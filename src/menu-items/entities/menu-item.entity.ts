@@ -1,5 +1,6 @@
 import { Field, Int, ObjectType } from '@nestjs/graphql';
 import { GraphQLJSONObject } from 'src/common/graphql/types/json.type';
+import { Menu } from 'src/menus/entities/menu.entity';
 import {
   Column,
   Entity,
@@ -38,4 +39,8 @@ export class MenuItem {
   @Field(() => Int, { nullable: true })
   @Column({ nullable: true })
   parentId?: number;
+
+  @ManyToOne(() => Menu, (menu) => menu.items)
+  @JoinColumn()
+  menu?: Menu;
 }

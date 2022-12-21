@@ -1,0 +1,43 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type MenuItem {
+  id: Int!
+  label: String!
+  order: Int!
+  meta: JSONObject
+  children: MenuItem
+  parentId: Int
+}
+
+"""
+The `JSONObject` scalar type represents JSON objects as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+"""
+scalar JSONObject
+
+type Menu {
+  id: Int!
+  name: String!
+  items: [MenuItem!]!
+}
+
+type Query {
+  menus: [Menu!]!
+  menu(id: Int!): Menu!
+}
+
+type Mutation {
+  createMenu(createMenuInput: CreateMenuInput!): Menu!
+  updateMenu(updateMenuInput: UpdateMenuInput!): Menu!
+  removeMenu(id: Int!): Menu!
+}
+
+input CreateMenuInput {
+  name: String!
+}
+
+input UpdateMenuInput {
+  name: String
+  id: Int!
+}
