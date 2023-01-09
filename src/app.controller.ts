@@ -8,12 +8,12 @@ export class AppController {
 
   @Get()
   getHello(): string {
-    const menuItem = 1;
-    throw new BusinessException(
-      'menu-item', 'Menu item id=${menuItem} was not found.',
-      'Menu item not found',
-      HttpStatus.NOT_FOUND,
-    )
+    // const menuItem = 1;
+    // throw new BusinessException(
+    //   'menu-item', 'Menu item id=${menuItem} was not found.',
+    //   'Menu item not found',
+    //   HttpStatus.NOT_FOUND,
+    // )
     return this.appService.getHello();
   }
 }

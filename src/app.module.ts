@@ -11,7 +11,7 @@ import { typeOrmConfig } from 'config/typeorm.config';
 import { PrometheusModule, makeCounterProvider } from '@willsoto/nestjs-prometheus';
 import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { LoggingInterceptor } from './logging.interceptor';
-import { CustomExecptionFilter } from './exception.filter';
+// import { CustomExecptionFilter } from './exception.filter';
 
 @Module({
   imports: [
@@ -37,10 +37,10 @@ import { CustomExecptionFilter } from './exception.filter';
     provide: APP_INTERCEPTOR,
     useClass: LoggingInterceptor,
   },
-  {
-    provide: APP_FILTER,
-    useClass: CustomExecptionFilter,
-  },
+  // {
+    // provide: APP_FILTER,
+    // useClass: CustomExecptionFilter,
+  // },
 ],
 
 controllers: [AppController],
