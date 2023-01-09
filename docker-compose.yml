@@ -1,14 +1,20 @@
 version: '3.6'
 services:
-  db:
-    image: mysql:8-debian
-    restart: always
-    ports:
-      - 3307:3306
-    volumes:
-      - ./data/mysql:/var/lib/mysql
+  jaeger:
+    image: jaegertracing/all-in-one:1.41
     environment:
-      MYSQL_ROOT_PASSWORD: 'root'
-      MYSQL_DATABASE: 'api'
-      MYSQL_USER: 'api'
-      MYSQL_PASSWORD: 'api'
+      COLLECTOR_ZIPKIN_HOST_PORT: :9411 
+      COLLECTOR_OTLP_ENABLED: true 
+    ports: 
+      - 14250:14250
+      - 14268:14268
+      - 14269:14269
+      - 16686:16686
+      - 4317:4317
+      - 4318:4318
+      - 5778:5778
+      - 6831:6831 
+      - 6832:6832 
+      - 9411:9411
+
+    
