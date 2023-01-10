@@ -14,6 +14,8 @@ import { LoggingInterceptor } from './logging.interceptor';
 // import { CustomExecptionFilter } from './exception.filter';
 
 @Module({
+
+
   imports: [
     PrometheusModule.register(),
     ConfigModule.forRoot(),
@@ -32,17 +34,17 @@ import { LoggingInterceptor } from './logging.interceptor';
     name: 'jamie_api_errors',
     help: 'Amount of errors collected in our application',
     labelNames: ['domain', 'status']
-  }), 
-  {
-    provide: APP_INTERCEPTOR,
-    useClass: LoggingInterceptor,
-  },
-  // {
+  }),
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: LoggingInterceptor,
+    },
+    // {
     // provide: APP_FILTER,
     // useClass: CustomExecptionFilter,
-  // },
-],
+    // },
+  ],
 
-controllers: [AppController],
+  controllers: [AppController],
 })
-export class AppModule {}
+export class AppModule { }
