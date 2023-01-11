@@ -8,9 +8,10 @@ import { MenusModule } from './menus/menus.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { typeOrmConfig } from 'config/typeorm.config';
-import { PrometheusModule, makeCounterProvider } from '@willsoto/nestjs-prometheus';
-import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
+import { PrometheusModule, makeCounterProvider, makeHistogramProvider, makeGaugeProvider } from '@willsoto/nestjs-prometheus';
+import { APP_INTERCEPTOR } from '@nestjs/core';
 import { LoggingInterceptor } from './logging.interceptor';
+import { MetricsInterceptor } from './metrics.interceptor';
 // import { CustomExecptionFilter } from './exception.filter';
 
 @Module({
@@ -30,21 +31,34 @@ import { LoggingInterceptor } from './logging.interceptor';
     }),
     MenusModule,
   ],
-  providers: [AppService, makeCounterProvider({
-    name: 'jamie_api_errors',
-    help: 'Amount of errors collected in our application',
-    labelNames: ['domain', 'status']
-  }),
+  providers: [
+    AppService, 
+    makeCounterProvider({
+      name: 'http_requests_count',
+      help: 'http requests count',
+      labelNames: ['endpoint', 'method'],
+    }),
+    makeCounterProvider({
+      name: 'http_requests_failures_count',
+      help: 'http requests failures count',
+      labelNames: ['endpoint', 'method'],
+    }),
+    makeHistogramProvider({
+      name: 'http_requests_bucket',
+      help: 'http requests bucket',
+      labelNames: ['endpoint', 'method'],
+    }),
     {
       provide: APP_INTERCEPTOR,
       useClass: LoggingInterceptor,
     },
-    // {
-    // provide: APP_FILTER,
-    // useClass: CustomExecptionFilter,
-    // },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: MetricsInterceptor,
+    },
   ],
 
   controllers: [AppController],
 })
 export class AppModule { }
+
