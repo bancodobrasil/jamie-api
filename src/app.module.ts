@@ -33,29 +33,29 @@ import { MetricsInterceptor } from './metrics.interceptor';
   ],
   providers: [
     AppService, 
-    makeCounterProvider({
-      name: 'http_requests_count',
-      help: 'http requests count',
-      labelNames: ['endpoint', 'method'],
-    }),
-    makeCounterProvider({
-      name: 'http_requests_failures_count',
-      help: 'http requests failures count',
-      labelNames: ['endpoint', 'method'],
-    }),
-    makeHistogramProvider({
-      name: 'http_requests_bucket',
-      help: 'http requests bucket',
-      labelNames: ['endpoint', 'method'],
-    }),
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: LoggingInterceptor,
-    },
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: MetricsInterceptor,
-    },
+    // makeCounterProvider({
+    //   name: 'http_requests_count',
+    //   help: 'http requests count',
+    //   labelNames: ['endpoint', 'method'],
+    // }),
+    // makeCounterProvider({
+    //   name: 'http_requests_failures_count',
+    //   help: 'http requests failures count',
+    //   labelNames: ['endpoint', 'method'],
+    // }),
+    // makeHistogramProvider({
+    //   name: 'http_requests_bucket',
+    //   help: 'http requests bucket',
+    //   labelNames: ['endpoint', 'method'],
+    // }),
+    // {
+    //   provide: APP_INTERCEPTOR,
+    //   useClass: LoggingInterceptor,
+    // },
+    // {
+    //   provide: APP_INTERCEPTOR,
+    //   useClass: MetricsInterceptor,
+    // },
   ],
 
   controllers: [AppController],
