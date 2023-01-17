@@ -29,18 +29,18 @@ export class MenuItem {
   meta?: object;
 
   @Field(() => MenuItem, { nullable: true })
-  @OneToMany(() => MenuItem, (menuItem) => menuItem.parent)
-  children?: MenuItem[];
+  @OneToMany(() => MenuItem, (menuItem) => menuItem.parent, { lazy: true })
+  children?: Promise<MenuItem[]>;
 
-  @ManyToOne(() => MenuItem, (menuItem) => menuItem.children)
+  @ManyToOne(() => MenuItem, (menuItem) => menuItem.children, { lazy: true })
   @JoinColumn()
-  parent?: MenuItem;
+  parent?: Promise<MenuItem>;
 
   @Field(() => Int, { nullable: true })
   @Column({ nullable: true })
   parentId?: number;
 
-  @ManyToOne(() => Menu, (menu) => menu.items)
+  @ManyToOne(() => Menu, (menu) => menu.items, { lazy: true })
   @JoinColumn()
-  menu?: Menu;
+  menu?: Promise<Menu>;
 }
