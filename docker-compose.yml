@@ -1,5 +1,17 @@
 version: '3.6'
 services:
+  db:
+    image: mysql:8-debian
+    restart: always
+    ports:
+      - 3307:3306
+    volumes:
+      - ./data/mysql:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: 'root'
+      MYSQL_DATABASE: 'api'
+      MYSQL_USER: 'api'
+      MYSQL_PASSWORD: 'api'
   jaeger:
     image: jaegertracing/all-in-one:1.41
     environment:
