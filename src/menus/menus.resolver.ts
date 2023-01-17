@@ -16,10 +16,7 @@ import { MenuItem } from 'src/menu-items/entities/menu-item.entity';
 
 @Resolver(() => Menu)
 export class MenusResolver {
-  constructor(
-    private readonly menusService: MenusService,
-    private readonly menuItemsService: MenuItemsService,
-  ) {}
+  constructor(private readonly menusService: MenusService) {}
 
   @Mutation(() => Menu)
   createMenu(@Args('createMenuInput') createMenuInput: CreateMenuInput) {
@@ -41,14 +38,18 @@ export class MenusResolver {
     return this.menusService.update(updateMenuInput.id, updateMenuInput);
   }
 
-  @Mutation(() => Menu)
-  removeMenu(@Args('id', { type: () => Int }) id: number) {
-    return this.menusService.remove(id);
+  @Mutation(() => Boolean)
+  async removeMenu(@Args('id', { type: () => Int }) id: number) {
+    //return this.menusService.remove(id);
+    await this.menusService.remove(id);
+
+    return true;
   }
 
-  @ResolveField('items', () => [MenuItem])
-  getItems(@Parent() menu: Menu) {
-    const { id } = menu;
-    return this.menuItemsService.findAll({ menuId: id });
-  }
+  // @ResolveField('items', () => [MenuItem])
+  // getItems(@Parent() menu: Menu) {
+  //   //const { id } = menu;
+  //   //return this.menuItemsService.findAll({ menuId: id });
+  //   return menu.items;
+  // }
 }
