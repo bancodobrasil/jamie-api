@@ -4,17 +4,6 @@ volumes:
   grafana-storage:
 
 services:
-  # wordpress:
-  #   image: wordpress
-  #   links:
-  #     - db
-  #   environment:
-  #     - WORDPRESS_DB_PASSWORD=password
-  #     - WORDPRESS_DB_USER=root
-  #   ports:
-  #     - "7000:7000"
-  #   volumes:
-  #     - ./html:/var/www/html
 
   db:
     image: mysql:8-debian
@@ -29,6 +18,19 @@ services:
       MYSQL_USER: 'api'
       MYSQL_PASSWORD: 'api'
 
+  wordpress:
+    depends_on:
+      - db
+    image: wordpress:latest
+    ports:
+      - "8000:80"
+    volumes:
+      - ./html:/var/www/html
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: api
+      WORDPRESS_DB_PASSWORD: api
+      WORDPRESS_DB_NAME: api
   prometheus:
     image: bitnami/prometheus
     ports:
