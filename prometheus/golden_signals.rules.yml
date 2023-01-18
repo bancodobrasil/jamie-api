@@ -1,0 +1,18 @@
+- record: job:http_requests_availability_sli_ratio:rate30d
+
+  expr: >
+    sum by (job) (
+      rate(http_requests_total{status!~"5.."}[30d])
+    )
+    /
+    sum by (job) (
+      rate(http_requests_total[30d])
+    )
+
+- record: job:http_request_duration_seconds_sli:rate30d_q95
+  expr: >
+    histogram_quantile(0.95, sum by (job, le) (
+      rate(
+        http_request_duration_seconds_bucket[30d]
+      )
+    ))

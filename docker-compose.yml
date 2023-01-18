@@ -4,6 +4,18 @@ volumes:
   grafana-storage:
 
 services:
+  # wordpress:
+  #   image: wordpress
+  #   links:
+  #     - db
+  #   environment:
+  #     - WORDPRESS_DB_PASSWORD=password
+  #     - WORDPRESS_DB_USER=root
+  #   ports:
+  #     - "7000:7000"
+  #   volumes:
+  #     - ./html:/var/www/html
+
   db:
     image: mysql:8-debian
     restart: always
@@ -23,6 +35,8 @@ services:
       - 9090:9090
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    links:
+      - api
 
   grafana:
     image: grafana/grafana
