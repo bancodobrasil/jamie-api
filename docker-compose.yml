@@ -18,19 +18,6 @@ services:
       MYSQL_USER: 'api'
       MYSQL_PASSWORD: 'api'
 
-  wordpress:
-    depends_on:
-      - db
-    image: wordpress:latest
-    ports:
-      - "8000:80"
-    volumes:
-      - ./html:/var/www/html
-    environment:
-      WORDPRESS_DB_HOST: db:3306
-      WORDPRESS_DB_USER: api
-      WORDPRESS_DB_PASSWORD: api
-      WORDPRESS_DB_NAME: api
   prometheus:
     image: bitnami/prometheus
     ports:
@@ -62,4 +49,20 @@ services:
       - JAMIE_API_DATABASE_USER=api
       - JAMIE_API_DATABASE_PASSWORD=api
   
+  jaeger:
+    image: jaegertracing/all-in-one:1.41
+    environment:
+      COLLECTOR_ZIPKIN_HOST_PORT: :9411 
+      COLLECTOR_OTLP_ENABLED: true 
+    ports: 
+      - 14250:14250
+      - 14268:14268
+      - 14269:14269
+      - 16686:16686
+      - 4317:4317
+      - 4318:4318
+      - 5778:5778
+      - 6831:6831 
+      - 6832:6832 
+      - 9411:9411
 

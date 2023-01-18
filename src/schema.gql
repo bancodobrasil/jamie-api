@@ -2,6 +2,12 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+type Menu {
+  id: Int!
+  name: String!
+  items: [MenuItem!]
+}
+
 type MenuItem {
   id: Int!
   label: String!
@@ -16,12 +22,6 @@ The `JSONObject` scalar type represents JSON objects as specified by [ECMA-404](
 """
 scalar JSONObject
 
-type Menu {
-  id: Int!
-  name: String!
-  items: [MenuItem!]!
-}
-
 type Query {
   menus: [Menu!]!
   menu(id: Int!): Menu!
@@ -30,14 +30,26 @@ type Query {
 type Mutation {
   createMenu(createMenuInput: CreateMenuInput!): Menu!
   updateMenu(updateMenuInput: UpdateMenuInput!): Menu!
-  removeMenu(id: Int!): Menu!
+  removeMenu(id: Int!): Boolean!
 }
 
 input CreateMenuInput {
   name: String!
+  items: [MenuItemInput!]
+}
+
+input MenuItemInput {
+  id: Int
+  label: String!
+  action: String!
+  order: Int!
+  parentId: Int
+  children: [MenuItemInput!]
+  meta: JSONObject
 }
 
 input UpdateMenuInput {
   name: String
+  items: [MenuItemInput!]
   id: Int!
 }

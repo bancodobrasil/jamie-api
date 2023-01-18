@@ -14,6 +14,6 @@ export class Menu {
   name: string;
 
   @Field(() => [MenuItem], { nullable: true })
-  @OneToMany(() => MenuItem, (menuItem) => menuItem.menu)
-  items?: MenuItem[];
+  @OneToMany(() => MenuItem, (menuItem) => menuItem.menu, { lazy: true })
+  items?: Promise<MenuItem[]>;
 }
