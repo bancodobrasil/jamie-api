@@ -1,4 +1,4 @@
-FROM node:16-alpine 
+FROM node:18-alpine 
 
 WORKDIR /app
 
@@ -10,6 +10,6 @@ COPY . .
 
 RUN yarn build
 
-EXPOSE 3000
+EXPOSE 5000
 
-CMD ["yarn", "start"]
+CMD [ "node", "dist/src/main.js" ]
