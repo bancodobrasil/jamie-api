@@ -8,9 +8,14 @@ import { MenusModule } from './menus/menus.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { typeOrmConfig } from 'config/typeorm.config';
+import { PrometheusModule } from '@willsoto/nestjs-prometheus';
+import { APP_INTERCEPTOR } from '@nestjs/core';
+import { LoggingInterceptor } from './logging.interceptor';
+import { MetricsInterceptor } from './metrics.interceptor';
 
 @Module({
   imports: [
+    PrometheusModule.register(),
     ConfigModule.forRoot(),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
@@ -23,7 +28,18 @@ import { typeOrmConfig } from 'config/typeorm.config';
     }),
     MenusModule,
   ],
+  providers: [
+    AppService,
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: LoggingInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: MetricsInterceptor,
+    },
+  ],
+
   controllers: [AppController],
-  providers: [AppService],
 })
 export class AppModule {}

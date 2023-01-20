@@ -1,5 +1,10 @@
 version: '3.6'
+
+volumes:
+  grafana-storage:
+
 services:
+
   db:
     image: mysql:8-debian
     restart: always
@@ -12,6 +17,38 @@ services:
       MYSQL_DATABASE: 'api'
       MYSQL_USER: 'api'
       MYSQL_PASSWORD: 'api'
+
+  prometheus:
+    image: bitnami/prometheus
+    ports:
+      - 9090:9090
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    links:
+      - api
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - 4000:3000
+    volumes:
+      - grafana-storage:/var/lib/grafana
+
+    environment:
+      GF_INSTALL_PLUGINS: "grafana-clock-panel,grafana-simple-json-datasource"
+      GF_SECURITY_ADMIN_PASSWORD: "admin"
+
+  api:
+    build: .
+    ports:
+      - 3000:3000
+    environment:
+      - JAMIE_API_DATABASE_HOST=db
+      - JAMIE_API_DATABASE_PORT=3306
+      - JAMIE_API_DATABASE_NAME=api
+      - JAMIE_API_DATABASE_USER=api
+      - JAMIE_API_DATABASE_PASSWORD=api
+  
   jaeger:
     image: jaegertracing/all-in-one:1.41
     environment:
@@ -29,4 +66,3 @@ services:
       - 6832:6832 
       - 9411:9411
 
-    
