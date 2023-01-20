@@ -37,14 +37,17 @@ import { MetricsInterceptor } from './metrics.interceptor';
     makeCounterProvider({
       name: 'http_requests_count',
       help: 'Count http requests',
+      labelNames: ['endpoint', 'method'],
     }),
     makeCounterProvider({
       name: 'http_requests_failures_count',
       help: 'Count http requests fails',
+      labelNames: ['endpoint', 'method'],
     }),
     makeHistogramProvider({
       name: 'http_requests_bucket',
       help: 'Count http requests time',
+      labelNames: ['endpoint', 'method'],
     }),
     {
       provide: APP_INTERCEPTOR,
