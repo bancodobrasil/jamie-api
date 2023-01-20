@@ -8,7 +8,11 @@ import { MenusModule } from './menus/menus.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { typeOrmConfig } from 'config/typeorm.config';
-import { PrometheusModule } from '@willsoto/nestjs-prometheus';
+import {
+  makeCounterProvider,
+  makeHistogramProvider,
+  PrometheusModule,
+} from '@willsoto/nestjs-prometheus';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { LoggingInterceptor } from './logging.interceptor';
 import { MetricsInterceptor } from './metrics.interceptor';
@@ -30,6 +34,18 @@ import { MetricsInterceptor } from './metrics.interceptor';
   ],
   providers: [
     AppService,
+    makeCounterProvider({
+      name: 'http_requests_count',
+      help: 'Count http requests',
+    }),
+    makeCounterProvider({
+      name: 'http_requests_failures_count',
+      help: 'Count http requests fails',
+    }),
+    makeHistogramProvider({
+      name: 'http_requests_bucket',
+      help: 'Count http requests time',
+    }),
     {
       provide: APP_INTERCEPTOR,
       useClass: LoggingInterceptor,
