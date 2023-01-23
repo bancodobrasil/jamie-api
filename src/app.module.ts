@@ -39,21 +39,11 @@ import { MetricsInterceptor } from './metrics.interceptor';
       name: 'http_requests_count',
       help: 'Count http requests',
     }),
-<<<<<<< Updated upstream
-    makeCounterProvider({
-      name: 'http_requests_failures_count',
-      help: 'Count http requests fails',
-    }),
-    makeHistogramProvider({
-      name: 'http_requests_bucket',
-      help: 'Count http requests time',
-=======
 
     makeHistogramProvider({
       name: 'http_requests_latency',
       help: 'Count http requests latency',
       labelNames: ['endpoint', 'method'],
->>>>>>> Stashed changes
     }),
 
     makeCounterProvider({
