@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { MenuItem } from 'src/menu-items/entities/menu-item.entity';
 import { MenuItemsService } from 'src/menu-items/menu-items.service';
 import { Repository } from 'typeorm';
 import { CreateMenuInput } from './dto/create-menu.input';
@@ -23,9 +22,9 @@ export class MenusService {
 
     if (createMenuInput.items) {
       menu.items = Promise.all(
-        createMenuInput.items.map((mii) =>
-          this.menuItemsService.handle(saved, mii),
-        ),
+        createMenuInput.items
+          .map((mii) => this.menuItemsService.handle(saved, mii))
+          .filter((a) => a != undefined),
       );
     }
 

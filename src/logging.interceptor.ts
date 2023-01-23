@@ -13,10 +13,14 @@ import { v4 as uuidv4 } from 'uuid';
 export class LoggingInterceptor implements NestInterceptor {
   private readonly logger = new Logger(LoggingInterceptor.name);
 
+  private readonly skipPaths = [/\/metrics.*/];
+
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+    this.logger.debug({ interceptor: 'logging', type: context.getType() });
     if (context.getType() === 'http') {
       return this.logHttpCall(context, next);
     }
+    return next.handle();
   }
 
   private logHttpCall(context: ExecutionContext, next: CallHandler) {
@@ -26,7 +30,12 @@ export class LoggingInterceptor implements NestInterceptor {
     const correlationKey = uuidv4();
     const userId = request.user?.userId;
 
-    this.logger.log(
+    if (this.skipPaths.find((p) => p.test(url))) {
+      this.logger.verbose(`Skipped path "${url}"`);
+      return next.handle();
+    }
+
+    this.logger.debug(
       `[${correlationKey}] ${method} ${url} ${userId} ${userAgent} ${ip}: ${
         context.getClass().name
       } ${context.getHandler().name}`,
@@ -40,7 +49,7 @@ export class LoggingInterceptor implements NestInterceptor {
         const { statusCode } = response;
         const contentLength = response.get('content-length');
 
-        this.logger.log(
+        this.logger.debug(
           `[${correlationKey}] ${method} ${url} ${statusCode} ${contentLength}: ${
             Date.now() - now
           }ms`,
