@@ -27,6 +27,7 @@ export class MetricsInterceptor implements NestInterceptor {
     if (context.getType() === 'http') {
       return this.countHttpCall(context, next);
     }
+    // TODO logGraphQLCall - qraphql
     return next.handle();
   }
 

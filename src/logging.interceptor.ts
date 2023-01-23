@@ -20,6 +20,7 @@ export class LoggingInterceptor implements NestInterceptor {
     if (context.getType() === 'http') {
       return this.logHttpCall(context, next);
     }
+    // TODO logGraphQLCall - qraphql
     return next.handle();
   }
 
