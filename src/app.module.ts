@@ -10,6 +10,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { typeOrmConfig } from 'config/typeorm.config';
 import {
   makeCounterProvider,
+  makeGaugeProvider,
   makeHistogramProvider,
   PrometheusModule,
 } from '@willsoto/nestjs-prometheus';
@@ -38,6 +39,7 @@ import { MetricsInterceptor } from './metrics.interceptor';
       name: 'http_requests_count',
       help: 'Count http requests',
     }),
+<<<<<<< Updated upstream
     makeCounterProvider({
       name: 'http_requests_failures_count',
       help: 'Count http requests fails',
@@ -45,7 +47,33 @@ import { MetricsInterceptor } from './metrics.interceptor';
     makeHistogramProvider({
       name: 'http_requests_bucket',
       help: 'Count http requests time',
+=======
+
+    makeHistogramProvider({
+      name: 'http_requests_latency',
+      help: 'Count http requests latency',
+      labelNames: ['endpoint', 'method'],
+>>>>>>> Stashed changes
     }),
+
+    makeCounterProvider({
+      name: 'http_errors_count',
+      help: 'Count http errors',
+      labelNames: ['endpoint', 'method'],
+    }),
+
+    makeGaugeProvider({
+      name: 'http_concurrent_requests',
+      help: 'Count http concurrent requests',
+      labelNames: ['endpoint', 'method'],
+    }),
+
+    makeGaugeProvider({
+      name: 'http_errors_rate',
+      help: 'Count http errors rate',
+      labelNames: ['endpoint', 'method'],
+    }),
+    
     {
       provide: APP_INTERCEPTOR,
       useClass: LoggingInterceptor,
