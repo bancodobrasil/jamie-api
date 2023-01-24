@@ -29,7 +29,7 @@ export class MetricsInterceptor implements NestInterceptor {
       this.saturation.inc();
       return this.countHttpCall(context, next);
     }
-    // TODO logGraphQLCall - qraphql
+    // TODO countGraphQLCall - qraphql
     return next.handle();
   }
 
