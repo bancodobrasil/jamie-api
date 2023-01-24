@@ -1,18 +1,8 @@
-import {
-  Resolver,
-  Query,
-  Mutation,
-  Args,
-  Int,
-  ResolveField,
-  Parent,
-} from '@nestjs/graphql';
+import { Resolver, Query, Mutation, Args, Int } from '@nestjs/graphql';
 import { MenusService } from './menus.service';
 import { Menu } from './entities/menu.entity';
 import { CreateMenuInput } from './dto/create-menu.input';
 import { UpdateMenuInput } from './dto/update-menu.input';
-import { MenuItemsService } from 'src/menu-items/menu-items.service';
-import { MenuItem } from 'src/menu-items/entities/menu-item.entity';
 
 @Resolver(() => Menu)
 export class MenusResolver {

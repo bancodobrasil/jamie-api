@@ -1,21 +1,21 @@
-import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
-import { join } from 'path';
-import { MenusModule } from './menus/menus.module';
+import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { APP_INTERCEPTOR } from '@nestjs/core';
+import { GraphQLModule } from '@nestjs/graphql';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { typeOrmConfig } from 'config/typeorm.config';
 import {
   makeCounterProvider,
   makeGaugeProvider,
   makeHistogramProvider,
   PrometheusModule,
 } from '@willsoto/nestjs-prometheus';
-import { APP_INTERCEPTOR } from '@nestjs/core';
+import { typeOrmConfig } from 'config/typeorm.config';
+import { join } from 'path';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
 import { LoggingInterceptor } from './logging.interceptor';
+import { MenusModule } from './menus/menus.module';
 import { MetricsInterceptor } from './metrics.interceptor';
 
 @Module({
@@ -38,11 +38,17 @@ import { MetricsInterceptor } from './metrics.interceptor';
     makeCounterProvider({
       name: 'http_requests_count',
       help: 'Count http requests',
+      labelNames: ['endpoint', 'method'],
     }),
 
     makeHistogramProvider({
       name: 'http_requests_latency',
       help: 'Count http requests latency',
+    }),
+    
+    makeHistogramProvider({
+      name: 'http_requests_bucket',
+      help: 'Count http requests time',
       labelNames: ['endpoint', 'method'],
     }),
 

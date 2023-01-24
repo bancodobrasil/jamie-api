@@ -1,40 +1,57 @@
-import type { NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
-import { Injectable } from '@nestjs/common';
+import type {
+  NestInterceptor,
+  ExecutionContext,
+  CallHandler,
+} from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectMetric } from '@willsoto/nestjs-prometheus';
 import type { Request } from 'express';
-import { Counter, Histogram, Gauge } from 'prom-client';
+import { Counter, Histogram } from 'prom-client';
 import { tap } from 'rxjs/operators';
 
 @Injectable()
 export class MetricsInterceptor implements NestInterceptor {
+  private readonly logger = new Logger(MetricsInterceptor.name);
+
+  private readonly skipPaths = [/\/metrics.*/];
+
   constructor(
-    @InjectMetric('http_requests_count') private requestCounter: Counter,
-    @InjectMetric('http_requests_latency') private requestLatency: Histogram,
-    @InjectMetric('http_errors_count') private errorCounter: Counter,
-    @InjectMetric('http_concurrent_requests') private concurrentRequests: Gauge,
-    @InjectMetric('http_errors_rate') private errorRate: Gauge,
+    @InjectMetric('http_requests_count') private counter: Counter<string>,
+    @InjectMetric('http_requests_bucket') private histogram: Histogram<string>,
+    @InjectMetric('http_requests_failures_count')
+    private failures: Counter<string>,
   ) {}
 
   intercept(context: ExecutionContext, next: CallHandler) {
+    this.logger.debug({ interceptor: 'metrics', type: context.getType() });
+    if (context.getType() === 'http') {
+      return this.countHttpCall(context, next);
+    }
+    // TODO logGraphQLCall - qraphql
+    return next.handle();
+  }
+
+  private countHttpCall(context: ExecutionContext, next: CallHandler) {
     const ctx = context.switchToHttp();
     const request = ctx.getRequest<Request>();
 
     const endpoint = request.path;
     const method = request.method;
 
-    const start = Date.now();
+    if (this.skipPaths.find((p) => p.test(endpoint))) {
+      this.logger.verbose(`Skipped path "${endpoint}"`);
+      return next.handle();
+    }
 
-    this.concurrentRequests.inc();
-    this.requestCounter.inc();
+    const end = this.histogram.startTimer({ endpoint, method });
 
     return next.handle().pipe(
       tap(() => {
-        this.concurrentRequests.dec();
-        this.requestLatency.observe(Date.now() - start);
         if (request.statusCode >= 400) {
-          this.errorCounter.inc();
+          this.failures.inc({ endpoint, method });
         }
-        // this.errorRate.set(this.errorCounter.get() / this.requestCounter.get());
+        this.counter.inc({ endpoint, method });
+        end();
       }),
     );
   }
