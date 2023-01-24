@@ -1,24 +1,14 @@
 {
-    "name": "Launch app",
-    "type": "node",
-    "request": "launch",
-    "args": [
-      "src/main.ts"
-    ],
-    "runtimeArgs": [
-      "-r",
-      "ts-node/register",
-      "-r",
-      "tsconfig-paths/register"
-    ],
-    "cwd": "${workspaceRoot}",
-    "protocol": "inspector",
-    "internalConsoleOptions": "openOnSessionStart",
-    "env": {
-      "NODE_ENV": "local",
-      "NODE_PORT": "9000"
-    },
-    "sourceMaps": true,
-    "console": "internalConsole",
-    "outputCapture": "std"
-  }
+  "configurations": [
+    {
+      "name": "Launch via NPM",
+      "request": "launch",
+      "envFile": "${workspaceFolder}/.env",
+      "runtimeVersion": "16.16.0",
+      "runtimeArgs": ["run", "start:debug"],
+      "runtimeExecutable": "npm",
+      "skipFiles": ["<node_internals>/**"],
+      "type": "node"
+    }
+  ]
+}
