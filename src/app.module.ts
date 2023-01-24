@@ -36,19 +36,23 @@ import { MetricsInterceptor } from './metrics.interceptor';
   providers: [
     AppService,
     makeCounterProvider({
-      name: 'http_requests_count',
-      help: 'Count http requests',
+      name: 'http_requests_traffic',
+      help: 'Count how many http requests are made to the server',
       labelNames: ['endpoint', 'method'],
     }),
     makeCounterProvider({
-      name: 'http_requests_failures_count',
-      help: 'Count http requests fails',
+      name: 'http_requests_errors_count',
+      help: 'Total number of request errors',
       labelNames: ['endpoint', 'method'],
     }),
     makeHistogramProvider({
-      name: 'http_requests_bucket',
-      help: 'Count http requests time',
+      name: 'http_requests_latency',
+      help: 'Count http requests latency time',
       labelNames: ['endpoint', 'method'],
+    }),
+    makeGaugeProvider({
+      name: 'http_requests_saturation',
+      help: 'Current number of requests being handled',
     }),
     {
       provide: APP_INTERCEPTOR,
