@@ -6,7 +6,7 @@ import type {
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectMetric } from '@willsoto/nestjs-prometheus';
 import type { Request } from 'express';
-import { Counter, Histogram } from 'prom-client';
+import { Counter, Gauge, Histogram } from 'prom-client';
 import { tap } from 'rxjs/operators';
 
 @Injectable()
@@ -16,10 +16,11 @@ export class MetricsInterceptor implements NestInterceptor {
   private readonly skipPaths = [/\/metrics.*/];
 
   constructor(
-    @InjectMetric('http_requests_count') private counter: Counter<string>,
-    @InjectMetric('http_requests_bucket') private histogram: Histogram<string>,
-    @InjectMetric('http_requests_failures_count')
-    private failures: Counter<string>,
+    @InjectMetric('http_requests_traffic') private traffic: Counter<string>,
+    @InjectMetric('http_requests_errors_count')
+    private errors: Counter<string>,
+    @InjectMetric('http_requests_latency') private latency: Histogram<string>,
+    @InjectMetric('http_requests_saturation') private saturation: Gauge<string>,
   ) {}
 
   intercept(context: ExecutionContext, next: CallHandler) {
@@ -43,14 +44,17 @@ export class MetricsInterceptor implements NestInterceptor {
       return next.handle();
     }
 
-    const end = this.histogram.startTimer({ endpoint, method });
+    this.saturation.inc({ endpoint, method });
+
+    const end = this.latency.startTimer({ endpoint, method });
 
     return next.handle().pipe(
       tap(() => {
         if (request.statusCode >= 400) {
-          this.failures.inc({ endpoint, method });
+          this.errors.inc({ endpoint, method });
         }
-        this.counter.inc({ endpoint, method });
+        this.traffic.inc({ endpoint, method });
+        this.saturation.dec({ endpoint, method });
         end();
       }),
     );
