@@ -40,36 +40,16 @@ import { MetricsInterceptor } from './metrics.interceptor';
       help: 'Count http requests',
       labelNames: ['endpoint', 'method'],
     }),
-
-    makeHistogramProvider({
-      name: 'http_requests_latency',
-      help: 'Count http requests latency',
+    makeCounterProvider({
+      name: 'http_requests_failures_count',
+      help: 'Count http requests fails',
+      labelNames: ['endpoint', 'method'],
     }),
-    
     makeHistogramProvider({
       name: 'http_requests_bucket',
       help: 'Count http requests time',
       labelNames: ['endpoint', 'method'],
     }),
-
-    makeCounterProvider({
-      name: 'http_errors_count',
-      help: 'Count http errors',
-      labelNames: ['endpoint', 'method'],
-    }),
-
-    makeGaugeProvider({
-      name: 'http_concurrent_requests',
-      help: 'Count http concurrent requests',
-      labelNames: ['endpoint', 'method'],
-    }),
-
-    makeGaugeProvider({
-      name: 'http_errors_rate',
-      help: 'Count http errors rate',
-      labelNames: ['endpoint', 'method'],
-    }),
-    
     {
       provide: APP_INTERCEPTOR,
       useClass: LoggingInterceptor,
