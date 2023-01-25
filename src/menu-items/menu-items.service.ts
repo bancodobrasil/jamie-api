@@ -35,7 +35,12 @@ export class MenuItemsService {
     return `This action removes a #${id} menu item`;
   }
 
-  async handle(menu: Menu, input: MenuItemInput, manager: EntityManager) {
+  async handle(
+    menu: Menu,
+    input: MenuItemInput,
+    manager: EntityManager,
+    index: number,
+  ) {
     if (
       input.action == MenuItemAction.CREATE ||
       input.action == MenuItemAction.UPDATE
@@ -47,7 +52,7 @@ export class MenuItemsService {
       item.label = input.label;
       item.order = input.order;
       item.meta = input.meta;
-      await item.validateMeta();
+      await item.validateMeta(index);
       return manager.save(item);
     }
 

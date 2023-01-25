@@ -1,5 +1,5 @@
-import { UnprocessableEntityException } from '@nestjs/common';
 import { Field, Int, ObjectType } from '@nestjs/graphql';
+import FieldValidationError from 'src/common/errors/field-validation.error';
 import { GraphQLJSONObject } from 'src/common/scalars/json.scalar';
 import { IMenuItemMeta } from 'src/common/types';
 import { Menu } from 'src/menus/entities/menu.entity';
@@ -11,7 +11,6 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { format } from 'util';
 
 @ObjectType()
 @Entity('menu_items')
@@ -50,7 +49,7 @@ export class MenuItem {
   @JoinColumn()
   menu?: Menu;
 
-  async validateMeta(): Promise<void> {
+  async validateMeta(index: number): Promise<void> {
     const menu = await this.menu;
     const menuMeta = menu?.meta || [];
     const missingRequiredMeta = [];
@@ -60,20 +59,18 @@ export class MenuItem {
       }
     });
     if (missingRequiredMeta.length) {
-      const menuItem = {
-        id: this.id,
-        parentId: this.parentId,
-        label: this.label,
-        meta: this.meta,
-      };
-      Object.keys(menuItem).forEach(
-        (key) => menuItem[key] === undefined && delete menuItem[key],
-      );
-      throw new UnprocessableEntityException(
-        `MenuItem: ${format(
-          menuItem,
-        )} missing required meta: ${missingRequiredMeta.join(', ')}`,
-      );
+      throw new FieldValidationError({
+        items: {
+          [index]: {
+            meta: {
+              errors: [
+                `Missing required meta: ${missingRequiredMeta.join(', ')}`,
+              ],
+              constraints: ['requiredMeta'],
+            },
+          },
+        },
+      });
     }
   }
 }

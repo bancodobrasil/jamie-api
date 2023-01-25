@@ -31,8 +31,13 @@ export class MenusService {
       if (createMenuInput.items) {
         menu.items = await Promise.all(
           createMenuInput.items
-            .map((mii) =>
-              this.menuItemsService.handle(saved, mii, queryRunner.manager),
+            .map((mii, index) =>
+              this.menuItemsService.handle(
+                saved,
+                mii,
+                queryRunner.manager,
+                index,
+              ),
             )
             .filter((a) => a != undefined),
         );
