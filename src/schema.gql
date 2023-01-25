@@ -5,8 +5,14 @@
 type Menu {
   id: Int!
   name: String!
+  meta: [Meta!]
   items: [MenuItem!]
 }
+
+"""
+The `Meta` scalar type represents a JSON object containing meta data for the menu's items.
+"""
+scalar Meta
 
 type MenuItem {
   id: Int!

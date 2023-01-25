@@ -1,4 +1,6 @@
 import { Field, Int, ObjectType } from '@nestjs/graphql';
+import GraphQLMeta from 'src/common/graphql/types/meta.type';
+import { IMenuMeta } from 'src/common/types';
 import { MenuItem } from 'src/menu-items/entities/menu-item.entity';
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
@@ -12,6 +14,13 @@ export class Menu {
   @Field()
   @Column()
   name: string;
+
+  @Field(() => [GraphQLMeta], { nullable: true })
+  @Column('text', {
+    nullable: true,
+    transformer: { from: JSON.parse, to: JSON.stringify },
+  })
+  meta?: IMenuMeta[];
 
   @Field(() => [MenuItem], { nullable: true })
   @OneToMany(() => MenuItem, (menuItem) => menuItem.menu, { lazy: true })
