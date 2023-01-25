@@ -6,14 +6,10 @@ import { Menu } from 'src/menus/entities/menu.entity';
 import {
   Column,
   Entity,
-  EntitySubscriberInterface,
-  EventSubscriber,
-  InsertEvent,
   JoinColumn,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
-  UpdateEvent,
 } from 'typeorm';
 
 @ObjectType()
@@ -54,7 +50,11 @@ export class MenuItem {
 
   @ManyToOne(() => Menu, (menu) => menu.items, { lazy: true })
   @JoinColumn()
-  menu?: Menu;
+  menu: Menu;
+
+  @Field(() => Int, { nullable: true })
+  @Column({ nullable: true })
+  menuId?: number;
 
   async validateMeta(index: number): Promise<void> {
     const menu = await this.menu;
@@ -78,35 +78,6 @@ export class MenuItem {
           },
         },
       });
-    }
-  }
-}
-
-@EventSubscriber()
-export class MenuItemSubscriber implements EntitySubscriberInterface<MenuItem> {
-  listenTo() {
-    return MenuItem;
-  }
-  beforeInsert(event: InsertEvent<MenuItem>) {
-    this.setMenu(event.entity);
-  }
-  beforeUpdate(event: UpdateEvent<MenuItem>) {
-    this.setMenu(event.databaseEntity);
-  }
-  private async setMenu(item: MenuItem): Promise<void> {
-    let menu = await item.menu;
-    if (!menu) {
-      const parent = await item.parent;
-      if (parent) {
-        menu = await parent.menu;
-        item.menu = menu;
-        if (item.children?.length) {
-          item.children = item.children.map((child) => {
-            child.menu = menu;
-            return child;
-          });
-        }
-      }
     }
   }
 }

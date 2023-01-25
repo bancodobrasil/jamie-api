@@ -21,6 +21,7 @@ type MenuItem {
   meta: JSONObject!
   children: [MenuItem!]
   parentId: Int
+  menuId: Int
 }
 
 """

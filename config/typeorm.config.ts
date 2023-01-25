@@ -14,6 +14,7 @@ export const typeOrmConfig: TypeOrmConfig = (configService: ConfigService) => {
     password: configService.get('JAMIE_API_DATABASE_PASSWORD'),
     database: configService.get('JAMIE_API_DATABASE_NAME'),
     entities: [join(__dirname, '..', 'src', '**', '*.entity{.js,.ts}')],
+    subscribers: [join(__dirname, '..', 'src', '**', '*.subscriber{.js,.ts}')],
     migrationsRun: true,
     migrations: [join(__dirname, '..', 'migrations', '*{.js,.ts}')],
     namingStrategy: new SnakeNamingStrategy(),
