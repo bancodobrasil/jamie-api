@@ -1,5 +1,5 @@
 import { Field, InputType } from '@nestjs/graphql';
-import GraphQLMeta from 'src/common/scalars/meta.scalar';
+import MetaScalar from 'src/common/scalars/meta.scalar';
 import { IMenuMeta } from 'src/common/types';
 import { MenuItemInput } from 'src/menu-items/dto/menu-item.input';
 
@@ -8,7 +8,7 @@ export class CreateMenuInput {
   @Field()
   name: string;
 
-  @Field(() => [GraphQLMeta], { nullable: true })
+  @Field(() => [MetaScalar], { nullable: true })
   meta?: IMenuMeta[];
 
   @Field(() => [MenuItemInput], { nullable: true })

@@ -1,5 +1,5 @@
 import { Field, Int, ObjectType } from '@nestjs/graphql';
-import GraphQLMeta from 'src/common/scalars/meta.scalar';
+import MetaScalar from 'src/common/scalars/meta.scalar';
 import { IMenuMeta } from 'src/common/types';
 import { MenuItem } from 'src/menu-items/entities/menu-item.entity';
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
@@ -15,7 +15,7 @@ export class Menu {
   @Column()
   name: string;
 
-  @Field(() => [GraphQLMeta], { nullable: true })
+  @Field(() => [MetaScalar], { nullable: true })
   @Column('text', {
     nullable: true,
     transformer: { from: JSON.parse, to: JSON.stringify },

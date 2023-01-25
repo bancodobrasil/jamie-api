@@ -1,8 +1,7 @@
-import { ValueNode } from 'graphql';
-import { GraphQLScalarType, Kind, print } from 'graphql';
+import { GraphQLScalarType, Kind, print, ValueNode } from 'graphql';
 import { IMenuMeta, MenuMetaType } from 'src/common/types';
 
-const ensureMeta = (value: unknown) => {
+const ensureMeta = (value: unknown): IMenuMeta => {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {
     throw new TypeError(`Meta cannot represent non-object value: ${value}`);
   }
@@ -21,7 +20,7 @@ const ensureMeta = (value: unknown) => {
     throw new TypeError(`Meta must have a required: ${JSON.stringify(value)}`);
   }
 
-  return value;
+  return value as IMenuMeta;
 };
 
 const parseLiteral = (ast: ValueNode): IMenuMeta => {
@@ -37,7 +36,7 @@ const parseLiteral = (ast: ValueNode): IMenuMeta => {
   return value;
 };
 
-export const GraphQLMeta = new GraphQLScalarType({
+export const MetaScalar = new GraphQLScalarType({
   name: 'Meta',
   description:
     "The `Meta` scalar type represents a JSON object containing meta data for the menu's items.",
@@ -46,4 +45,4 @@ export const GraphQLMeta = new GraphQLScalarType({
   parseLiteral,
 });
 
-export default GraphQLMeta;
+export default MetaScalar;
