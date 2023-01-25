@@ -22,7 +22,7 @@ export class MenusService {
     const saved = await this.menuRepository.save(menu);
 
     if (createMenuInput.items) {
-      menu.items = Promise.all(
+      menu.items = await Promise.all(
         createMenuInput.items
           .map((mii) => this.menuItemsService.handle(saved, mii))
           .filter((a) => a != undefined),
