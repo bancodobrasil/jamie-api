@@ -25,3 +25,7 @@ export interface IMenuMeta {
   required: boolean;
   type: MenuMetaType;
 }
+
+export interface IMenuItemMeta {
+  [key: string]: unknown;
+}

@@ -5,7 +5,7 @@
 type Menu {
   id: Int!
   name: String!
-  meta: [Meta!]
+  meta: [Meta!]!
   items: [MenuItem!]
 }
 
@@ -41,7 +41,7 @@ type Mutation {
 
 input CreateMenuInput {
   name: String!
-  meta: [Meta!]
+  meta: [Meta!]!
   items: [MenuItemInput!]
 }
 

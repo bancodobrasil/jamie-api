@@ -15,12 +15,11 @@ export class Menu {
   @Column()
   name: string;
 
-  @Field(() => [MetaScalar], { nullable: true })
+  @Field(() => [MetaScalar])
   @Column('text', {
-    nullable: true,
     transformer: { from: JSON.parse, to: JSON.stringify },
   })
-  meta?: IMenuMeta[];
+  meta: IMenuMeta[];
 
   @Field(() => [MenuItem], { nullable: true })
   @OneToMany(() => MenuItem, (menuItem) => menuItem.menu, { lazy: true })

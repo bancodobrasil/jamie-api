@@ -8,8 +8,8 @@ export class CreateMenuInput {
   @Field()
   name: string;
 
-  @Field(() => [MetaScalar], { nullable: true })
-  meta?: IMenuMeta[];
+  @Field(() => [MetaScalar])
+  meta: IMenuMeta[];
 
   @Field(() => [MenuItemInput], { nullable: true })
   items?: MenuItemInput[];
