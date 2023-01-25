@@ -21,12 +21,10 @@ export class MenuItemsService {
     manager: EntityManager,
     index: number,
   ) {
-    const item = new MenuItem();
-    item.menu = menu;
-    item.label = input.label;
-    item.order = input.order;
-    item.meta = input.meta;
-
+    const item = manager.getRepository(MenuItem).create({
+      ...input,
+      menu,
+    });
     await item.validateMeta(index);
     return manager.save(item);
   }
@@ -49,7 +47,30 @@ export class MenuItemsService {
   ) {
     const item = await manager.getRepository(MenuItem).preload({ ...input });
     await item.validateMeta(index);
-    return manager.save(item);
+    const saved = await manager.save(item);
+    if (input.children?.length) {
+      await Promise.all(
+        input.children.map(async (child, index) => {
+          switch (child.action) {
+            case MenuItemAction.CREATE:
+              child.parentId = saved.id;
+              return this.create(
+                await saved.menu,
+                child as CreateMenuItemInput,
+                manager,
+                index,
+              );
+            case MenuItemAction.UPDATE:
+              return this.update(child as UpdateMenuItemInput, manager, index);
+            case MenuItemAction.DELETE:
+              return this.remove(child as DeleteMenuItemInput, manager);
+            default:
+              throw new Error('unexpected action');
+          }
+        }),
+      );
+    }
+    return saved;
   }
 
   async remove(input: DeleteMenuItemInput, manager: EntityManager) {

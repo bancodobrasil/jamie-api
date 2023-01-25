@@ -22,6 +22,9 @@ export class Menu {
   meta: IMenuMeta[];
 
   @Field(() => [MenuItem], { nullable: true })
-  @OneToMany(() => MenuItem, (menuItem) => menuItem.menu, { lazy: true })
+  @OneToMany(() => MenuItem, (menuItem) => menuItem.menu, {
+    lazy: true,
+    cascade: true,
+  })
   items?: MenuItem[];
 }

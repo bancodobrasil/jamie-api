@@ -16,40 +16,8 @@ export class MenusService {
   ) {}
 
   async create(createMenuInput: CreateMenuInput) {
-    const queryRunner = this.dataSource.createQueryRunner();
-
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
-    try {
-      const menu = new Menu();
-      menu.name = createMenuInput.name;
-      menu.meta = createMenuInput.meta;
-
-      const saved = await queryRunner.manager.save(menu);
-
-      if (createMenuInput.items) {
-        await Promise.all(
-          createMenuInput.items.map((mii, index) =>
-            this.menuItemsService.handle(
-              saved,
-              mii,
-              queryRunner.manager,
-              index,
-            ),
-          ),
-        );
-      }
-
-      await queryRunner.commitTransaction();
-
-      return saved;
-    } catch (err) {
-      await queryRunner.rollbackTransaction();
-      throw err;
-    } finally {
-      await queryRunner.release();
-    }
+    const menu = await this.menuRepository.create({ ...createMenuInput });
+    return this.menuRepository.save(menu);
   }
 
   findAll() {

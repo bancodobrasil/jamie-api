@@ -19,7 +19,7 @@ type MenuItem {
   label: String!
   order: Int!
   meta: JSONObject!
-  children: MenuItem
+  children: [MenuItem!]
   parentId: Int
 }
 

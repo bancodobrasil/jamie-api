@@ -6,10 +6,14 @@ import { Menu } from 'src/menus/entities/menu.entity';
 import {
   Column,
   Entity,
+  EntitySubscriberInterface,
+  EventSubscriber,
+  InsertEvent,
   JoinColumn,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
+  UpdateEvent,
 } from 'typeorm';
 
 @ObjectType()
@@ -33,8 +37,11 @@ export class MenuItem {
   })
   meta: IMenuItemMeta;
 
-  @Field(() => MenuItem, { nullable: true })
-  @OneToMany(() => MenuItem, (menuItem) => menuItem.parent, { lazy: true })
+  @Field(() => [MenuItem], { nullable: true })
+  @OneToMany(() => MenuItem, (menuItem) => menuItem.parent, {
+    lazy: true,
+    cascade: true,
+  })
   children?: MenuItem[];
 
   @ManyToOne(() => MenuItem, (menuItem) => menuItem.children, { lazy: true })
@@ -71,6 +78,35 @@ export class MenuItem {
           },
         },
       });
+    }
+  }
+}
+
+@EventSubscriber()
+export class MenuItemSubscriber implements EntitySubscriberInterface<MenuItem> {
+  listenTo() {
+    return MenuItem;
+  }
+  beforeInsert(event: InsertEvent<MenuItem>) {
+    this.setMenu(event.entity);
+  }
+  beforeUpdate(event: UpdateEvent<MenuItem>) {
+    this.setMenu(event.databaseEntity);
+  }
+  private async setMenu(item: MenuItem): Promise<void> {
+    let menu = await item.menu;
+    if (!menu) {
+      const parent = await item.parent;
+      if (parent) {
+        menu = await parent.menu;
+        item.menu = menu;
+        if (item.children?.length) {
+          item.children = item.children.map((child) => {
+            child.menu = menu;
+            return child;
+          });
+        }
+      }
     }
   }
 }
