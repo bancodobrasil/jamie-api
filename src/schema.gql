@@ -42,22 +42,30 @@ type Mutation {
 input CreateMenuInput {
   name: String!
   meta: [Meta!]!
-  items: [MenuItemInput!]
+  items: [CreateMenuItemInput!]
 }
 
-input MenuItemInput {
-  id: Int
+input CreateMenuItemInput {
   label: String!
-  action: String!
   order: Int!
   meta: JSONObject!
   parentId: Int
-  children: [MenuItemInput!]
+  children: [CreateMenuItemInput!]
 }
 
 input UpdateMenuInput {
   name: String
   meta: [Meta!]
-  items: [MenuItemInput!]
   id: Int!
+  items: [UpdateMenuItemInput!]
+}
+
+input UpdateMenuItemInput {
+  label: String
+  order: Int
+  meta: JSONObject
+  parentId: Int
+  action: String!
+  id: Int
+  children: [UpdateMenuItemInput!]
 }

@@ -3,12 +3,13 @@ import { Type } from 'class-transformer';
 import {
   IsArray,
   IsNotEmpty,
+  IsOptional,
   MaxLength,
   MinLength,
   ValidateNested,
 } from 'class-validator';
 import MetaScalar from 'src/common/scalars/meta.scalar';
-import { MenuItemInput } from 'src/menu-items/dto/menu-item.input';
+import { CreateMenuItemInput } from 'src/menu-items/dto/create-menu-item.input';
 import { MenuMetaInput } from './meta.input';
 
 @InputType()
@@ -25,6 +26,10 @@ export class CreateMenuInput {
   @Type(() => MenuMetaInput)
   meta: MenuMetaInput[];
 
-  @Field(() => [MenuItemInput], { nullable: true })
-  items?: MenuItemInput[];
+  @Field(() => [CreateMenuItemInput], { nullable: true })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateMenuItemInput)
+  items?: CreateMenuItemInput[];
 }

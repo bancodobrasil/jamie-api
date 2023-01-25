@@ -13,22 +13,27 @@ class FieldValidationError extends GraphQLError {
     const composeErrors = (errors, hasParent = false, parentPath = '') =>
       errors.reduce((acc, error) => {
         const { property, constraints, children } = error;
-        const obj = {
-          errors: Object.values(constraints),
-          constraints: Object.keys(constraints),
-        };
         if (!hasParent) {
           if (children?.length) {
             return { ...acc, ...composeErrors(children, true, property) };
           }
-          return { ...acc, [property]: obj };
+          return {
+            ...acc,
+            [property]: {
+              errors: Object.values(constraints),
+              constraints: Object.keys(constraints),
+            },
+          };
         } else {
           if (constraints) {
             return {
               ...acc,
               [parentPath]: {
                 ...acc[parentPath],
-                [property]: obj,
+                [property]: {
+                  errors: Object.values(constraints),
+                  constraints: Object.keys(constraints),
+                },
               },
             };
           }

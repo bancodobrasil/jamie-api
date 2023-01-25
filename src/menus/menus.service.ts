@@ -29,17 +29,15 @@ export class MenusService {
       const saved = await queryRunner.manager.save(menu);
 
       if (createMenuInput.items) {
-        menu.items = await Promise.all(
-          createMenuInput.items
-            .map((mii, index) =>
-              this.menuItemsService.handle(
-                saved,
-                mii,
-                queryRunner.manager,
-                index,
-              ),
-            )
-            .filter((a) => a != undefined),
+        await Promise.all(
+          createMenuInput.items.map((mii, index) =>
+            this.menuItemsService.handle(
+              saved,
+              mii,
+              queryRunner.manager,
+              index,
+            ),
+          ),
         );
       }
 
@@ -62,12 +60,41 @@ export class MenusService {
     return this.menuRepository.findOneBy({ id: id });
   }
 
-  update(id: number, updateMenuInput: UpdateMenuInput) {
-    const menu = new Menu();
-    menu.id = id;
-    menu.name = updateMenuInput.name;
-    menu.meta = updateMenuInput.meta;
-    return this.menuRepository.save(menu);
+  async update(id: number, updateMenuInput: UpdateMenuInput) {
+    const queryRunner = this.dataSource.createQueryRunner();
+
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const menu = await queryRunner.manager
+        .getRepository(Menu)
+        .preload({ id, ...updateMenuInput });
+
+      const saved = await queryRunner.manager.save(menu);
+
+      if (updateMenuInput.items) {
+        await Promise.all(
+          updateMenuInput.items.map((mii, index) =>
+            this.menuItemsService.handle(
+              saved,
+              mii,
+              queryRunner.manager,
+              index,
+            ),
+          ),
+        );
+      }
+
+      await queryRunner.commitTransaction();
+
+      return saved;
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      throw err;
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   remove(id: number) {
