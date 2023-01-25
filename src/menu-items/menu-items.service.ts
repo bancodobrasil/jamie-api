@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Menu } from 'src/menus/entities/menu.entity';
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import { MenuItemAction, MenuItemInput } from './dto/menu-item.input';
 import { MenuItem } from './entities/menu-item.entity';
+import { plainToClass } from 'class-transformer';
 
 @Injectable()
 export class MenuItemsService {
@@ -34,7 +35,7 @@ export class MenuItemsService {
     return `This action removes a #${id} menu item`;
   }
 
-  async handle(menu: Menu, input: MenuItemInput) {
+  async handle(menu: Menu, input: MenuItemInput, manager: EntityManager) {
     if (
       input.action == MenuItemAction.CREATE ||
       input.action == MenuItemAction.UPDATE
@@ -47,11 +48,11 @@ export class MenuItemsService {
       item.order = input.order;
       item.meta = input.meta;
       await item.validateMeta();
-      return this.menuItemRepository.save(item);
+      return manager.save(item);
     }
 
     if (input.action == MenuItemAction.DELETE) {
-      this.menuItemRepository.delete(input.id);
+      manager.remove(plainToClass(MenuItem, { id: input.id }));
       return;
     }
 

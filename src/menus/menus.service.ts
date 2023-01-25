@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MenuItemsService } from 'src/menu-items/menu-items.service';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { CreateMenuInput } from './dto/create-menu.input';
 import { UpdateMenuInput } from './dto/update-menu.input';
 import { Menu } from './entities/menu.entity';
@@ -9,27 +9,44 @@ import { Menu } from './entities/menu.entity';
 @Injectable()
 export class MenusService {
   constructor(
+    private dataSource: DataSource,
     @InjectRepository(Menu)
     private menuRepository: Repository<Menu>,
     private readonly menuItemsService: MenuItemsService,
   ) {}
 
   async create(createMenuInput: CreateMenuInput) {
-    const menu = new Menu();
-    menu.name = createMenuInput.name;
-    menu.meta = createMenuInput.meta;
+    const queryRunner = this.dataSource.createQueryRunner();
 
-    const saved = await this.menuRepository.save(menu);
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
 
-    if (createMenuInput.items) {
-      menu.items = await Promise.all(
-        createMenuInput.items
-          .map((mii) => this.menuItemsService.handle(saved, mii))
-          .filter((a) => a != undefined),
-      );
+    try {
+      const menu = new Menu();
+      menu.name = createMenuInput.name;
+      menu.meta = createMenuInput.meta;
+
+      const saved = await queryRunner.manager.save(menu);
+
+      if (createMenuInput.items) {
+        menu.items = await Promise.all(
+          createMenuInput.items
+            .map((mii) =>
+              this.menuItemsService.handle(saved, mii, queryRunner.manager),
+            )
+            .filter((a) => a != undefined),
+        );
+      }
+
+      await queryRunner.commitTransaction();
+
+      return saved;
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      throw err;
+    } finally {
+      await queryRunner.release();
     }
-
-    return saved;
   }
 
   findAll() {
