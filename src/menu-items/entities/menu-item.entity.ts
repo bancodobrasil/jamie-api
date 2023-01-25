@@ -1,5 +1,6 @@
 import { Field, Int, ObjectType } from '@nestjs/graphql';
 import { GraphQLJSONObject } from 'src/common/scalars/json.scalar';
+import { IMenuItemMeta } from 'src/common/types';
 import { Menu } from 'src/menus/entities/menu.entity';
 import {
   Column,
@@ -25,8 +26,11 @@ export class MenuItem {
   @Column()
   order: number;
 
-  @Field(() => GraphQLJSONObject, { nullable: true })
-  meta?: object;
+  @Field(() => GraphQLJSONObject)
+  @Column('text', {
+    transformer: { from: JSON.parse, to: JSON.stringify },
+  })
+  meta: IMenuItemMeta;
 
   @Field(() => MenuItem, { nullable: true })
   @OneToMany(() => MenuItem, (menuItem) => menuItem.parent, { lazy: true })
