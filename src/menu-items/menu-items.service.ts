@@ -42,10 +42,10 @@ export class MenuItemsService {
       const item = new MenuItem();
 
       item.id = input.id;
+      item.menu = menu;
       item.label = input.label;
       item.order = input.order;
-      item.menu = Promise.resolve(menu);
-
+      item.meta = input.meta;
       return this.menuItemRepository.save(item);
     }
 

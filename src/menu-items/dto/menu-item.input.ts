@@ -1,5 +1,6 @@
 import { Field, InputType, Int } from '@nestjs/graphql';
 import { GraphQLJSONObject } from 'src/common/scalars/json.scalar';
+import { IMenuItemMeta } from 'src/common/types';
 
 export enum MenuItemAction {
   CREATE = 'create',
@@ -21,12 +22,12 @@ export class MenuItemInput {
   @Field(() => Int)
   order: number;
 
+  @Field(() => GraphQLJSONObject)
+  meta: IMenuItemMeta;
+
   @Field(() => Int, { nullable: true })
   parentId?: number;
 
   @Field(() => [MenuItemInput], { nullable: true })
   children?: MenuItemInput[];
-
-  @Field(() => GraphQLJSONObject, { nullable: true })
-  meta?: object;
 }
