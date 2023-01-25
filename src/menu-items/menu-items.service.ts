@@ -34,7 +34,7 @@ export class MenuItemsService {
     return `This action removes a #${id} menu item`;
   }
 
-  handle(menu: Menu, input: MenuItemInput) {
+  async handle(menu: Menu, input: MenuItemInput) {
     if (
       input.action == MenuItemAction.CREATE ||
       input.action == MenuItemAction.UPDATE
@@ -46,6 +46,7 @@ export class MenuItemsService {
       item.label = input.label;
       item.order = input.order;
       item.meta = input.meta;
+      await item.validateMeta();
       return this.menuItemRepository.save(item);
     }
 

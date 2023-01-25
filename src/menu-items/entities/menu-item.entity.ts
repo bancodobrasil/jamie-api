@@ -1,3 +1,4 @@
+import { UnprocessableEntityException } from '@nestjs/common';
 import { Field, Int, ObjectType } from '@nestjs/graphql';
 import { GraphQLJSONObject } from 'src/common/scalars/json.scalar';
 import { IMenuItemMeta } from 'src/common/types';
@@ -10,6 +11,7 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { format } from 'util';
 
 @ObjectType()
 @Entity('menu_items')
@@ -47,4 +49,31 @@ export class MenuItem {
   @ManyToOne(() => Menu, (menu) => menu.items, { lazy: true })
   @JoinColumn()
   menu?: Menu;
+
+  async validateMeta(): Promise<void> {
+    const menu = await this.menu;
+    const menuMeta = menu?.meta || [];
+    const missingRequiredMeta = [];
+    menuMeta.forEach((m) => {
+      if (m.required && !this.meta[m.name]) {
+        missingRequiredMeta.push(m.name);
+      }
+    });
+    if (missingRequiredMeta.length) {
+      const menuItem = {
+        id: this.id,
+        parentId: this.parentId,
+        label: this.label,
+        meta: this.meta,
+      };
+      Object.keys(menuItem).forEach(
+        (key) => menuItem[key] === undefined && delete menuItem[key],
+      );
+      throw new UnprocessableEntityException(
+        `MenuItem: ${format(
+          menuItem,
+        )} missing required meta: ${missingRequiredMeta.join(', ')}`,
+      );
+    }
+  }
 }
