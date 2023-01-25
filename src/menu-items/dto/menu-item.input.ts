@@ -1,5 +1,5 @@
 import { Field, InputType, Int } from '@nestjs/graphql';
-import { GraphQLJSONObject } from 'src/common/graphql/types/json.type';
+import { GraphQLJSONObject } from 'src/common/scalars/json.scalar';
 
 export enum MenuItemAction {
   CREATE = 'create',

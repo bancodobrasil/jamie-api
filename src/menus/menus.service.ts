@@ -17,6 +17,7 @@ export class MenusService {
   async create(createMenuInput: CreateMenuInput) {
     const menu = new Menu();
     menu.name = createMenuInput.name;
+    menu.meta = createMenuInput.meta;
 
     const saved = await this.menuRepository.save(menu);
 
@@ -43,6 +44,7 @@ export class MenusService {
     const menu = new Menu();
     menu.id = id;
     menu.name = updateMenuInput.name;
+    menu.meta = updateMenuInput.meta;
     return this.menuRepository.save(menu);
   }
 

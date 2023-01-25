@@ -41,6 +41,7 @@ type Mutation {
 
 input CreateMenuInput {
   name: String!
+  meta: [Meta!]
   items: [MenuItemInput!]
 }
 
@@ -56,6 +57,7 @@ input MenuItemInput {
 
 input UpdateMenuInput {
   name: String
+  meta: [Meta!]
   items: [MenuItemInput!]
   id: Int!
 }
