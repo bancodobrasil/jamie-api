@@ -12,8 +12,6 @@ const ensureMeta = (value: unknown): IMenuMeta => {
   // Validate type
   if (value['type'] === undefined) {
     throw new TypeError(`Meta must have a type: ${JSON.stringify(value)}`);
-  } else if (!Object.values(MenuMetaType).includes(value['type'])) {
-    throw new TypeError(`Invalid Meta type: ${value['type']}`);
   }
   // Validate required
   if (value['required'] === undefined) {
