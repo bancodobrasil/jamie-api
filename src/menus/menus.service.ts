@@ -43,13 +43,8 @@ export class MenusService {
 
       if (updateMenuInput.items) {
         await Promise.all(
-          updateMenuInput.items.map((mii, index) =>
-            this.menuItemsService.handle(
-              saved,
-              mii,
-              queryRunner.manager,
-              index,
-            ),
+          updateMenuInput.items.map((mii) =>
+            this.menuItemsService.handle(saved, mii, queryRunner.manager),
           ),
         );
       }

@@ -15,17 +15,12 @@ export class MenuItemsService {
     @InjectRepository(MenuItem)
     private menuItemRepository: Repository<MenuItem>,
   ) {}
-  async create(
-    menu: Menu,
-    input: CreateMenuItemInput,
-    manager: EntityManager,
-    index: number,
-  ) {
+  async create(menu: Menu, input: CreateMenuItemInput, manager: EntityManager) {
     const item = manager.getRepository(MenuItem).create({
       ...input,
       menu,
     });
-    await item.validateMeta(index);
+
     return manager.save(item);
   }
 
@@ -40,17 +35,12 @@ export class MenuItemsService {
     return `This action returns a #${id} menu item`;
   }
 
-  async update(
-    input: UpdateMenuItemInput,
-    manager: EntityManager,
-    index: number,
-  ) {
+  async update(input: UpdateMenuItemInput, manager: EntityManager) {
     const item = await manager.getRepository(MenuItem).preload({ ...input });
-    await item.validateMeta(index);
     const saved = await manager.save(item);
     if (input.children?.length) {
       await Promise.all(
-        input.children.map(async (child, index) => {
+        input.children.map(async (child) => {
           switch (child.action) {
             case MenuItemAction.CREATE:
               child.parentId = saved.id;
@@ -58,10 +48,9 @@ export class MenuItemsService {
                 await saved.menu,
                 child as CreateMenuItemInput,
                 manager,
-                index,
               );
             case MenuItemAction.UPDATE:
-              return this.update(child as UpdateMenuItemInput, manager, index);
+              return this.update(child as UpdateMenuItemInput, manager);
             case MenuItemAction.DELETE:
               return this.remove(child as DeleteMenuItemInput, manager);
             default:
@@ -81,13 +70,12 @@ export class MenuItemsService {
     menu: Menu,
     input: CreateMenuItemInput | UpdateMenuItemInput | DeleteMenuItemInput,
     manager: EntityManager,
-    index: number,
   ) {
     switch (input.action) {
       case MenuItemAction.CREATE:
-        return this.create(menu, input as CreateMenuItemInput, manager, index);
+        return this.create(menu, input as CreateMenuItemInput, manager);
       case MenuItemAction.UPDATE:
-        return this.update(input as UpdateMenuItemInput, manager, index);
+        return this.update(input as UpdateMenuItemInput, manager);
       case MenuItemAction.DELETE:
         return this.remove(input as DeleteMenuItemInput, manager);
       default:
