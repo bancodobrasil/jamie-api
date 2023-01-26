@@ -16,7 +16,7 @@ export class MetricsInterceptor implements NestInterceptor {
   private readonly skipPaths = [/\/metrics.*/];
 
   constructor(
-    @InjectMetric('http_requests_traffic') private traffic : Counter<string>,
+    @InjectMetric('http_requests_traffic') private traffic: Counter<string>,
     @InjectMetric('http_requests_errors_count')
     private errors: Counter<string>,
     @InjectMetric('http_requests_latency') private latency: Histogram<string>,
@@ -26,10 +26,9 @@ export class MetricsInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler) {
     this.logger.debug({ interceptor: 'metrics', type: context.getType() });
     if (context.getType() === 'http') {
-      this.saturation.inc();
       return this.countHttpCall(context, next);
     }
-    // TODO logGraphQLCall - qraphql
+    // TODO countGraphQLCall - qraphql
     return next.handle();
   }
 
@@ -45,6 +44,8 @@ export class MetricsInterceptor implements NestInterceptor {
       return next.handle();
     }
 
+    this.saturation.inc({ endpoint, method });
+
     const end = this.latency.startTimer({ endpoint, method });
 
     return next.handle().pipe(
@@ -53,7 +54,7 @@ export class MetricsInterceptor implements NestInterceptor {
           this.errors.inc({ endpoint, method });
         }
         this.traffic.inc({ endpoint, method });
-        this.saturation.dec();
+        this.saturation.dec({ endpoint, method });
         end();
       }),
     );

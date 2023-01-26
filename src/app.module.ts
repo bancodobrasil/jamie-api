@@ -53,6 +53,7 @@ import { MetricsInterceptor } from './metrics.interceptor';
     makeGaugeProvider({
       name: 'http_requests_saturation',
       help: 'Current number of requests being handled',
+      labelNames: ['endpoint', 'method'],
     }),
     {
       provide: APP_INTERCEPTOR,
