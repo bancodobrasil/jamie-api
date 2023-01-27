@@ -8,8 +8,8 @@ import { tap } from 'rxjs/operators';
 //Big Brother Metrics
 
 @Injectable()
-export class MetricsInterceptor implements NestInterceptor {
-    private readonly logger = new Logger(MetricsInterceptor.name);
+export class BigBrotherMetricsInterceptor implements NestInterceptor {
+    private readonly logger = new Logger(BigBrotherMetricsInterceptor.name);
 
     private readonly skipPaths = [/\/metrics.*/];
 
@@ -43,20 +43,24 @@ export class MetricsInterceptor implements NestInterceptor {
         const status = request.statusCode;
         const method = request.method;
         const addr = request.path;
+        const isErrorBool = status >= 400;
+        const isError = isErrorBool ? 'true' : 'false';
+        const errorMessage = isErrorBool ? request.body.message : undefined;
+        // const le = 
 
         if (this.skipPaths.find((p) => p.test(addr))) {
             this.logger.verbose(`Skipped path "${addr}"`);
             return next.handle();
         }
 
-        const end = this.requestBucket.startTimer({ type, status, method, addr });
+        const end = this.requestBucket.startTimer({ type, status, isError, errorMessage, method, addr });
 
         return next.handle().pipe(
             tap(async () => {
-                this.requestCount.inc({ type, status, method, addr });
-                this.requestSum.observe({ type, status, method, addr }, end());
+                this.requestCount.inc({ type, status, isError, errorMessage, method, addr });
+                this.requestSum.observe({ type, status, isError, errorMessage, method, addr }, end());
                 if (request.headers['content-length']) {
-                    this.responseSize.inc({ type, status, method, addr }, parseInt(request.headers['content-length'], 10));
+                    this.responseSize.inc({ type, status, isError, errorMessage, method, addr }, parseInt(request.headers['content-length'], 10));
                 }
 
                 // Check dependency and update dependencyUp metrics
@@ -64,12 +68,12 @@ export class MetricsInterceptor implements NestInterceptor {
                     const start = Date.now();
                     const response = await axios.get('https://google.com');
                     const duration = Date.now() - start;
-                    this.dependencyUp.set({ dependency: 'google' }, 1);
-                    this.depRequestBucket.observe({ dependency: 'google' }, duration);
-                    this.depRequestCount.inc({ dependency: 'google' });
-                    this.depRequestSum.observe({ dependency: 'google' }, duration);
+                    this.dependencyUp.set({ name: 'google',  }, 1);
+                    this.depRequestBucket.observe({ name: 'google', type, status, isError, errorMessage, method, addr }, duration);
+                    this.depRequestCount.inc({ name: 'google', type, status, isError, errorMessage, method, addr });
+                    this.depRequestSum.observe({ name: 'google', type, status, isError, errorMessage, method, addr }, duration);
                 } catch (error) {
-                    this.dependencyUp.set({ dependency: 'google' }, 0);
+                    this.dependencyUp.set({ name: 'google' }, 0);
                 }
             }),
         );
