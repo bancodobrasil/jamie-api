@@ -1,9 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Menu } from 'src/menus/entities/menu.entity';
-import { Repository } from 'typeorm';
-import { MenuItemAction, MenuItemInput } from './dto/menu-item.input';
+import { EntityManager, Repository } from 'typeorm';
+import { CreateMenuItemInput } from './dto/create-menu-item.input';
 import { MenuItem } from './entities/menu-item.entity';
+import { plainToClass } from 'class-transformer';
+import { UpdateMenuItemInput } from './dto/update-menu-item.input';
+import { MenuItemAction } from 'src/common/types';
+import { DeleteMenuItemInput } from './dto/delete-menu-item.input';
 
 @Injectable()
 export class MenuItemsService {
@@ -11,8 +15,13 @@ export class MenuItemsService {
     @InjectRepository(MenuItem)
     private menuItemRepository: Repository<MenuItem>,
   ) {}
-  create(createMenuInput: MenuItemInput) {
-    return 'This action adds a new menu item';
+  async create(menu: Menu, input: CreateMenuItemInput, manager: EntityManager) {
+    const item = manager.getRepository(MenuItem).create({
+      ...input,
+      menu,
+    });
+
+    return manager.save(item);
   }
 
   findAll(query: any) {
@@ -26,34 +35,51 @@ export class MenuItemsService {
     return `This action returns a #${id} menu item`;
   }
 
-  update(id: number, updateMenuInput: MenuItemInput) {
-    return `This action updates a #${id} menu item`;
+  async update(input: UpdateMenuItemInput, manager: EntityManager) {
+    const item = await manager.getRepository(MenuItem).preload({ ...input });
+    const saved = await manager.save(item);
+    if (input.children?.length) {
+      await Promise.all(
+        input.children.map(async (child) => {
+          switch (child.action) {
+            case MenuItemAction.CREATE:
+              child.parentId = saved.id;
+              return this.create(
+                await saved.menu,
+                child as CreateMenuItemInput,
+                manager,
+              );
+            case MenuItemAction.UPDATE:
+              return this.update(child as UpdateMenuItemInput, manager);
+            case MenuItemAction.DELETE:
+              return this.remove(child as DeleteMenuItemInput, manager);
+            default:
+              throw new Error('unexpected action');
+          }
+        }),
+      );
+    }
+    return saved;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} menu item`;
+  async remove(input: DeleteMenuItemInput, manager: EntityManager) {
+    await manager.remove(plainToClass(MenuItem, { ...input }));
   }
 
-  handle(menu: Menu, input: MenuItemInput) {
-    if (
-      input.action == MenuItemAction.CREATE ||
-      input.action == MenuItemAction.UPDATE
-    ) {
-      const item = new MenuItem();
-
-      item.id = input.id;
-      item.label = input.label;
-      item.order = input.order;
-      item.menu = Promise.resolve(menu);
-
-      return this.menuItemRepository.save(item);
+  handle(
+    menu: Menu,
+    input: CreateMenuItemInput | UpdateMenuItemInput | DeleteMenuItemInput,
+    manager: EntityManager,
+  ) {
+    switch (input.action) {
+      case MenuItemAction.CREATE:
+        return this.create(menu, input as CreateMenuItemInput, manager);
+      case MenuItemAction.UPDATE:
+        return this.update(input as UpdateMenuItemInput, manager);
+      case MenuItemAction.DELETE:
+        return this.remove(input as DeleteMenuItemInput, manager);
+      default:
+        throw new Error('unexpected action');
     }
-
-    if (input.action == MenuItemAction.DELETE) {
-      this.menuItemRepository.delete(input.id);
-      return;
-    }
-
-    throw new Error('unexpected action');
   }
 }
