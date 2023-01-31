@@ -8,12 +8,14 @@ import {
   makeCounterProvider,
   makeGaugeProvider,
   makeHistogramProvider,
+  makeSummaryProvider,
   PrometheusModule,
 } from '@willsoto/nestjs-prometheus';
 import { typeOrmConfig } from 'config/typeorm.config';
 import { join } from 'path';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { BigBrotherMetricsInterceptor } from './bbmetrics.interceptor';
 import { LoggingInterceptor } from './logging.interceptor';
 import { MenusModule } from './menus/menus.module';
 import { MetricsInterceptor } from './metrics.interceptor';
@@ -55,6 +57,52 @@ import { MetricsInterceptor } from './metrics.interceptor';
       help: 'Current number of requests being handled',
       labelNames: ['endpoint', 'method'],
     }),
+    makeHistogramProvider({
+      name: 'request_seconds_bucket',
+      help: 'Count http requests latency time big brother on a bucket',
+      labelNames: ['type', 'status', 'isError', 'errorMessage', 'method', 'addr'],
+    }),
+    makeCounterProvider({
+      name: 'request_seconds_count',
+      help: 'Count http requests latency time big brother on a count',
+      labelNames: ['type', 'status','isError', 'errorMessage', 'method', 'addr'],
+    }),
+    makeSummaryProvider({
+      name: 'request_seconds_sum',
+      help: 'Count http requests latency time big brother on a summary',
+      labelNames: ['type', 'status','isError', 'errorMessage', 'method', 'addr'],
+    }),
+    makeCounterProvider({
+      name: 'response_size_bytes',
+      help: 'Count http response size',
+      labelNames: ['type', 'status','isError', 'errorMessage', 'method', 'addr'],
+    }),
+    makeGaugeProvider({
+      name: 'dependency_up',
+      help: 'Check if dependency is up',
+      labelNames: ['name'],
+    }),
+    makeHistogramProvider({
+      name: 'dependency_request_seconds_bucket',
+      help: 'Count dependency requests latency time big brother on a bucket',
+      labelNames: ['name','type', 'status','isError', 'errorMessage', 'method', 'addr'],
+    }),
+    makeCounterProvider({
+      name: 'dependency_request_seconds_count',
+      help: 'Count dependency requests latency time big brother on a count',
+      labelNames: ['name', 'type', 'status','isError', 'errorMessage', 'method', 'addr'],
+    }),
+    makeSummaryProvider({
+      name: 'dependency_request_seconds_sum',
+      help: 'Count dependency requests latency time big brother on a summary',
+      labelNames: ['name', 'type', 'status','isError', 'errorMessage', 'method', 'addr'],
+    }),
+    makeGaugeProvider({
+      name: 'application_info',
+      help: 'Application info',
+      labelNames: ['version'],
+    }),
+
     {
       provide: APP_INTERCEPTOR,
       useClass: LoggingInterceptor,
@@ -63,6 +111,10 @@ import { MetricsInterceptor } from './metrics.interceptor';
       provide: APP_INTERCEPTOR,
       useClass: MetricsInterceptor,
     },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: BigBrotherMetricsInterceptor,
+    }
   ],
 
   controllers: [AppController],
