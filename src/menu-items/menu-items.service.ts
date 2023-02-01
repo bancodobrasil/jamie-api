@@ -39,11 +39,13 @@ export class MenuItemsService {
     const item = await manager
       .getRepository(MenuItem)
       .findOne({ where: { id: input.id } });
+    const children = input.children;
     delete input.action;
+    delete input.children;
     await manager.update(MenuItem, item.id, input);
-    if (input.children?.length) {
+    if (children?.length) {
       await Promise.all(
-        input.children.map(async (child) => {
+        children.map(async (child) => {
           switch (child.action) {
             case MenuItemAction.CREATE:
               child.parentId = item.id;
