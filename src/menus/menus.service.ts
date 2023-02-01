@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MenuItemsService } from 'src/menu-items/menu-items.service';
 import { DataSource, Repository } from 'typeorm';
-import { CreateMenuInput } from './dto/create-menu.input';
-import { UpdateMenuInput } from './dto/update-menu.input';
+import { CreateMenuInput } from './inputs/create-menu.input';
+import { UpdateMenuInput } from './inputs/update-menu.input';
 import { Menu } from './entities/menu.entity';
 
 @Injectable()

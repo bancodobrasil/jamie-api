@@ -1,7 +1,7 @@
 import { Field, InputType, Int, OmitType, PartialType } from '@nestjs/graphql';
 import { Type } from 'class-transformer';
 import { IsArray, IsOptional, ValidateNested } from 'class-validator';
-import { UpdateMenuItemInput } from 'src/menu-items/dto/update-menu-item.input';
+import { UpdateMenuItemInput } from 'src/menu-items/inputs/update-menu-item.input';
 import { CreateMenuInput } from './create-menu.input';
 
 @InputType()
