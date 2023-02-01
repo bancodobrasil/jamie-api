@@ -1,4 +1,5 @@
 import FieldValidationError from 'src/common/errors/field-validation.error';
+import { MenuMetaType } from 'src/common/types';
 import {
   EntitySubscriberInterface,
   EventSubscriber,
@@ -28,7 +29,11 @@ export class MenuItemSubscriber implements EntitySubscriberInterface<MenuItem> {
     const menuMeta = menu?.meta || [];
     const missingRequiredMeta = [];
     menuMeta.forEach((m) => {
-      if (m.required && !menuItem.meta[m.name]) {
+      if (
+        m.required &&
+        m.type !== MenuMetaType.BOOLEAN &&
+        !menuItem.meta[m.name]
+      ) {
         missingRequiredMeta.push(m.name);
       }
     });
