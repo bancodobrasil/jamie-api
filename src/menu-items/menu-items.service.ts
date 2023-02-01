@@ -36,16 +36,19 @@ export class MenuItemsService {
   }
 
   async update(input: UpdateMenuItemInput, manager: EntityManager) {
-    const item = await manager.getRepository(MenuItem).preload({ ...input });
-    const saved = await manager.save(item);
+    const item = await manager
+      .getRepository(MenuItem)
+      .findOne({ where: { id: input.id } });
+    delete input.action;
+    await manager.update(MenuItem, item.id, input);
     if (input.children?.length) {
       await Promise.all(
         input.children.map(async (child) => {
           switch (child.action) {
             case MenuItemAction.CREATE:
-              child.parentId = saved.id;
+              child.parentId = item.id;
               return this.create(
-                await saved.menu,
+                await item.menu,
                 child as CreateMenuItemInput,
                 manager,
               );
@@ -59,7 +62,6 @@ export class MenuItemsService {
         }),
       );
     }
-    return saved;
   }
 
   async remove(input: DeleteMenuItemInput, manager: EntityManager) {
