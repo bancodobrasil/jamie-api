@@ -1,5 +1,5 @@
 import { Field, Int, ObjectType } from '@nestjs/graphql';
-import MetaScalar from 'src/common/scalars/meta.scalar';
+import MetaScalar from 'src/common/schema/scalars/meta.scalar';
 import { IMenuMeta } from 'src/common/types';
 import { MenuItem } from 'src/menu-items/entities/menu-item.entity';
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';

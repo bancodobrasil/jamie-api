@@ -8,7 +8,7 @@ import {
   Min,
   ValidateNested,
 } from 'class-validator';
-import { GraphQLJSONObject } from 'src/common/scalars/json.scalar';
+import { GraphQLJSONObject } from 'src/common/schema/scalars/json.scalar';
 import { IMenuItemMeta, MenuItemAction } from 'src/common/types';
 
 @InputType()
