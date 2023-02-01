@@ -47,7 +47,11 @@ export class MenuItem {
   @Column({ nullable: true })
   parentId?: number;
 
-  @ManyToOne(() => Menu, (menu) => menu.items, { lazy: true })
+  @ManyToOne(() => Menu, (menu) => menu.items, {
+    lazy: true,
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE',
+  })
   @JoinColumn()
   menu: Menu;
 
