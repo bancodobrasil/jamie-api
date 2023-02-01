@@ -1,8 +1,10 @@
 import { Resolver, Query, Mutation, Args, Int } from '@nestjs/graphql';
 import { MenusService } from './menus.service';
-import { Menu } from './entities/menu.entity';
+import { Menu, MenuConnection } from './entities/menu.entity';
 import { CreateMenuInput } from './inputs/create-menu.input';
 import { UpdateMenuInput } from './inputs/update-menu.input';
+import { PaginationArgs } from 'src/common/schema/args/pagination.arg';
+import { FindMenuSortArgs } from './args/find-menu-sort.arg';
 
 @Resolver(() => Menu)
 export class MenusResolver {
@@ -13,9 +15,9 @@ export class MenusResolver {
     return this.menusService.create(createMenuInput);
   }
 
-  @Query(() => [Menu], { name: 'menus' })
-  findAll() {
-    return this.menusService.findAll();
+  @Query(() => MenuConnection, { name: 'menus' })
+  findAll(@Args() pagination: PaginationArgs, @Args() sort: FindMenuSortArgs) {
+    return this.menusService.findAll(pagination, sort);
   }
 
   @Query(() => Menu, { name: 'menu' })

@@ -11,7 +11,7 @@ export async function paginate<T>(
   query: SelectQueryBuilder<T>,
   paginationArgs: PaginationArgs,
   cursorColumn = 'id',
-  direction = Direction.DESC,
+  direction = Direction.ASC,
   defaultLimit = 25,
 ): Promise<any> {
   const logger = new Logger('Pagination');
@@ -101,6 +101,7 @@ export async function paginate<T>(
   // pageInfo.countNext = countAfter;
   // pageInfo.countCurrent = edges.length;
   // pageInfo.countTotal = countAfter + countBefore + edges.length;
+  const totalCount = countAfter + countBefore + edges.length;
 
-  return { edges, pageInfo };
+  return { edges, pageInfo, totalCount };
 }

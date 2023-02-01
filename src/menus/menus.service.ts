@@ -5,6 +5,9 @@ import { DataSource, Repository } from 'typeorm';
 import { CreateMenuInput } from './inputs/create-menu.input';
 import { UpdateMenuInput } from './inputs/update-menu.input';
 import { Menu } from './entities/menu.entity';
+import { PaginationArgs } from 'src/common/schema/args/pagination.arg';
+import { FindMenuSortArgs } from './args/find-menu-sort.arg';
+import { paginate } from 'src/common/helpers/paginate.helper';
 
 @Injectable()
 export class MenusService {
@@ -20,8 +23,10 @@ export class MenusService {
     return this.menuRepository.save(menu);
   }
 
-  findAll() {
-    return this.menuRepository.find();
+  async findAll(paginationArgs: PaginationArgs, sortArgs: FindMenuSortArgs) {
+    const query = await this.menuRepository.createQueryBuilder().select();
+
+    return paginate(query, paginationArgs, sortArgs.sort, sortArgs.direction);
   }
 
   findOne(id: number) {

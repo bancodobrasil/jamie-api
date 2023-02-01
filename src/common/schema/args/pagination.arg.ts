@@ -1,16 +1,21 @@
 import { ArgsType, Int, Field } from '@nestjs/graphql';
+import { IsOptional } from 'class-validator';
 
 @ArgsType()
 export class PaginationArgs {
   @Field(() => Int, { nullable: true })
-  first: number;
+  @IsOptional()
+  first?: number;
 
   @Field(() => String, { nullable: true })
-  after: string;
+  @IsOptional()
+  after?: string;
 
   @Field(() => Int, { nullable: true })
-  last: number;
+  @IsOptional()
+  last?: number;
 
   @Field(() => String, { nullable: true })
-  before: string;
+  @IsOptional()
+  before?: string;
 }

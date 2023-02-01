@@ -1,4 +1,4 @@
-import { Field, ObjectType } from '@nestjs/graphql';
+import { Field, Int, ObjectType } from '@nestjs/graphql';
 import { Type } from '@nestjs/common';
 import { PageInfo } from './page-info.object';
 
@@ -24,6 +24,9 @@ export function Connection<T>(classRef: Type<T>): any {
 
     @Field(() => PageInfo, { nullable: true })
     pageInfo: PageInfo;
+
+    @Field(() => Int, { nullable: true })
+    totalCount: number;
   }
   return PaginatedType;
 }
