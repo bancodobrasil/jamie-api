@@ -51,7 +51,10 @@ export class MenusService {
 
       await queryRunner.commitTransaction();
 
-      return saved;
+      return this.menuRepository.findOne({
+        where: { id: saved.id },
+        relations: ['items'],
+      });
     } catch (err) {
       await queryRunner.rollbackTransaction();
       throw err;
