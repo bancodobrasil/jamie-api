@@ -10,8 +10,10 @@ import { Resource } from '@opentelemetry/resources';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 
 import { NodeSDK } from '@opentelemetry/sdk-node';
-// import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
 
+import { GraphQLInstrumentation } from '@opentelemetry/instrumentation-graphql';
+import { MySQL2Instrumentation } from '@opentelemetry/instrumentation-mysql2';
+import { NestInstrumentation } from '@opentelemetry/instrumentation-nestjs-core';
 import { MySQLInstrumentation } from '@opentelemetry/instrumentation-mysql';
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
 import {
@@ -42,6 +44,15 @@ const sdk = new NodeSDK({
   traceExporter: exporter,
   instrumentations: [
     new MySQLInstrumentation({
+      enabled: true,
+    }),
+    new MySQL2Instrumentation({
+      enabled: true,
+    }),
+    new NestInstrumentation({
+      enabled: true,
+    }),
+    new GraphQLInstrumentation({
       enabled: true,
     }),
     new HttpInstrumentation({
