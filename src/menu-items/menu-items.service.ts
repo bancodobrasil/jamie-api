@@ -2,12 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Menu } from 'src/menus/entities/menu.entity';
 import { EntityManager, Repository } from 'typeorm';
-import { CreateMenuItemInput } from './dto/create-menu-item.input';
+import { CreateMenuItemInput } from './inputs/create-menu-item.input';
 import { MenuItem } from './entities/menu-item.entity';
 import { plainToClass } from 'class-transformer';
-import { UpdateMenuItemInput } from './dto/update-menu-item.input';
+import { UpdateMenuItemInput } from './inputs/update-menu-item.input';
 import { MenuItemAction } from 'src/common/types';
-import { DeleteMenuItemInput } from './dto/delete-menu-item.input';
+import { DeleteMenuItemInput } from './inputs/delete-menu-item.input';
 
 @Injectable()
 export class MenuItemsService {

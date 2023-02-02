@@ -1,5 +1,5 @@
 import { Field, Int, ObjectType } from '@nestjs/graphql';
-import { GraphQLJSONObject } from 'src/common/scalars/json.scalar';
+import { GraphQLJSONObject } from 'src/common/schema/scalars/json.scalar';
 import { IMenuItemMeta } from 'src/common/types';
 import { Menu } from 'src/menus/entities/menu.entity';
 import {
