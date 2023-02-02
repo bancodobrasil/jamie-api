@@ -14,13 +14,18 @@ import { NodeSDK } from '@opentelemetry/sdk-node';
 
 import { MySQLInstrumentation } from '@opentelemetry/instrumentation-mysql';
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
-import { ExpressInstrumentation } from '@opentelemetry/instrumentation-express';
+import {
+  ExpressInstrumentation,
+  ExpressLayerType,
+} from '@opentelemetry/instrumentation-express';
 
 import { Logger } from '@nestjs/common';
 
 const exporter = new OTLPTraceExporter({
   url: telemetryConfig.otlpUrl,
 });
+
+const skipPaths = [/\/metrics\/?$/];
 
 const provider = new BasicTracerProvider({
   resource: new Resource({
@@ -41,9 +46,20 @@ const sdk = new NodeSDK({
     }),
     new HttpInstrumentation({
       enabled: true,
+      ignoreIncomingRequestHook: (request) => {
+        // Ignore metrics requests
+        return skipPaths.some((path) => path.test(request.url));
+      },
     }),
     new ExpressInstrumentation({
       enabled: true,
+      ignoreLayersType: [ExpressLayerType.ROUTER],
+      ignoreLayers: [
+        (name) => {
+          // Ignore metrics requests
+          return skipPaths.some((path) => path.test(name));
+        },
+      ],
     }),
   ],
 });
