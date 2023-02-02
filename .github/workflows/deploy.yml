@@ -19,7 +19,7 @@ jobs:
         uses: dokku/github-action@master
         with:
           # specify `--force` as a flag for git pushes
-          ci_branch_name: develop
+          branch: develop
           git_push_flags: '--force'
           git_remote_url: ${{ secrets.DOKKU_SSH_URL }}
           ssh_private_key: ${{ secrets.DOKKU_SSH_PRIVATE_KEY }}
