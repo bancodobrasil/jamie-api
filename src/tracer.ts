@@ -1,40 +1,73 @@
 'use strict';
-
-import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
+import { telemetryConfig } from 'config/telemetry.config';
+import {
+  BasicTracerProvider,
+  // ConsoleSpanExporter,
+  SimpleSpanProcessor,
+} from '@opentelemetry/sdk-trace-base';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { Resource } from '@opentelemetry/resources';
-import * as opentelemetry from '@opentelemetry/sdk-node';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 
-// Configure the SDK to export telemetry data to the console
-// Enable all auto-instrumentations from the meta package
-const exporterOptions = {
-  url: 'http://localhost:9411',
-};
+import { NodeSDK } from '@opentelemetry/sdk-node';
+// import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
 
-const traceExporter = new OTLPTraceExporter(exporterOptions);
-const sdk = new opentelemetry.NodeSDK({
-  traceExporter,
-  instrumentations: [getNodeAutoInstrumentations()],
+import { MySQLInstrumentation } from '@opentelemetry/instrumentation-mysql';
+import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
+import { ExpressInstrumentation } from '@opentelemetry/instrumentation-express';
+
+import { Logger } from '@nestjs/common';
+
+const exporter = new OTLPTraceExporter({
+  url: telemetryConfig.otlpUrl,
+});
+
+const provider = new BasicTracerProvider({
   resource: new Resource({
-    [SemanticResourceAttributes.SERVICE_NAME]: "NestJSExempleCars",
+    [SemanticResourceAttributes.SERVICE_NAME]: 'jamie-api',
   }),
 });
+// export spans to console (useful for debugging)
+// provider.addSpanProcessor(new SimpleSpanProcessor(new ConsoleSpanExporter()));
+// export spans to opentelemetry collector
+provider.addSpanProcessor(new SimpleSpanProcessor(exporter));
 
-// initialize the SDK and register with the OpenTelemetry API
-// this enables the API to record telemetry
-sdk
-  .start()
-  .then(() => console.log('Tracing initialized'))
-  .catch((error) => console.log('Error initializing tracing', error));
-
-// gracefully shut down the SDK on process exit
-process.on('SIGTERM', () => {
-  sdk
-    .shutdown()
-    .then(() => console.log('Tracing terminated'))
-    .catch((error) => console.log('Error terminating tracing', error))
-    .finally(() => process.exit(0));
+provider.register();
+const sdk = new NodeSDK({
+  traceExporter: exporter,
+  instrumentations: [
+    new MySQLInstrumentation({
+      enabled: true,
+    }),
+    new HttpInstrumentation({
+      enabled: true,
+    }),
+    new ExpressInstrumentation({
+      enabled: true,
+    }),
+  ],
 });
+
+if (telemetryConfig.enabled) {
+  const logger = new Logger('Tracer');
+  sdk
+    .start()
+    .then(() => {
+      logger.debug('Tracing initialized');
+    })
+    .catch((error) => logger.error('Error initializing tracing', error));
+
+  // gracefully shut down the SDK on process exit
+  process.on('SIGTERM', async () => {
+    try {
+      await sdk.shutdown();
+      logger.debug('Tracing terminated ');
+    } catch (error) {
+      logger.error('Error terminating tracing', error);
+    } finally {
+      process.exit(0);
+    }
+  });
+}
 
 export default sdk;
