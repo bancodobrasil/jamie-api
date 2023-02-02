@@ -2,12 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Menu } from 'src/menus/entities/menu.entity';
 import { EntityManager, Repository } from 'typeorm';
-import { CreateMenuItemInput } from './dto/create-menu-item.input';
+import { CreateMenuItemInput } from './inputs/create-menu-item.input';
 import { MenuItem } from './entities/menu-item.entity';
 import { plainToClass } from 'class-transformer';
-import { UpdateMenuItemInput } from './dto/update-menu-item.input';
+import { UpdateMenuItemInput } from './inputs/update-menu-item.input';
 import { MenuItemAction } from 'src/common/types';
-import { DeleteMenuItemInput } from './dto/delete-menu-item.input';
+import { DeleteMenuItemInput } from './inputs/delete-menu-item.input';
 
 @Injectable()
 export class MenuItemsService {
@@ -36,16 +36,21 @@ export class MenuItemsService {
   }
 
   async update(input: UpdateMenuItemInput, manager: EntityManager) {
-    const item = await manager.getRepository(MenuItem).preload({ ...input });
-    const saved = await manager.save(item);
-    if (input.children?.length) {
+    const item = await manager
+      .getRepository(MenuItem)
+      .findOne({ where: { id: input.id } });
+    const children = input.children;
+    delete input.action;
+    delete input.children;
+    await manager.update(MenuItem, item.id, input);
+    if (children?.length) {
       await Promise.all(
-        input.children.map(async (child) => {
+        children.map(async (child) => {
           switch (child.action) {
             case MenuItemAction.CREATE:
-              child.parentId = saved.id;
+              child.parentId = item.id;
               return this.create(
-                await saved.menu,
+                await item.menu,
                 child as CreateMenuItemInput,
                 manager,
               );
@@ -59,7 +64,6 @@ export class MenuItemsService {
         }),
       );
     }
-    return saved;
   }
 
   async remove(input: DeleteMenuItemInput, manager: EntityManager) {

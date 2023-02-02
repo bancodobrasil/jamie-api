@@ -8,8 +8,8 @@ import {
   MinLength,
   ValidateNested,
 } from 'class-validator';
-import MetaScalar from 'src/common/scalars/meta.scalar';
-import { CreateMenuItemInput } from 'src/menu-items/dto/create-menu-item.input';
+import MetaScalar from 'src/common/schema/scalars/meta.scalar';
+import { CreateMenuItemInput } from 'src/menu-items/inputs/create-menu-item.input';
 import { MenuMetaInput } from './meta.input';
 
 @InputType()

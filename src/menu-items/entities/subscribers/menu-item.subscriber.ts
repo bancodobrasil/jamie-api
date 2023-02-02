@@ -1,4 +1,5 @@
 import FieldValidationError from 'src/common/errors/field-validation.error';
+import { MenuMetaType } from 'src/common/types';
 import {
   EntitySubscriberInterface,
   EventSubscriber,
@@ -16,9 +17,15 @@ export class MenuItemSubscriber implements EntitySubscriberInterface<MenuItem> {
     await this.validateMeta(event.entity);
   }
   async beforeUpdate(event: UpdateEvent<MenuItem>) {
+    let { databaseEntity } = event;
+    if (!databaseEntity) {
+      databaseEntity = await event.manager.findOne(MenuItem, {
+        where: { id: event.entity.id },
+      });
+    }
     const menuItem = event.manager.merge(
       MenuItem,
-      event.databaseEntity,
+      databaseEntity,
       event.entity,
     );
     await this.validateMeta(menuItem);
@@ -28,7 +35,11 @@ export class MenuItemSubscriber implements EntitySubscriberInterface<MenuItem> {
     const menuMeta = menu?.meta || [];
     const missingRequiredMeta = [];
     menuMeta.forEach((m) => {
-      if (m.required && !menuItem.meta[m.name]) {
+      if (
+        m.required &&
+        m.type !== MenuMetaType.BOOLEAN &&
+        !menuItem.meta?.[m.name]
+      ) {
         missingRequiredMeta.push(m.name);
       }
     });

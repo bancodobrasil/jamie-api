@@ -2,6 +2,13 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+type PageInfo {
+  startCursor: String
+  endCursor: String
+  hasPreviousPage: Boolean!
+  hasNextPage: Boolean!
+}
+
 type Menu {
   id: Int!
   name: String!
@@ -13,6 +20,17 @@ type Menu {
 The `Meta` scalar type represents a JSON object containing meta data for the menu's items.
 """
 scalar Meta
+
+type MenuConnection {
+  edges: [MenuEdge!]
+  pageInfo: PageInfo
+  totalCount: Int
+}
+
+type MenuEdge {
+  cursor: String!
+  node: Menu!
+}
 
 type MenuItem {
   id: Int!
@@ -30,8 +48,18 @@ The `JSONObject` scalar type represents JSON objects as specified by [ECMA-404](
 scalar JSONObject
 
 type Query {
-  menus: [Menu!]!
+  menus(first: Int, after: String, last: Int, before: String, sort: MenuSort, direction: Direction): MenuConnection!
   menu(id: Int!): Menu!
+}
+
+enum MenuSort {
+  Id
+  Name
+}
+
+enum Direction {
+  ASC
+  DESC
 }
 
 type Mutation {
