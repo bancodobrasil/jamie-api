@@ -39,6 +39,7 @@ type MenuItem {
   meta: JSONObject!
   children: [MenuItem!]
   parentId: Int
+  menu: Menu!
   menuId: Int
 }
 
@@ -50,6 +51,7 @@ scalar JSONObject
 type Query {
   menus(first: Int, after: String, last: Int, before: String, sort: MenuSort, direction: Direction): MenuConnection!
   menu(id: Int!): Menu!
+  menuItem(id: Int!): MenuItem!
 }
 
 enum MenuSort {

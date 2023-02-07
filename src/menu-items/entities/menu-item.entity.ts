@@ -47,6 +47,7 @@ export class MenuItem {
   @Column({ nullable: true })
   parentId?: number;
 
+  @Field(() => Menu)
   @ManyToOne(() => Menu, (menu) => menu.items, {
     lazy: true,
     onDelete: 'CASCADE',
