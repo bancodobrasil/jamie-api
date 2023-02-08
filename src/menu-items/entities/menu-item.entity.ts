@@ -59,16 +59,16 @@ export class MenuItem {
   @Column({ nullable: true })
   menuId?: number;
 
-  @Field(() => Boolean, { nullable: true })
-  @Column({ nullable: true })
-  enabled?: boolean;
+  @Field(() => Boolean, { nullable: false })
+  @Column({ nullable: false })
+  enabled: boolean;
 
   @Field(() => Date, { nullable: true })
   @Column({ nullable: true })
-  startTime?: Date;
+  startPublication?: Date;
 
   @Field(() => Date, { nullable: true })
   @Column({ nullable: true })
-  endTime?: Date;
+  endPublication?: Date;
   
 }
