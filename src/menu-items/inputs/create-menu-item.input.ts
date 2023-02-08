@@ -38,4 +38,21 @@ export class CreateMenuItemInput {
   @ValidateNested({ each: true })
   @Type(() => CreateMenuItemInput)
   children?: CreateMenuItemInput[];
+
+  @Field(() => Boolean, { nullable: true })
+  @IsOptional()
+  enabled?: boolean;
+
+  @Field(() => Date, { nullable: true })
+  @IsOptional()
+  startTime?: Date;
+
+
+  @Field(() => Date, { nullable: true })
+  @IsOptional()
+  endTime?: Date;
+
+
+
+  
 }
