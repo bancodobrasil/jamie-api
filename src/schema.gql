@@ -40,12 +40,20 @@ type MenuItem {
   children: [MenuItem!]
   parentId: Int
   menuId: Int
+  enabled: Boolean!
+  startPublication: DateTime
+  endPublication: DateTime
 }
 
 """
 The `JSONObject` scalar type represents JSON objects as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
 """
 scalar JSONObject
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
 
 type Query {
   menus(first: Int, after: String, last: Int, before: String, sort: MenuSort, direction: Direction): MenuConnection!
@@ -80,6 +88,9 @@ input CreateMenuItemInput {
   meta: JSONObject!
   parentId: Int
   children: [CreateMenuItemInput!]
+  enabled: Boolean!
+  startPublication: DateTime
+  endPublication: DateTime
 }
 
 input UpdateMenuInput {
@@ -94,6 +105,9 @@ input UpdateMenuItemInput {
   order: Int
   meta: JSONObject
   parentId: Int
+  enabled: Boolean
+  startPublication: DateTime
+  endPublication: DateTime
   action: String!
   id: Int
   children: [UpdateMenuItemInput!]

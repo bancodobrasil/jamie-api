@@ -2,6 +2,7 @@ import { Field, InputType, Int } from '@nestjs/graphql';
 import { Type } from 'class-transformer';
 import {
   IsArray,
+  IsDate,
   IsDefined,
   IsObject,
   IsOptional,
@@ -38,4 +39,20 @@ export class CreateMenuItemInput {
   @ValidateNested({ each: true })
   @Type(() => CreateMenuItemInput)
   children?: CreateMenuItemInput[];
+
+  @Field(() => Boolean, { nullable: false })
+  @IsOptional()
+  enabled?: boolean;
+
+  @Field(() => Date, { nullable: true })
+  @IsDate()
+  @IsOptional()
+  startPublication?: Date;
+
+
+  @Field(() => Date, { nullable: true })
+  @IsDate()
+  @IsOptional()
+  endPublication?: Date;
+  
 }
