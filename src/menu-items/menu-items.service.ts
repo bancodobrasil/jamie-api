@@ -32,7 +32,7 @@ export class MenuItemsService {
   }
 
   findOne(id: number) {
-    return `This action returns a #${id} menu item`;
+    return this.menuItemRepository.findOneBy({ id: id });
   }
 
   async update(input: UpdateMenuItemInput, manager: EntityManager) {
