@@ -53,6 +53,7 @@ type MenuItem {
   startPublication: DateTime
   endPublication: DateTime
   template: String
+  templateFormat: TemplateFormat
 }
 
 """
