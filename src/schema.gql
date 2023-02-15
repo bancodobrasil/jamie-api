@@ -45,6 +45,7 @@ type MenuItem {
   enabled: Boolean!
   startPublication: DateTime
   endPublication: DateTime
+  template: String
 }
 
 """

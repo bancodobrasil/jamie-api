@@ -71,5 +71,8 @@ export class MenuItem {
   @Field(() => Date, { nullable: true })
   @Column({ nullable: true })
   endPublication?: Date;
-  
+
+  @Field(() => String, { nullable: true })
+  @Column('text', { nullable: true })
+  template?: string;
 }
