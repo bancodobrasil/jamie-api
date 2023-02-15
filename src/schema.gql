@@ -110,6 +110,8 @@ input UpdateMenuInput {
   meta: [Meta!]
   id: Int!
   items: [UpdateMenuItemInput!]
+  template: String
+  templateFormat: TemplateFormat
 }
 
 input UpdateMenuItemInput {

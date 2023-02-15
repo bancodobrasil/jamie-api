@@ -1,8 +1,15 @@
 import { Field, InputType, Int, OmitType, PartialType } from '@nestjs/graphql';
 import { Type } from 'class-transformer';
-import { IsArray, IsOptional, ValidateNested } from 'class-validator';
+import {
+  IsArray,
+  IsEnum,
+  IsOptional,
+  ValidateIf,
+  ValidateNested,
+} from 'class-validator';
 import { UpdateMenuItemInput } from 'src/menu-items/inputs/update-menu-item.input';
 import { CreateMenuInput } from './create-menu.input';
+import { TemplateFormat } from '../../common/enums/template-format.enum';
 
 @InputType()
 export class UpdateMenuInput extends PartialType(
@@ -17,4 +24,14 @@ export class UpdateMenuInput extends PartialType(
   @ValidateNested({ each: true })
   @Type(() => UpdateMenuItemInput)
   items?: UpdateMenuItemInput[];
+
+  @Field(() => String, { nullable: true })
+  @IsOptional()
+  template?: string;
+
+  @Field(() => TemplateFormat, { nullable: true })
+  @IsOptional()
+  @ValidateIf((o) => o.template !== undefined)
+  @IsEnum(TemplateFormat)
+  templateFormat?: TemplateFormat;
 }
