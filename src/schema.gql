@@ -14,6 +14,7 @@ type Menu {
   name: String!
   meta: [Meta!]!
   template: String
+  templateFormat: TemplateFormat
   items: [MenuItem!]
 }
 
@@ -21,6 +22,12 @@ type Menu {
 The `Meta` scalar type represents a JSON object containing meta data for the menu's items.
 """
 scalar Meta
+
+enum TemplateFormat {
+  JSON
+  XML
+  PLAIN
+}
 
 type MenuConnection {
   edges: [MenuEdge!]
