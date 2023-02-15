@@ -29,9 +29,12 @@ export class UpdateMenuInput extends PartialType(
   @IsOptional()
   template?: string;
 
-  @Field(() => TemplateFormat, { nullable: true })
-  @IsOptional()
-  @ValidateIf((o) => o.template !== undefined)
+  @Field(() => String, { nullable: true })
+  @ValidateIf(
+    (o, value) =>
+      (o.template !== undefined && o.template !== null) ||
+      (value !== undefined && value !== null),
+  )
   @IsEnum(TemplateFormat)
   templateFormat?: TemplateFormat;
 }

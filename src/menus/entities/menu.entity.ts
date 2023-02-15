@@ -27,7 +27,7 @@ export class Menu {
   @Column('text', { nullable: true })
   template?: string;
 
-  @Field(() => TemplateFormat, { nullable: true })
+  @Field(() => String, { nullable: true })
   @Column('text', { nullable: true })
   templateFormat?: TemplateFormat;
 
