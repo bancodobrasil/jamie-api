@@ -13,6 +13,7 @@ type Menu {
   id: Int!
   name: String!
   meta: [Meta!]!
+  template: String
   items: [MenuItem!]
 }
 

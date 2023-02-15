@@ -22,6 +22,10 @@ export class Menu {
   })
   meta: IMenuMeta[];
 
+  @Field(() => String, { nullable: true })
+  @Column('text', { nullable: true })
+  template?: string;
+
   @Field(() => [MenuItem], { nullable: true })
   @OneToMany(() => MenuItem, (menuItem) => menuItem.menu, {
     lazy: true,
