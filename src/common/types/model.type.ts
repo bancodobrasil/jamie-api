@@ -20,12 +20,6 @@ export enum MenuMetaType {
   // OBJECT = 'object',
 }
 
-export interface IMenuMeta {
-  name: string;
-  required: boolean;
-  type: MenuMetaType;
-}
-
 export interface IMenuItemMeta {
   [key: string]: unknown;
 }

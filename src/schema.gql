@@ -9,19 +9,28 @@ type PageInfo {
   hasNextPage: Boolean!
 }
 
+type MenuMeta {
+  id: Int!
+  name: String!
+  type: String!
+  required: Boolean!
+  order: Int!
+  defaultValue: JSON
+}
+
+"""
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+"""
+scalar JSON
+
 type Menu {
   id: Int!
   name: String!
-  meta: [Meta!]!
+  meta: [MenuMeta!]
   template: String
   templateFormat: String
   items: [MenuItem!]
 }
-
-"""
-The `Meta` scalar type represents a JSON object containing meta data for the menu's items.
-"""
-scalar Meta
 
 type MenuConnection {
   edges: [MenuEdge!]
@@ -84,8 +93,16 @@ type Mutation {
 
 input CreateMenuInput {
   name: String!
-  meta: [Meta!]!
+  meta: [CreateMenuMetaInput!]
   items: [CreateMenuItemInput!]
+}
+
+input CreateMenuMetaInput {
+  name: String!
+  type: String!
+  required: Boolean!
+  order: Int!
+  defaultValue: JSON
 }
 
 input CreateMenuItemInput {
@@ -101,7 +118,7 @@ input CreateMenuItemInput {
 
 input UpdateMenuInput {
   name: String
-  meta: [Meta!]
+  meta: [CreateMenuMetaInput!]
   id: Int!
   items: [UpdateMenuItemInput!]
   template: String

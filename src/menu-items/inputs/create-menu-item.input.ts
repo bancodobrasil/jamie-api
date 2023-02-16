@@ -49,10 +49,8 @@ export class CreateMenuItemInput {
   @IsOptional()
   startPublication?: Date;
 
-
   @Field(() => Date, { nullable: true })
   @IsDate()
   @IsOptional()
   endPublication?: Date;
-  
 }
