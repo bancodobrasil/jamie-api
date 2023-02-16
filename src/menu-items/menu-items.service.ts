@@ -6,8 +6,8 @@ import { CreateMenuItemInput } from './inputs/create-menu-item.input';
 import { MenuItem } from './entities/menu-item.entity';
 import { plainToClass } from 'class-transformer';
 import { UpdateMenuItemInput } from './inputs/update-menu-item.input';
-import { MenuItemAction } from 'src/common/types';
 import { DeleteMenuItemInput } from './inputs/delete-menu-item.input';
+import { InputAction } from 'src/common/schema/enums/input-action.enum';
 
 @Injectable()
 export class MenuItemsService {
@@ -47,16 +47,16 @@ export class MenuItemsService {
       await Promise.all(
         children.map(async (child) => {
           switch (child.action) {
-            case MenuItemAction.CREATE:
+            case InputAction.CREATE:
               child.parentId = item.id;
               return this.create(
                 await item.menu,
                 child as CreateMenuItemInput,
                 manager,
               );
-            case MenuItemAction.UPDATE:
+            case InputAction.UPDATE:
               return this.update(child as UpdateMenuItemInput, manager);
-            case MenuItemAction.DELETE:
+            case InputAction.DELETE:
               return this.remove(child as DeleteMenuItemInput, manager);
             default:
               throw new Error('unexpected action');
@@ -76,11 +76,11 @@ export class MenuItemsService {
     manager: EntityManager,
   ) {
     switch (input.action) {
-      case MenuItemAction.CREATE:
+      case InputAction.CREATE:
         return this.create(menu, input as CreateMenuItemInput, manager);
-      case MenuItemAction.UPDATE:
+      case InputAction.UPDATE:
         return this.update(input as UpdateMenuItemInput, manager);
-      case MenuItemAction.DELETE:
+      case InputAction.DELETE:
         return this.remove(input as DeleteMenuItemInput, manager);
       default:
         throw new Error('unexpected action');

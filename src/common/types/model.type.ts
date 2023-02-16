@@ -23,9 +23,3 @@ export enum MenuMetaType {
 export interface IMenuItemMeta {
   [key: string]: unknown;
 }
-
-export enum MenuItemAction {
-  CREATE = 'create',
-  UPDATE = 'update',
-  DELETE = 'delete',
-}

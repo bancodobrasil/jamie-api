@@ -133,9 +133,15 @@ input UpdateMenuItemInput {
   enabled: Boolean
   startPublication: DateTime
   endPublication: DateTime
-  action: String!
+  action: InputAction!
   id: Int
   children: [UpdateMenuItemInput!]
   template: String
   templateFormat: String
+}
+
+enum InputAction {
+  CREATE
+  UPDATE
+  DELETE
 }

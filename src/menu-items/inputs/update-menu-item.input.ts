@@ -9,22 +9,21 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { TemplateFormat } from 'src/common/enums/template-format.enum';
-import { MenuItemAction } from 'src/common/types';
+import { InputAction } from 'src/common/schema/enums/input-action.enum';
 import { CreateMenuItemInput } from './create-menu-item.input';
 
 @InputType()
 export class UpdateMenuItemInput extends PartialType(
   OmitType(CreateMenuItemInput, ['children', 'action']),
 ) {
-  @Field()
+  @Field(() => InputAction)
   @IsDefined()
-  @IsEnum(MenuItemAction)
-  action: MenuItemAction;
+  @IsEnum(InputAction)
+  action: InputAction;
 
   @Field(() => Int, { nullable: true })
   @ValidateIf(
-    (o) =>
-      o.action === MenuItemAction.UPDATE || o.action === MenuItemAction.DELETE,
+    (o) => o.action === InputAction.UPDATE || o.action === InputAction.DELETE,
   )
   @IsDefined()
   id?: number;

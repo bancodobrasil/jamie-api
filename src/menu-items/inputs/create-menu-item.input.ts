@@ -9,12 +9,13 @@ import {
   Min,
   ValidateNested,
 } from 'class-validator';
+import { InputAction } from 'src/common/schema/enums/input-action.enum';
 import { GraphQLJSONObject } from 'src/common/schema/scalars/json.scalar';
-import { IMenuItemMeta, MenuItemAction } from 'src/common/types';
+import { IMenuItemMeta } from 'src/common/types';
 
 @InputType()
 export class CreateMenuItemInput {
-  readonly action = MenuItemAction.CREATE;
+  readonly action = InputAction.CREATE;
 
   @Field()
   label: string;
