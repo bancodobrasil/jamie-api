@@ -36,13 +36,10 @@ export class MenuItemsService {
   }
 
   async update(input: UpdateMenuItemInput, manager: EntityManager) {
-    const item = await manager
-      .getRepository(MenuItem)
-      .findOne({ where: { id: input.id } });
-    const children = input.children;
+    const { children } = input;
     delete input.action;
     delete input.children;
-    await manager.update(MenuItem, item.id, input);
+    const item = await manager.save(MenuItem, input);
     if (children?.length) {
       await Promise.all(
         children.map(async (child) => {
