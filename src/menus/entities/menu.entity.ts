@@ -18,6 +18,7 @@ export class Menu {
 
   @Field(() => [MenuMeta], { nullable: true })
   @Column('text', {
+    nullable: true,
     transformer: { from: JSON.parse, to: JSON.stringify },
   })
   meta: MenuMeta[];
