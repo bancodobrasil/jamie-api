@@ -1,10 +1,10 @@
 import FieldValidationError from 'src/common/errors/field-validation.error';
 import { MenuItem } from 'src/menu-items/entities/menu-item.entity';
-import { MenuMeta } from 'src/menus/objects/menu-meta.object';
 import {
   EntitySubscriberInterface,
   EventSubscriber,
   InsertEvent,
+  ObjectLiteral,
   UpdateEvent,
 } from 'typeorm';
 import { Menu } from '../menu.entity';
@@ -16,17 +16,11 @@ export class MenuSubscriber implements EntitySubscriberInterface<Menu> {
   }
 
   beforeInsert(event: InsertEvent<Menu>): void {
-    const { meta } = event.entity;
-    if (meta?.length) {
-      this.validateMeta(meta);
-    }
+    this.validateMeta(event.entity);
   }
 
   beforeUpdate(event: UpdateEvent<Menu>): void {
-    const { meta } = event.entity;
-    if (meta?.length) {
-      this.validateMeta(meta);
-    }
+    this.validateMeta(event.entity, event.databaseEntity);
   }
 
   async afterInsert(event: InsertEvent<Menu>) {
@@ -34,56 +28,77 @@ export class MenuSubscriber implements EntitySubscriberInterface<Menu> {
     await event.manager.save(menu, { reload: true });
   }
 
-  private validateMeta(meta: MenuMeta[]) {
-    const metaWithIndex = meta.map((m, index) => ({ ...m, index }));
-    const repeatedMetaIds = metaWithIndex.filter((m) => {
-      return metaWithIndex.find((m2) => m2.id === m.id && m2.index !== m.index);
-    });
-    const repeatedMetaNames = metaWithIndex.filter((m) => {
-      return metaWithIndex.find(
-        (m2) => m2.name === m.name && m2.index !== m.index,
-      );
-    });
-    const repeatedMetaOrders = metaWithIndex.filter((m) => {
-      return metaWithIndex.find(
-        (m2) => m2.order === m.order && m2.index !== m.index,
-      );
-    });
-    if (
-      !repeatedMetaIds.length &&
-      !repeatedMetaNames.length &&
-      !repeatedMetaOrders.length
-    ) {
-      return;
-    }
+  private validateMeta(
+    entity: ObjectLiteral | Menu,
+    databaseEntity?: Menu,
+  ): void {
+    if (!entity.meta) return;
+    const metaWithIndex = entity.meta.map((m, index) => ({ ...m, index }));
     const errors = {};
-    metaWithIndex.forEach((m) => {
-      if (repeatedMetaIds.find((m2) => m2.id === m.id)) {
+    // Check if ids are unique
+    metaWithIndex
+      .filter((m) => {
+        return metaWithIndex.find(
+          (m2) => m2.id === m.id && m2.index !== m.index,
+        );
+      })
+      .forEach((m) => {
         errors[`meta[${m.index}]`] = {
           ...errors[`meta[${m.index}]`],
           id: {
             errors: `Menu meta ids must be unique. Found repeated id: ${m.id}`,
           },
         };
-      }
-      if (repeatedMetaNames.find((m2) => m2.id === m.id)) {
+      });
+    // Check if names are unique
+    metaWithIndex
+      .filter((m) => {
+        return metaWithIndex.find(
+          (m2) => m2.name === m.name && m2.index !== m.index,
+        );
+      })
+      .forEach((m) => {
         errors[`meta[${m.index}]`] = {
           ...errors[`meta[${m.index}]`],
-          name: {
+          id: {
             errors: `Menu meta names must be unique. Found repeated name: ${m.name}`,
           },
         };
-      }
-      if (repeatedMetaOrders.find((m2) => m2.id === m.id)) {
+      });
+    // Check if orders are unique
+    metaWithIndex
+      .filter((m) => {
+        return metaWithIndex.find(
+          (m2) => m2.order === m.order && m2.index !== m.index,
+        );
+      })
+      .forEach((m) => {
         errors[`meta[${m.index}]`] = {
           ...errors[`meta[${m.index}]`],
-          order: {
+          id: {
             errors: `Menu meta orders must be unique. Found repeated order: ${m.order}`,
           },
         };
-      }
-    });
-    throw new FieldValidationError(errors);
+      });
+    if (databaseEntity) {
+      // Is an update
+      const dbMeta = databaseEntity.meta;
+      // Check if types have changed
+      metaWithIndex
+        .filter((m) => {
+          const dbMetaItem = dbMeta.find((m2) => m2.id === m.id);
+          return dbMetaItem?.type !== m.type;
+        })
+        .forEach((m) => {
+          errors[`meta[${m.index}]`] = {
+            ...errors[`meta[${m.index}]`],
+            type: {
+              errors: `Menu meta types cannot be changed. Found changed type: ${m.type}`,
+            },
+          };
+        });
+    }
+    if (Object.keys(errors).length) throw new FieldValidationError(errors);
   }
 
   private async setMenu(menu: Menu): Promise<Menu> {

@@ -3,7 +3,6 @@ import {
   IsDefined,
   IsEnum,
   IsNotEmpty,
-  IsOptional,
   MaxLength,
   MinLength,
   ValidateIf,
@@ -49,6 +48,7 @@ export class UpdateMenuMetaInput {
   order?: number;
 
   @Field(() => GraphQLJSON, { nullable: true })
-  @IsOptional()
+  @ValidateIf((o) => o.action === InputAction.UPDATE && o.required)
+  @IsDefined()
   defaultValue?: any;
 }
