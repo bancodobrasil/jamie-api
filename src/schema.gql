@@ -47,7 +47,7 @@ type MenuItem {
   id: Int!
   label: String!
   order: Int!
-  meta: JSONObject!
+  meta: JSONObject
   children: [MenuItem!]
   parentId: Int
   menu: Menu!

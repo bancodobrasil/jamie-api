@@ -27,11 +27,12 @@ export class MenuItem {
   @Column()
   order: number;
 
-  @Field(() => GraphQLJSONObject)
+  @Field(() => GraphQLJSONObject, { nullable: true })
   @Column('text', {
+    nullable: true,
     transformer: { from: JSON.parse, to: JSON.stringify },
   })
-  meta: IMenuItemMeta;
+  meta?: IMenuItemMeta;
 
   @Field(() => [MenuItem], { nullable: true })
   @OneToMany(() => MenuItem, (menuItem) => menuItem.parent, {
