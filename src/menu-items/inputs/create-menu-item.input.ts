@@ -11,7 +11,6 @@ import {
 } from 'class-validator';
 import { InputAction } from 'src/common/schema/enums/input-action.enum';
 import { GraphQLJSONObject } from 'src/common/schema/scalars/json.scalar';
-import { IMenuItemMeta } from 'src/common/types';
 
 @InputType()
 export class CreateMenuItemInput {
@@ -25,10 +24,10 @@ export class CreateMenuItemInput {
   @Min(1)
   order: number;
 
-  @Field(() => GraphQLJSONObject)
-  @IsDefined()
+  @Field(() => GraphQLJSONObject, { nullable: true })
+  @IsOptional()
   @IsObject()
-  meta: IMenuItemMeta;
+  meta?: Record<string, unknown>;
 
   @Field(() => Int, { nullable: true })
   @IsOptional()
