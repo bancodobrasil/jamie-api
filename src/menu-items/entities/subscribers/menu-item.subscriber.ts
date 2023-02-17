@@ -13,32 +13,40 @@ export class MenuItemSubscriber implements EntitySubscriberInterface<MenuItem> {
   listenTo() {
     return MenuItem;
   }
+
   async beforeInsert(event: InsertEvent<MenuItem>) {
+    event.entity = await this.setMetaIds(event.entity);
     await this.validateMeta(event.entity);
   }
+
   async beforeUpdate(event: UpdateEvent<MenuItem>) {
-    let { databaseEntity } = event;
-    if (!databaseEntity) {
-      databaseEntity = await event.manager.findOne(MenuItem, {
-        where: { id: event.entity.id },
-      });
-    }
-    const menuItem = event.manager.merge(
-      MenuItem,
-      databaseEntity,
-      event.entity,
-    );
+    const { databaseEntity } = event;
+    let menuItem = event.manager.merge(MenuItem, databaseEntity, event.entity);
+    menuItem = await this.setMetaIds(menuItem);
     await this.validateMeta(menuItem);
+    event.entity.meta = menuItem.meta;
   }
+
+  private async setMetaIds(menuItem: MenuItem): Promise<MenuItem> {
+    const menu = await menuItem.menu;
+    if (!menu.meta?.length) return;
+    const meta = {};
+    menu.meta.forEach((m) => {
+      if (menuItem.meta?.[m.name]) meta[m.id] = menuItem.meta[m.name];
+    });
+    menuItem.meta = { ...menuItem.meta, ...meta };
+    return menuItem;
+  }
+
   private async validateMeta(menuItem: MenuItem): Promise<void> {
     const menu = await menuItem.menu;
-    const menuMeta = menu?.meta || [];
+    if (!menu.meta?.length) return;
     const missingRequiredMeta = [];
-    menuMeta.forEach((m) => {
+    menu.meta.forEach((m) => {
       if (
         m.required &&
         m.type !== MenuMetaType.BOOLEAN &&
-        !menuItem.meta?.[m.name]
+        !menuItem.meta?.[m.id]
       ) {
         missingRequiredMeta.push(m.name);
       }

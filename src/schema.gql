@@ -51,7 +51,7 @@ type MenuItem {
   children: [MenuItem!]
   parentId: Int
   menu: Menu!
-  menuId: Int
+  menuId: Int!
   enabled: Boolean!
   startPublication: DateTime
   endPublication: DateTime
@@ -108,7 +108,7 @@ input CreateMenuMetaInput {
 input CreateMenuItemInput {
   label: String!
   order: Int!
-  meta: JSONObject!
+  meta: JSONObject
   parentId: Int
   children: [CreateMenuItemInput!]
   enabled: Boolean!
