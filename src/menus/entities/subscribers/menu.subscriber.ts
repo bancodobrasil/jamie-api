@@ -44,8 +44,11 @@ export class MenuSubscriber implements EntitySubscriberInterface<Menu> {
   }
 
   async afterInsert(event: InsertEvent<Menu>) {
+    const { items } = event.queryRunner.data;
+    if (!items) return;
+    event.entity.items = items;
     const menu = await this.setMenu(event.entity);
-    await event.manager.save(menu, { reload: true });
+    await event.manager.save(menu);
   }
 
   private validateMeta(meta: MenuMetaWithAction[], dbMeta?: MenuMeta[]): void {
@@ -167,6 +170,7 @@ export class MenuSubscriber implements EntitySubscriberInterface<Menu> {
         return Promise.all(
           items.map(async (item) => {
             item.menuId = menu.id;
+            item.menu = menu;
             const children = await item.children;
             if (children?.length) {
               item.children = await setMenuOnItems(children);

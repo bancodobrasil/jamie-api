@@ -22,7 +22,7 @@ export class MenusService {
   ) {}
 
   async create(createMenuInput: CreateMenuInput) {
-    const { meta, ...rest } = createMenuInput;
+    const { meta, items, ...rest } = createMenuInput;
     const metaWithIds = meta
       ?.sort((a, b) => a.order - b.order)
       .map((m, index) => {
@@ -34,7 +34,7 @@ export class MenusService {
       ...rest,
       meta: metaWithIds,
     });
-    return this.menuRepository.save(menu);
+    return this.menuRepository.save(menu, { data: { items } });
   }
 
   async findAll(paginationArgs: PaginationArgs, sortArgs: FindMenuSortArgs) {
