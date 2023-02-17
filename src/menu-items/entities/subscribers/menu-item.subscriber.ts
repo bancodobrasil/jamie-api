@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import FieldValidationError from 'src/common/errors/field-validation.error';
 import { MenuMetaType } from 'src/common/types';
 import {
@@ -10,6 +11,8 @@ import { MenuItem } from '../menu-item.entity';
 
 @EventSubscriber()
 export class MenuItemSubscriber implements EntitySubscriberInterface<MenuItem> {
+  private readonly logger = new Logger(MenuItemSubscriber.name);
+
   listenTo() {
     return MenuItem;
   }
@@ -21,10 +24,10 @@ export class MenuItemSubscriber implements EntitySubscriberInterface<MenuItem> {
 
   async beforeUpdate(event: UpdateEvent<MenuItem>) {
     const { databaseEntity } = event;
-    let menuItem = event.manager.merge(MenuItem, databaseEntity, event.entity);
+    if (!event.entity || !databaseEntity) return;
+    let menuItem = { ...databaseEntity, ...event.entity };
     menuItem = await this.setMetaIds(menuItem);
     await this.validateMeta(menuItem);
-    event.entity.meta = menuItem.meta;
   }
 
   private async setMetaIds(menuItem: MenuItem): Promise<MenuItem> {
@@ -32,9 +35,10 @@ export class MenuItemSubscriber implements EntitySubscriberInterface<MenuItem> {
     if (!menu.meta?.length) return;
     const meta = {};
     menu.meta.forEach((m) => {
+      if (menuItem.meta?.[m.id]) meta[m.id] = menuItem.meta[m.id];
       if (menuItem.meta?.[m.name]) meta[m.id] = menuItem.meta[m.name];
     });
-    menuItem.meta = { ...menuItem.meta, ...meta };
+    menuItem.meta = { ...meta };
     return menuItem;
   }
 

@@ -16,12 +16,22 @@ export class MenuItemsService {
     private menuItemRepository: Repository<MenuItem>,
   ) {}
   async create(menu: Menu, input: CreateMenuItemInput, manager: EntityManager) {
+    const { children, ...rest } = input;
     const item = manager.getRepository(MenuItem).create({
-      ...input,
+      ...rest,
       menu,
+      menuId: menu.id,
     });
 
-    return manager.save(item);
+    const saved = await manager.save(item);
+    if (children?.length) {
+      await Promise.all(
+        children.map(async (child) => {
+          child.parentId = saved.id;
+          await this.create(menu, child, manager);
+        }),
+      );
+    }
   }
 
   findAll(query: any) {
@@ -35,24 +45,24 @@ export class MenuItemsService {
     return this.menuItemRepository.findOneBy({ id: id });
   }
 
-  async update(input: UpdateMenuItemInput, manager: EntityManager) {
+  async update(menu: Menu, input: UpdateMenuItemInput, manager: EntityManager) {
     const { children } = input;
     delete input.action;
     delete input.children;
-    const item = await manager.save(MenuItem, input);
+    const item = await manager.save(MenuItem, {
+      ...input,
+      menu,
+      menuId: menu.id,
+    });
     if (children?.length) {
       await Promise.all(
         children.map(async (child) => {
           switch (child.action) {
             case InputAction.CREATE:
               child.parentId = item.id;
-              return this.create(
-                await item.menu,
-                child as CreateMenuItemInput,
-                manager,
-              );
+              return this.create(menu, child as CreateMenuItemInput, manager);
             case InputAction.UPDATE:
-              return this.update(child as UpdateMenuItemInput, manager);
+              return this.update(menu, child as UpdateMenuItemInput, manager);
             case InputAction.DELETE:
               return this.remove(child as DeleteMenuItemInput, manager);
             default:
@@ -76,7 +86,7 @@ export class MenuItemsService {
       case InputAction.CREATE:
         return this.create(menu, input as CreateMenuItemInput, manager);
       case InputAction.UPDATE:
-        return this.update(input as UpdateMenuItemInput, manager);
+        return this.update(menu, input as UpdateMenuItemInput, manager);
       case InputAction.DELETE:
         return this.remove(input as DeleteMenuItemInput, manager);
       default:

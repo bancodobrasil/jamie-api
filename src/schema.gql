@@ -130,12 +130,12 @@ input UpdateMenuItemInput {
   order: Int
   meta: JSONObject
   parentId: Int
-  enabled: Boolean
   startPublication: DateTime
   endPublication: DateTime
   action: InputAction!
   id: Int
   children: [UpdateMenuItemInput!]
+  enabled: Boolean
   template: String
   templateFormat: String
 }
