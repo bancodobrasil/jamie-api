@@ -8,6 +8,7 @@ import { plainToClass } from 'class-transformer';
 import { UpdateMenuItemInput } from './inputs/update-menu-item.input';
 import { MenuItemAction } from 'src/common/types';
 import { DeleteMenuItemInput } from './inputs/delete-menu-item.input';
+import { FindMenuSortArgs } from 'src/menus/args/find-menu-sort.arg';
 
 @Injectable()
 export class MenuItemsService {
@@ -24,13 +25,19 @@ export class MenuItemsService {
     return manager.save(item);
   }
 
-  findAll(query: any) {
-    // return `This action returns all menu items`;
+  async findAll(query: any, sortArgs: FindMenuSortArgs) {
+    // Return all menu items that belong to the menu with the specified ID.
     return this.menuItemRepository.find({
       where: [{ menu: { id: query.menuId } }],
+
+      // Sort the results based on the specified sort and direction.
+      order: {
+        [sortArgs.sort]: sortArgs.sort ? sortArgs.direction : 'ASC',
+      },
     });
   }
 
+ 
   findOne(id: number) {
     return `This action returns a #${id} menu item`;
   }
