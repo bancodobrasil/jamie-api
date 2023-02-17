@@ -2,6 +2,7 @@ import { Field, InputType, Int } from '@nestjs/graphql';
 import { Type } from 'class-transformer';
 import {
   IsArray,
+  IsBoolean,
   IsDate,
   IsDefined,
   IsObject,
@@ -41,8 +42,9 @@ export class CreateMenuItemInput {
   children?: CreateMenuItemInput[];
 
   @Field(() => Boolean, { nullable: false })
-  @IsOptional()
-  enabled?: boolean;
+  @IsDefined()
+  @IsBoolean()
+  enabled: boolean;
 
   @Field(() => Date, { nullable: true })
   @IsDate()
