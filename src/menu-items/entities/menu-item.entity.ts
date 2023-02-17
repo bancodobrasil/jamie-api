@@ -62,8 +62,8 @@ export class MenuItem {
   @JoinColumn()
   menu: Menu;
 
-  @Field(() => Int, { nullable: true })
-  @Column({ nullable: true })
+  @Field(() => Int)
+  @Column()
   menuId?: number;
 
   @Field(() => Boolean, { nullable: false })
