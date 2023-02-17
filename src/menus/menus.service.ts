@@ -10,7 +10,7 @@ import { FindMenuSortArgs } from './args/find-menu-sort.arg';
 import { paginate } from 'src/common/helpers/paginate.helper';
 import { UpdateMenuMetaInput } from './inputs/update-menu-meta.input';
 import { InputAction } from 'src/common/schema/enums/input-action.enum';
-import { CreateMenuMetaInput } from './inputs/create-menu-meta.input';
+import { MenuMeta } from './objects/menu-meta.object';
 
 @Injectable()
 export class MenusService {
@@ -25,7 +25,11 @@ export class MenusService {
     const { meta, ...rest } = createMenuInput;
     const metaWithIds = meta
       ?.sort((a, b) => a.order - b.order)
-      .map((m, index) => ({ ...m, id: index + 1 }));
+      .map((m, index) => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { action, ...rest } = m;
+        return { ...rest, id: index + 1 };
+      });
     const menu = await this.menuRepository.create({
       ...rest,
       meta: metaWithIds,
@@ -56,7 +60,7 @@ export class MenusService {
         .preload({ id, ...rest });
 
       const updatedMeta = this.handleMeta(menu, meta);
-      menu.meta = updatedMeta;
+      menu.meta = updatedMeta as MenuMeta[];
 
       const saved = await queryRunner.manager.save(menu);
 
@@ -88,27 +92,20 @@ export class MenusService {
 
   handleMeta(menu: Menu, input?: UpdateMenuMetaInput[]) {
     if (!input || !input.length) return menu.meta;
-    let meta =
-      menu.meta
-        ?.map((m) => {
-          const update = input.find((i) => i.id === m.id);
-          if (!update) return m;
-          if (update.action === InputAction.DELETE) return null;
-          return { ...m, ...update };
-        })
-        .filter((m) => m !== null)
-        .sort((a, b) => a.id - b.id) || [];
-    const lastId = meta[meta.length - 1]?.id || 0;
+    let updatedMeta = input.filter(
+      (i) => i.action === InputAction.UPDATE || i.action === InputAction.DELETE,
+    );
+    const lastId = menu.meta?.sort((a, b) => a.id - b.id).pop()?.id || 0;
     const create = input
       .filter((i) => i.action === InputAction.CREATE)
       .sort((a, b) => a.order - b.order)
       .map((i, index) => ({
         ...i,
         id: lastId + index + 1,
-      })) as CreateMenuMetaInput[] & { id: number }[];
+      }));
     if (create.length) {
-      meta = [...meta, ...create];
+      updatedMeta = [...updatedMeta, ...create];
     }
-    return meta.sort((a, b) => a.order - b.order);
+    return updatedMeta.sort((a, b) => a.order - b.order);
   }
 }
