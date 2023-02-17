@@ -21,5 +21,5 @@ export enum MenuMetaType {
 }
 
 export interface IMenuItemMeta {
-  [key: string]: unknown;
+  [index: number]: unknown;
 }
