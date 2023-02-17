@@ -118,9 +118,9 @@ input CreateMenuItemInput {
 
 input UpdateMenuInput {
   name: String
-  meta: [CreateMenuMetaInput!]
   id: Int!
   items: [UpdateMenuItemInput!]
+  meta: [UpdateMenuMetaInput!]
   template: String
   templateFormat: String
 }
@@ -144,4 +144,14 @@ enum InputAction {
   CREATE
   UPDATE
   DELETE
+}
+
+input UpdateMenuMetaInput {
+  action: InputAction!
+  id: Int
+  name: String!
+  type: String!
+  required: Boolean!
+  order: Int!
+  defaultValue: JSON
 }
