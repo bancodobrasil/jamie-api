@@ -149,9 +149,9 @@ enum InputAction {
 input UpdateMenuMetaInput {
   action: InputAction!
   id: Int
-  name: String!
-  type: String!
-  required: Boolean!
-  order: Int!
+  name: String
+  type: String
+  required: Boolean
+  order: Int
   defaultValue: JSON
 }

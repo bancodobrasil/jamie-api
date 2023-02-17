@@ -26,24 +26,24 @@ export class UpdateMenuMetaInput {
   @IsDefined()
   id?: number;
 
-  @Field()
+  @Field({ nullable: true })
   @ValidateIf((o) => o.action === InputAction.CREATE)
   @IsNotEmpty()
   @MinLength(3)
   @MaxLength(255)
   name?: string;
 
-  @Field()
+  @Field({ nullable: true })
   @ValidateIf((o) => o.action === InputAction.CREATE)
   @IsEnum(MenuMetaType)
   type?: MenuMetaType;
 
-  @Field(() => Boolean)
+  @Field(() => Boolean, { nullable: true })
   @ValidateIf((o) => o.action === InputAction.CREATE)
   @IsDefined()
   required?: boolean;
 
-  @Field(() => Int)
+  @Field(() => Int, { nullable: true })
   @ValidateIf((o) => o.action === InputAction.CREATE)
   @IsDefined()
   order?: number;
