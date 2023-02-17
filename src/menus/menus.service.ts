@@ -8,6 +8,9 @@ import { Menu } from './entities/menu.entity';
 import { PaginationArgs } from 'src/common/schema/args/pagination.arg';
 import { FindMenuSortArgs } from './args/find-menu-sort.arg';
 import { paginate } from 'src/common/helpers/paginate.helper';
+import { UpdateMenuMetaInput } from './inputs/update-menu-meta.input';
+import { InputAction } from 'src/common/schema/enums/input-action.enum';
+import { CreateMenuMetaInput } from './inputs/create-menu-meta.input';
 
 @Injectable()
 export class MenusService {
@@ -45,9 +48,13 @@ export class MenusService {
     await queryRunner.startTransaction();
 
     try {
+      const { meta, ...rest } = updateMenuInput;
       const menu = await queryRunner.manager
         .getRepository(Menu)
-        .preload({ id, ...updateMenuInput });
+        .preload({ id, ...rest });
+
+      const updatedMeta = this.handleMeta(menu, meta);
+      menu.meta = updatedMeta;
 
       const saved = await queryRunner.manager.save(menu);
 
@@ -75,5 +82,31 @@ export class MenusService {
 
   remove(id: number) {
     return this.menuRepository.delete(id);
+  }
+
+  handleMeta(menu: Menu, input?: UpdateMenuMetaInput[]) {
+    if (!input || !input.length) return menu.meta;
+    let meta =
+      menu.meta
+        ?.map((m) => {
+          const update = input.find((i) => i.id === m.id);
+          if (!update) return m;
+          if (update.action === InputAction.DELETE) return null;
+          return { ...m, ...update };
+        })
+        .filter((m) => m !== null)
+        .sort((a, b) => a.id - b.id) || [];
+    const lastId = meta[meta.length - 1]?.id || 0;
+    const create = input
+      .filter((i) => i.action === InputAction.CREATE)
+      .sort((a, b) => a.order - b.order)
+      .map((i, index) => ({
+        ...i,
+        id: lastId + index + 1,
+      })) as CreateMenuMetaInput[] & { id: number }[];
+    if (create.length) {
+      meta = [...meta, ...create];
+    }
+    return meta.sort((a, b) => a.order - b.order);
   }
 }

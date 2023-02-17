@@ -10,10 +10,11 @@ import {
 import { UpdateMenuItemInput } from 'src/menu-items/inputs/update-menu-item.input';
 import { CreateMenuInput } from './create-menu.input';
 import { TemplateFormat } from '../../common/enums/template-format.enum';
+import { UpdateMenuMetaInput } from './update-menu-meta.input';
 
 @InputType()
 export class UpdateMenuInput extends PartialType(
-  OmitType(CreateMenuInput, ['items']),
+  OmitType(CreateMenuInput, ['items', 'meta']),
 ) {
   @Field(() => Int)
   id: number;
@@ -24,6 +25,13 @@ export class UpdateMenuInput extends PartialType(
   @ValidateNested({ each: true })
   @Type(() => UpdateMenuItemInput)
   items?: UpdateMenuItemInput[];
+
+  @Field(() => [UpdateMenuMetaInput], { nullable: true })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => UpdateMenuMetaInput)
+  meta?: UpdateMenuMetaInput[];
 
   @Field(() => String, { nullable: true })
   @IsOptional()
