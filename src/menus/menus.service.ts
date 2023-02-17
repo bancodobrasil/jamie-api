@@ -19,7 +19,12 @@ export class MenusService {
   ) {}
 
   async create(createMenuInput: CreateMenuInput) {
-    const menu = await this.menuRepository.create({ ...createMenuInput });
+    const { meta, ...rest } = createMenuInput;
+    const metaWithIds = meta?.map((m) => ({ ...m, id: m.order }));
+    const menu = await this.menuRepository.create({
+      ...rest,
+      meta: metaWithIds,
+    });
     return this.menuRepository.save(menu);
   }
 
