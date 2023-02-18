@@ -18,21 +18,88 @@ export class MenuItemSubscriber implements EntitySubscriberInterface<MenuItem> {
   }
 
   async beforeInsert(event: InsertEvent<MenuItem>) {
+    const { index, isChildren, childrenIndex, siblings } = event.entity as any;
+    await this.validateMenuItem(
+      event.entity,
+      siblings,
+      index,
+      isChildren,
+      childrenIndex,
+    );
     event.entity = await this.setMetaIds(event.entity);
-    const { index, isChildren, childrenIndex, ...rest } = event.entity as any;
-    event.entity = { ...rest };
     await this.validateMeta(event.entity, index, isChildren, childrenIndex);
   }
 
   async beforeUpdate(event: UpdateEvent<MenuItem>) {
+    const { index, isChildren, childrenIndex, siblings } = event.entity;
     const { databaseEntity } = event;
-    if (!event.entity || !databaseEntity) return;
     let menuItem = { ...databaseEntity, ...event.entity };
+    await this.validateMenuItem(
+      menuItem,
+      siblings,
+      index,
+      isChildren,
+      childrenIndex,
+    );
     menuItem = await this.setMetaIds(menuItem);
     event.entity.meta = menuItem.meta;
-    const { index, isChildren, childrenIndex, ...rest } = event.entity;
-    event.entity = { ...rest };
     await this.validateMeta(menuItem, index, isChildren, childrenIndex);
+    await event.manager.save(MenuItem, event.entity);
+  }
+
+  private async validateMenuItem(
+    menuItem: MenuItem,
+    siblings: MenuItem[],
+    index: number,
+    isChildren: boolean,
+    childrenIndex?: number[],
+  ) {
+    this.logger.log('validateMenuItem');
+    const menu = await menuItem.menu;
+    const items = await menu.items;
+    const allSiblings = items.filter(
+      (i) =>
+        i.parentId === menuItem.parentId &&
+        !siblings.find((s) => s.id === i.id),
+    );
+    siblings = [...siblings, ...allSiblings];
+    if (menuItem.id) siblings = siblings.filter((s) => s.id !== menuItem.id);
+    const { IS_UNIQUE } = FieldValidationError.constraints;
+    let errors = {};
+    if (siblings.length) {
+      const siblingNames = siblings.map((s) => s.label);
+      if (siblingNames.includes(menuItem.label)) {
+        errors['label'] = {
+          errors: [
+            `Menu Item labels must be unique within the same parent. Found repeated label: ${menuItem.label}`,
+          ],
+          constraints: [IS_UNIQUE],
+        };
+      }
+      const siblingOrders = siblings.map((s) => s.order);
+      if (siblingOrders.includes(menuItem.order)) {
+        errors['order'] = {
+          errors: [
+            `Menu Item orders must be unique within the same parent. Found repeated order: ${menuItem.order}`,
+          ],
+          constraints: [IS_UNIQUE],
+        };
+      }
+    }
+    if (Object.keys(errors).length) {
+      if (isChildren) {
+        for (const i of childrenIndex) {
+          errors = {
+            [`children[${i}]`]: { ...errors },
+          };
+        }
+      }
+      throw new FieldValidationError({
+        [`items[${index}]`]: {
+          ...errors,
+        },
+      });
+    }
   }
 
   private async setMetaIds(menuItem: MenuItem): Promise<MenuItem> {
@@ -74,7 +141,6 @@ export class MenuItemSubscriber implements EntitySubscriberInterface<MenuItem> {
         },
       };
       if (isChildren) {
-        console.log('isChildren', childrenIndex);
         for (const i of childrenIndex) {
           errors = {
             [`children[${i}]`]: { ...errors },

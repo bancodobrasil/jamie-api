@@ -21,7 +21,8 @@ export class MenuItemsService {
     manager: EntityManager,
     index: number,
     isChildren = false,
-    childrenIndex: number[] = [],
+    childrenIndex: number[],
+    siblings: CreateMenuItemInput[],
   ) {
     const { children, ...rest } = input;
     const item = manager.getRepository(MenuItem).create({
@@ -35,15 +36,21 @@ export class MenuItemsService {
       index,
       isChildren,
       childrenIndex,
+      siblings,
     });
     if (children?.length) {
       await Promise.all(
         children.map(async (child, i) => {
           child.parentId = saved.id;
-          await this.create(menu, child, manager, index, true, [
-            ...childrenIndex,
-            i,
-          ]);
+          await this.create(
+            menu,
+            child,
+            manager,
+            index,
+            true,
+            [...childrenIndex, i],
+            children.filter((c, index2) => i !== index2),
+          );
         }),
       );
     }
@@ -65,10 +72,10 @@ export class MenuItemsService {
     input: UpdateMenuItemInput,
     manager: EntityManager,
     index: number,
-    isChildren = false,
-    childrenIndex: number[] = [],
+    isChildren,
+    childrenIndex: number[],
+    siblings: UpdateMenuItemInput[],
   ) {
-    console.log(input, index, isChildren, childrenIndex);
     const { children } = input;
     delete input.action;
     delete input.children;
@@ -79,11 +86,11 @@ export class MenuItemsService {
       index,
       isChildren,
       childrenIndex,
+      siblings,
     });
     if (children?.length) {
       await Promise.all(
         children.map(async (child, i) => {
-          console.log(child, i);
           switch (child.action) {
             case InputAction.CREATE:
               child.parentId = item.id;
@@ -94,6 +101,9 @@ export class MenuItemsService {
                 index,
                 true,
                 [...childrenIndex, i],
+                children.filter(
+                  (c, index2) => i !== index2,
+                ) as CreateMenuItemInput[],
               );
             case InputAction.UPDATE:
               return this.update(
@@ -103,6 +113,7 @@ export class MenuItemsService {
                 index,
                 true,
                 [...childrenIndex, i],
+                children.filter((c, index2) => i !== index2),
               );
             case InputAction.DELETE:
               return this.remove(child as DeleteMenuItemInput, manager);
@@ -123,12 +134,29 @@ export class MenuItemsService {
     input: CreateMenuItemInput | UpdateMenuItemInput | DeleteMenuItemInput,
     manager: EntityManager,
     index: number,
+    siblings: CreateMenuItemInput[] | UpdateMenuItemInput[],
   ) {
     switch (input.action) {
       case InputAction.CREATE:
-        return this.create(menu, input as CreateMenuItemInput, manager, index);
+        return this.create(
+          menu,
+          input as CreateMenuItemInput,
+          manager,
+          index,
+          false,
+          [],
+          siblings as CreateMenuItemInput[],
+        );
       case InputAction.UPDATE:
-        return this.update(menu, input as UpdateMenuItemInput, manager, index);
+        return this.update(
+          menu,
+          input as UpdateMenuItemInput,
+          manager,
+          index,
+          false,
+          [],
+          siblings as UpdateMenuItemInput[],
+        );
       case InputAction.DELETE:
         return this.remove(input as DeleteMenuItemInput, manager);
       default:

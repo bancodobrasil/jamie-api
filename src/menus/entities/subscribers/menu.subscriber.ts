@@ -44,8 +44,39 @@ export class MenuSubscriber implements EntitySubscriberInterface<Menu> {
   }
 
   async afterInsert(event: InsertEvent<Menu>) {
-    const { items } = event.queryRunner.data;
+    let { items } = event.queryRunner.data;
     if (!items) return;
+    const setChildrenIndex = (
+      children,
+      index: number,
+      childrenIndex: number[] = [],
+    ) => {
+      return children.map((child, childIndex) => {
+        delete child.action;
+        child.index = index;
+        child.isChildren = true;
+        child.childrenIndex = [...childrenIndex, childIndex];
+        child.siblings = children.filter(
+          (i, index2) => childrenIndex !== index2,
+        );
+        if (child.children) {
+          child.children = setChildrenIndex(child.children, index, [
+            ...childrenIndex,
+            childIndex,
+          ]);
+        }
+        return child;
+      });
+    };
+    items = items.map((item, index) => {
+      delete item.action;
+      item.index = index;
+      item.siblings = items.filter((i, index2) => index !== index2);
+      if (item.children) {
+        item.children = setChildrenIndex(item.children, index);
+      }
+      return item;
+    });
     event.entity.items = items;
     const menu = await this.setMenu(event.entity);
     await event.manager.save(menu);
