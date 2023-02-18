@@ -15,6 +15,7 @@ type MenuMeta {
   type: String!
   required: Boolean!
   order: Int!
+  enabled: Boolean!
   defaultValue: JSON
 }
 
@@ -102,6 +103,7 @@ input CreateMenuMetaInput {
   type: String!
   required: Boolean!
   order: Int!
+  enabled: Boolean!
   defaultValue: JSON
 }
 
@@ -153,5 +155,6 @@ input UpdateMenuMetaInput {
   type: String
   required: Boolean
   order: Int
+  enabled: Boolean
   defaultValue: JSON
 }

@@ -1,5 +1,6 @@
 import { Field, InputType, Int } from '@nestjs/graphql';
 import {
+  IsBoolean,
   IsDefined,
   IsEnum,
   IsNotEmpty,
@@ -40,12 +41,19 @@ export class UpdateMenuMetaInput {
   @Field(() => Boolean, { nullable: true })
   @ValidateIf((o) => o.action === InputAction.CREATE)
   @IsDefined()
+  @IsBoolean()
   required?: boolean;
 
   @Field(() => Int, { nullable: true })
   @ValidateIf((o) => o.action === InputAction.CREATE)
   @IsDefined()
   order?: number;
+
+  @Field(() => Boolean, { nullable: true })
+  @ValidateIf((o) => o.action === InputAction.CREATE)
+  @IsDefined()
+  @IsBoolean()
+  enabled?: boolean;
 
   @Field(() => GraphQLJSON, { nullable: true })
   @ValidateIf((o) => o.action === InputAction.UPDATE && o.required)

@@ -19,6 +19,9 @@ export class MenuMeta {
   @Field(() => Int)
   order: number;
 
+  @Field(() => Boolean)
+  enabled: boolean;
+
   @Field(() => GraphQLJSON, { nullable: true })
   defaultValue?: any;
 }
