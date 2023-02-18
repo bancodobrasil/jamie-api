@@ -56,6 +56,8 @@ export class MenuSubscriber implements EntitySubscriberInterface<Menu> {
       .map((m, index) => ({ ...m, index }))
       .filter((m) => m.action !== InputAction.DELETE);
     const errors = {};
+    const { IS_UNIQUE, META_TYPE_CANNOT_BE_CHANGED } =
+      FieldValidationError.constraints;
     // Check if ids are unique
     metaWithIndex
       .filter((m) => {
@@ -67,7 +69,10 @@ export class MenuSubscriber implements EntitySubscriberInterface<Menu> {
         errors[`meta[${m.index}]`] = {
           ...errors[`meta[${m.index}]`],
           id: {
-            errors: `Menu meta ids must be unique. Found repeated id: ${m.id}`,
+            errors: [
+              `Menu meta ids must be unique. Found repeated id: ${m.id}`,
+            ],
+            constraints: [IS_UNIQUE],
           },
         };
       });
@@ -82,7 +87,10 @@ export class MenuSubscriber implements EntitySubscriberInterface<Menu> {
         errors[`meta[${m.index}]`] = {
           ...errors[`meta[${m.index}]`],
           name: {
-            errors: `Menu meta names must be unique. Found repeated name: ${m.name}`,
+            errors: [
+              `Menu meta names must be unique. Found repeated name: ${m.name}`,
+            ],
+            constraints: [IS_UNIQUE],
           },
         };
       });
@@ -97,7 +105,10 @@ export class MenuSubscriber implements EntitySubscriberInterface<Menu> {
         errors[`meta[${m.index}]`] = {
           ...errors[`meta[${m.index}]`],
           order: {
-            errors: `Menu meta orders must be unique. Found repeated order: ${m.order}`,
+            errors: [
+              `Menu meta orders must be unique. Found repeated order: ${m.order}`,
+            ],
+            constraints: [IS_UNIQUE],
           },
         };
       });
@@ -115,7 +126,10 @@ export class MenuSubscriber implements EntitySubscriberInterface<Menu> {
           errors[`meta[${m.index}]`] = {
             ...errors[`meta[${m.index}]`],
             id: {
-              errors: `Menu meta ids must be unique. Found repeated id: ${m.id}`,
+              errors: [
+                `Menu meta ids must be unique. Found repeated id: ${m.id}`,
+              ],
+              constraints: [IS_UNIQUE],
             },
           };
         });
@@ -128,7 +142,10 @@ export class MenuSubscriber implements EntitySubscriberInterface<Menu> {
           errors[`meta[${m.index}]`] = {
             ...errors[`meta[${m.index}]`],
             name: {
-              errors: `Menu meta names must be unique. Found repeated name: ${m.name}`,
+              errors: [
+                `Menu meta names must be unique. Found repeated name: ${m.name}`,
+              ],
+              constraints: [IS_UNIQUE],
             },
           };
         });
@@ -141,7 +158,10 @@ export class MenuSubscriber implements EntitySubscriberInterface<Menu> {
           errors[`meta[${m.index}]`] = {
             ...errors[`meta[${m.index}]`],
             order: {
-              errors: `Menu meta orders must be unique. Found repeated order: ${m.order}`,
+              errors: [
+                `Menu meta orders must be unique. Found repeated order: ${m.order}`,
+              ],
+              constraints: [IS_UNIQUE],
             },
           };
         });
@@ -155,7 +175,10 @@ export class MenuSubscriber implements EntitySubscriberInterface<Menu> {
           errors[`meta[${m.index}]`] = {
             ...errors[`meta[${m.index}]`],
             type: {
-              errors: `Menu meta types cannot be changed. Found changed type: ${m.type}`,
+              errors: [
+                `Menu meta types cannot be changed. Found changed type: ${m.type}`,
+              ],
+              constraints: [META_TYPE_CANNOT_BE_CHANGED],
             },
           };
         });

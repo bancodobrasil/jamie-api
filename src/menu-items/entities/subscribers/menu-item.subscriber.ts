@@ -66,10 +66,11 @@ export class MenuItemSubscriber implements EntitySubscriberInterface<MenuItem> {
       }
     });
     if (missingRequiredMeta.length) {
+      const { META_REQUIRED } = FieldValidationError.constraints;
       let errors: any = {
         meta: {
           errors: [`Missing required meta: ${missingRequiredMeta.join(', ')}`],
-          constraints: ['requiredMeta'],
+          constraints: [META_REQUIRED],
         },
       };
       if (isChildren) {

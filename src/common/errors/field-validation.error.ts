@@ -52,6 +52,14 @@ class FieldValidationError extends GraphQLError {
 
     return new FieldValidationError(composeErrors(errors));
   }
+
+  static constraints = {
+    IS_UNIQUE: 'isUnique',
+    // Menu Meta
+    META_TYPE_CANNOT_BE_CHANGED: 'metaTypeCannotBeChanged',
+    // Menu Item Meta
+    META_REQUIRED: 'metaRequired',
+  };
 }
 
 export default FieldValidationError;
