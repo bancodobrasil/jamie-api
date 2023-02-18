@@ -34,7 +34,11 @@ export class MenusService {
       ...rest,
       meta: metaWithIds,
     });
-    return this.menuRepository.save(menu, { data: { items } });
+    await this.menuRepository.save(menu, { data: { items } });
+    return this.menuRepository.findOne({
+      where: { id: menu.id },
+      relations: ['items'],
+    });
   }
 
   async findAll(paginationArgs: PaginationArgs, sortArgs: FindMenuSortArgs) {

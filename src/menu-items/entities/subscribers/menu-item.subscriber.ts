@@ -30,6 +30,17 @@ export class MenuItemSubscriber implements EntitySubscriberInterface<MenuItem> {
     await this.validateMeta(event.entity, index, isChildren, childrenIndex);
   }
 
+  async afterInsert(event: InsertEvent<MenuItem>): Promise<any> {
+    const { children } = event.entity;
+    if (!children) return;
+    await Promise.all(
+      children.map(async (child) => {
+        child.parentId = event.entity.id;
+        await event.manager.save(MenuItem, child);
+      }),
+    );
+  }
+
   async beforeUpdate(event: UpdateEvent<MenuItem>) {
     const { index, isChildren, childrenIndex, siblings } = event.entity;
     const { databaseEntity } = event;
@@ -54,7 +65,6 @@ export class MenuItemSubscriber implements EntitySubscriberInterface<MenuItem> {
     isChildren: boolean,
     childrenIndex?: number[],
   ) {
-    this.logger.log('validateMenuItem');
     const menu = await menuItem.menu;
     const items = await menu.items;
     const allSiblings = items.filter(

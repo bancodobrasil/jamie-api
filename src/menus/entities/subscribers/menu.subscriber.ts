@@ -56,9 +56,7 @@ export class MenuSubscriber implements EntitySubscriberInterface<Menu> {
         child.index = index;
         child.isChildren = true;
         child.childrenIndex = [...childrenIndex, childIndex];
-        child.siblings = children.filter(
-          (i, index2) => childrenIndex !== index2,
-        );
+        child.siblings = children.filter((i, index2) => childIndex !== index2);
         if (child.children) {
           child.children = setChildrenIndex(child.children, index, [
             ...childrenIndex,
