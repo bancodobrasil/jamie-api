@@ -19,7 +19,9 @@ export class MenuItemSubscriber implements EntitySubscriberInterface<MenuItem> {
 
   async beforeInsert(event: InsertEvent<MenuItem>) {
     event.entity = await this.setMetaIds(event.entity);
-    await this.validateMeta(event.entity);
+    const { index, isChildren, childrenIndex, ...rest } = event.entity as any;
+    event.entity = { ...rest };
+    await this.validateMeta(event.entity, index, isChildren, childrenIndex);
   }
 
   async beforeUpdate(event: UpdateEvent<MenuItem>) {
@@ -27,7 +29,10 @@ export class MenuItemSubscriber implements EntitySubscriberInterface<MenuItem> {
     if (!event.entity || !databaseEntity) return;
     let menuItem = { ...databaseEntity, ...event.entity };
     menuItem = await this.setMetaIds(menuItem);
-    await this.validateMeta(menuItem);
+    event.entity.meta = menuItem.meta;
+    const { index, isChildren, childrenIndex, ...rest } = event.entity;
+    event.entity = { ...rest };
+    await this.validateMeta(menuItem, index, isChildren, childrenIndex);
   }
 
   private async setMetaIds(menuItem: MenuItem): Promise<MenuItem> {
@@ -42,7 +47,12 @@ export class MenuItemSubscriber implements EntitySubscriberInterface<MenuItem> {
     return menuItem;
   }
 
-  private async validateMeta(menuItem: MenuItem): Promise<void> {
+  private async validateMeta(
+    menuItem: MenuItem,
+    index: number,
+    isChildren: boolean,
+    childrenIndex?: number[],
+  ): Promise<void> {
     const menu = await menuItem.menu;
     if (!menu.meta?.length) return;
     const missingRequiredMeta = [];
@@ -56,15 +66,23 @@ export class MenuItemSubscriber implements EntitySubscriberInterface<MenuItem> {
       }
     });
     if (missingRequiredMeta.length) {
-      const formattedId = menuItem.id ? `menuItem #${menuItem.id}` : 'menuItem';
+      let errors: any = {
+        meta: {
+          errors: [`Missing required meta: ${missingRequiredMeta.join(', ')}`],
+          constraints: ['requiredMeta'],
+        },
+      };
+      if (isChildren) {
+        console.log('isChildren', childrenIndex);
+        for (const i of childrenIndex) {
+          errors = {
+            [`children[${i}]`]: { ...errors },
+          };
+        }
+      }
       throw new FieldValidationError({
-        [formattedId]: {
-          meta: {
-            errors: [
-              `Missing required meta: ${missingRequiredMeta.join(', ')}`,
-            ],
-            constraints: ['requiredMeta'],
-          },
+        [`items[${index}]`]: {
+          ...errors,
         },
       });
     }
