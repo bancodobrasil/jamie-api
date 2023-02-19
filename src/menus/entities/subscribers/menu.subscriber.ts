@@ -26,13 +26,13 @@ export class MenuSubscriber implements EntitySubscriberInterface<Menu> {
   beforeUpdate(event: UpdateEvent<Menu>): void {
     if (event.entity.meta) {
       this.validateMeta(event.entity.meta, event.databaseEntity.meta);
-      const updatedMeta = event.databaseEntity.meta.map((dbMeta) => {
-        const meta = event.entity.meta.find(
-          (m) => m.id === dbMeta.id && m.action !== InputAction.DELETE,
-        );
-        meta?.action && delete meta.action;
-        return { ...dbMeta, ...meta };
-      });
+      const updatedMeta = event.databaseEntity.meta
+        .map((dbMeta) => {
+          const meta = event.entity.meta.find((m) => m.id === dbMeta.id);
+          meta?.action !== InputAction.DELETE && delete meta.action;
+          return { ...dbMeta, ...meta };
+        })
+        .filter((m) => m.action !== InputAction.DELETE);
       const newMeta = event.entity.meta
         .filter((m) => m.action === InputAction.CREATE)
         .map((m) => {
@@ -81,9 +81,7 @@ export class MenuSubscriber implements EntitySubscriberInterface<Menu> {
   }
 
   private validateMeta(meta: MenuMetaWithAction[], dbMeta?: MenuMeta[]): void {
-    const metaWithIndex = meta
-      .map((m, index) => ({ ...m, index }))
-      .filter((m) => m.action !== InputAction.DELETE);
+    const metaWithIndex = meta.map((m, index) => ({ ...m, index }));
     const errors = {};
     const { IS_UNIQUE, META_TYPE_CANNOT_BE_CHANGED } =
       FieldValidationError.constraints;
@@ -147,7 +145,7 @@ export class MenuSubscriber implements EntitySubscriberInterface<Menu> {
       metaWithIndex
         .filter((m) => {
           return (
-            m.action !== InputAction.UPDATE &&
+            m.action === InputAction.CREATE &&
             dbMeta.find((m2) => m2.id === m.id)
           );
         })
@@ -172,7 +170,9 @@ export class MenuSubscriber implements EntitySubscriberInterface<Menu> {
             !!m.name &&
             existing &&
             !metaWithIndex.find(
-              (m2) => m2.name !== m.name && m2.id === existing.id,
+              (m2) =>
+                m2.id === existing.id &&
+                (m2.name !== m.name || m2.action === InputAction.DELETE),
             )
           );
         })
@@ -197,7 +197,9 @@ export class MenuSubscriber implements EntitySubscriberInterface<Menu> {
             !!m.order &&
             existing &&
             !metaWithIndex.find(
-              (m2) => m2.order !== m.order && m2.id === existing.id,
+              (m2) =>
+                m2.id === existing.id &&
+                (m2.order !== m.order || m2.action === InputAction.DELETE),
             )
           );
         })
