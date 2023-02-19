@@ -109,7 +109,7 @@ export class MenuSubscriber implements EntitySubscriberInterface<Menu> {
     metaWithIndex
       .filter((m) => {
         return metaWithIndex.find(
-          (m2) => m2.name === m.name && m2.index !== m.index,
+          (m2) => !!m.name && m2.name === m.name && m2.index !== m.index,
         );
       })
       .forEach((m) => {
@@ -127,7 +127,7 @@ export class MenuSubscriber implements EntitySubscriberInterface<Menu> {
     metaWithIndex
       .filter((m) => {
         return metaWithIndex.find(
-          (m2) => m2.order === m.order && m2.index !== m.index,
+          (m2) => !!m.order && m2.order === m.order && m2.index !== m.index,
         );
       })
       .forEach((m) => {
@@ -165,7 +165,16 @@ export class MenuSubscriber implements EntitySubscriberInterface<Menu> {
       // Check if names are unique
       metaWithIndex
         .filter((m) => {
-          return dbMeta.find((m2) => m2.name === m.name && m2.id !== m.id);
+          const existing = dbMeta.find(
+            (m2) => m2.name === m.name && m2.id !== m.id,
+          );
+          return (
+            !!m.name &&
+            existing &&
+            !metaWithIndex.find(
+              (m2) => m2.name !== m.name && m2.id === existing.id,
+            )
+          );
         })
         .forEach((m) => {
           errors[`meta[${m.index}]`] = {
@@ -181,7 +190,16 @@ export class MenuSubscriber implements EntitySubscriberInterface<Menu> {
       // Check if orders are unique
       metaWithIndex
         .filter((m) => {
-          return dbMeta.find((m2) => m2.order === m.order && m2.id !== m.id);
+          const existing = dbMeta.find(
+            (m2) => m2.order === m.order && m2.id !== m.id,
+          );
+          return (
+            !!m.order &&
+            existing &&
+            !metaWithIndex.find(
+              (m2) => m2.order !== m.order && m2.id === existing.id,
+            )
+          );
         })
         .forEach((m) => {
           errors[`meta[${m.index}]`] = {
