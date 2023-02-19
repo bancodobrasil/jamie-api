@@ -72,6 +72,8 @@ export class MenuItemSubscriber implements EntitySubscriberInterface<MenuItem> {
         i.parentId === menuItem.parentId &&
         !siblings.find((s) => s.id === i.id),
     );
+    console.log('siblings', siblings);
+    console.log('allSiblings', allSiblings);
     siblings = [...siblings, ...allSiblings];
     if (menuItem.id) siblings = siblings.filter((s) => s.id !== menuItem.id);
     const { IS_UNIQUE } = FieldValidationError.constraints;

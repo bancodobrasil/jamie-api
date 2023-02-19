@@ -76,7 +76,7 @@ export class MenusService {
               mii,
               queryRunner.manager,
               i,
-              updateMenuInput.items,
+              updateMenuInput.items.filter((m2, i2) => i2 !== i),
             ),
           ),
         );
