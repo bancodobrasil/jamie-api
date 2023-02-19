@@ -1,5 +1,6 @@
 import FieldValidationError from 'src/common/errors/field-validation.error';
 import { InputAction } from 'src/common/schema/enums/input-action.enum';
+import { WithAction } from 'src/common/types';
 import { MenuItem } from 'src/menu-items/entities/menu-item.entity';
 import { MenuMeta } from 'src/menus/objects/menu-meta.object';
 import {
@@ -10,7 +11,6 @@ import {
 } from 'typeorm';
 import { Menu } from '../menu.entity';
 
-type MenuMetaWithAction = MenuMeta & { action?: InputAction };
 @EventSubscriber()
 export class MenuSubscriber implements EntitySubscriberInterface<Menu> {
   listenTo() {
@@ -80,7 +80,10 @@ export class MenuSubscriber implements EntitySubscriberInterface<Menu> {
     await event.manager.save(menu);
   }
 
-  private validateMeta(meta: MenuMetaWithAction[], dbMeta?: MenuMeta[]): void {
+  private validateMeta(
+    meta: WithAction<MenuMeta>[],
+    dbMeta?: MenuMeta[],
+  ): void {
     const metaWithIndex = meta.map((m, index) => ({ ...m, index }));
     const errors = {};
     const { IS_UNIQUE, META_TYPE_CANNOT_BE_CHANGED } =

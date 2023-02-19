@@ -1,6 +1,7 @@
 import { Logger } from '@nestjs/common';
 import FieldValidationError from 'src/common/errors/field-validation.error';
-import { MenuMetaType } from 'src/common/types';
+import { InputAction } from 'src/common/schema/enums/input-action.enum';
+import { WithAction, MenuMetaType } from 'src/common/types';
 import {
   EntitySubscriberInterface,
   EventSubscriber,
@@ -59,7 +60,7 @@ export class MenuItemSubscriber implements EntitySubscriberInterface<MenuItem> {
 
   private async validateMenuItem(
     menuItem: MenuItem,
-    siblings: MenuItem[],
+    siblings: WithAction<MenuItem>[],
     index: number,
     isChildren: boolean,
     childrenIndex?: number[],
@@ -71,7 +72,9 @@ export class MenuItemSubscriber implements EntitySubscriberInterface<MenuItem> {
         i.parentId === menuItem.parentId &&
         !siblings.find((s) => s.id === i.id),
     );
-    siblings = [...siblings, ...allSiblings];
+    siblings = [...siblings, ...allSiblings].filter(
+      (s: WithAction<MenuItem>) => s.action !== InputAction.DELETE,
+    );
     if (menuItem.id) siblings = siblings.filter((s) => s.id !== menuItem.id);
     const { IS_UNIQUE } = FieldValidationError.constraints;
     let errors = {};
