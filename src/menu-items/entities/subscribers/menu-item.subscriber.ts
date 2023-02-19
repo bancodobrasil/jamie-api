@@ -138,6 +138,7 @@ export class MenuItemSubscriber implements EntitySubscriberInterface<MenuItem> {
     menu.meta.forEach((m) => {
       if (
         m.required &&
+        m.enabled &&
         m.type !== MenuMetaType.BOOLEAN &&
         !menuItem.meta?.[m.id]
       ) {
