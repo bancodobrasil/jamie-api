@@ -1,4 +1,5 @@
 import { Field, Int, ObjectType } from '@nestjs/graphql';
+import { TemplateFormat } from 'src/common/enums/template-format.enum';
 import { GraphQLJSONObject } from 'src/common/schema/scalars/json.scalar';
 import { IMenuItemMeta } from 'src/common/types';
 import { Menu } from 'src/menus/entities/menu.entity';
@@ -71,5 +72,12 @@ export class MenuItem {
   @Field(() => Date, { nullable: true })
   @Column({ nullable: true })
   endPublication?: Date;
-  
+
+  @Field(() => String, { nullable: true })
+  @Column('text', { nullable: true })
+  template?: string;
+
+  @Field(() => String, { nullable: true })
+  @Column('text', { nullable: true })
+  templateFormat?: TemplateFormat;
 }

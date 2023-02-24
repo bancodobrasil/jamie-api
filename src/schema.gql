@@ -13,6 +13,8 @@ type Menu {
   id: Int!
   name: String!
   meta: [Meta!]!
+  template: String
+  templateFormat: String
   items: [MenuItem!]
 }
 
@@ -44,6 +46,8 @@ type MenuItem {
   enabled: Boolean!
   startPublication: DateTime
   endPublication: DateTime
+  template: String
+  templateFormat: String
 }
 
 """
@@ -100,6 +104,8 @@ input UpdateMenuInput {
   meta: [Meta!]
   id: Int!
   items: [UpdateMenuItemInput!]
+  template: String
+  templateFormat: String
 }
 
 input UpdateMenuItemInput {
@@ -113,4 +119,6 @@ input UpdateMenuItemInput {
   action: String!
   id: Int
   children: [UpdateMenuItemInput!]
+  template: String
+  templateFormat: String
 }

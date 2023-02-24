@@ -8,6 +8,7 @@ import {
   ValidateIf,
   ValidateNested,
 } from 'class-validator';
+import { TemplateFormat } from 'src/common/enums/template-format.enum';
 import { MenuItemAction } from 'src/common/types';
 import { CreateMenuItemInput } from './create-menu-item.input';
 
@@ -34,4 +35,17 @@ export class UpdateMenuItemInput extends PartialType(
   @ValidateNested({ each: true })
   @Type(() => UpdateMenuItemInput)
   children?: UpdateMenuItemInput[];
+
+  @Field(() => String, { nullable: true })
+  @IsOptional()
+  template?: string;
+
+  @Field(() => String, { nullable: true })
+  @ValidateIf(
+    (o, value) =>
+      (o.template !== undefined && o.template !== null) ||
+      (value !== undefined && value !== null),
+  )
+  @IsEnum(TemplateFormat)
+  templateFormat?: TemplateFormat;
 }

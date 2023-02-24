@@ -1,4 +1,5 @@
 import { Field, Int, ObjectType, registerEnumType } from '@nestjs/graphql';
+import { TemplateFormat } from 'src/common/enums/template-format.enum';
 import { Connection } from 'src/common/schema/objects/connection.object';
 import MetaScalar from 'src/common/schema/scalars/meta.scalar';
 import { IMenuMeta } from 'src/common/types';
@@ -21,6 +22,14 @@ export class Menu {
     transformer: { from: JSON.parse, to: JSON.stringify },
   })
   meta: IMenuMeta[];
+
+  @Field(() => String, { nullable: true })
+  @Column('text', { nullable: true })
+  template?: string;
+
+  @Field(() => String, { nullable: true })
+  @Column('text', { nullable: true })
+  templateFormat?: TemplateFormat;
 
   @Field(() => [MenuItem], { nullable: true })
   @OneToMany(() => MenuItem, (menuItem) => menuItem.menu, {
