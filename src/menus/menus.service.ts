@@ -131,6 +131,8 @@ export class MenusService {
       where: { id: input.menuId },
     });
 
+    delete menu.currentRevision;
+
     const items = await this.itemRepository.find({
       where: { menuId: input.menuId },
     });
@@ -146,12 +148,19 @@ export class MenusService {
       id = revisions.sort((a, b) => b.id - a.id)[0].id + 1;
     }
 
-    return this.revisionRepository.save({
+    const currentRevision = await this.revisionRepository.create({
       ...input,
       menu,
       snapshot,
       id,
     });
+
+    await this.menuRepository.save({
+      ...menu,
+      currentRevision,
+    });
+
+    return currentRevision;
   }
 
   async restoreRevision(menuId: number, revisionId: number) {
@@ -177,24 +186,33 @@ export class MenusService {
 
       const { items, ...snapshot } = JSON.parse(revision.snapshot);
 
-      menu = await queryRunner.manager.save(Menu, {
-        ...menu,
-        ...snapshot,
-      });
+      menu = await queryRunner.manager.save(
+        Menu,
+        {
+          ...menu,
+          ...snapshot,
+          currentRevision: revision,
+        },
+        { data: { replaceMeta: true } },
+      );
 
       const itemsWithMenu = items.map((i, index) => {
-        const siblings = items.filter((m2, i2) => i2 !== index);
+        const siblings = items.filter(
+          (m2, i2) => i2 !== index && m2.parentId === i.parentId,
+        );
         return { ...i, menu, index, siblings };
       });
 
-      await queryRunner.manager.save(MenuItem, itemsWithMenu);
+      const savedItems = await queryRunner.manager.save(
+        MenuItem,
+        itemsWithMenu,
+      );
 
       await queryRunner.commitTransaction();
 
-      return this.menuRepository.findOne({
-        where: { id: menuId },
-        relations: ['items'],
-      });
+      menu.items = savedItems;
+
+      return menu;
     } catch (err) {
       await queryRunner.rollbackTransaction();
       throw err;

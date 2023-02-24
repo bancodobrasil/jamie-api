@@ -25,6 +25,10 @@ export class MenuSubscriber implements EntitySubscriberInterface<Menu> {
 
   beforeUpdate(event: UpdateEvent<Menu>): void {
     if (event.entity.meta) {
+      if (event.queryRunner.data.replaceMeta) {
+        this.validateMeta(event.entity.meta);
+        return;
+      }
       this.validateMeta(event.entity.meta, event.databaseEntity.meta);
       const updatedMeta = event.databaseEntity.meta
         .map((dbMeta) => {
