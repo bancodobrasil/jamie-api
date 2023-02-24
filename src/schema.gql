@@ -46,6 +46,7 @@ type Menu {
   templateFormat: String
   items: [MenuItem!]
   revisions: [MenuRevision!]
+  currentRevision: MenuRevision
 }
 
 type MenuConnection {
