@@ -2,6 +2,7 @@ import { Field, InputType, Int } from '@nestjs/graphql';
 import { Type } from 'class-transformer';
 import {
   IsArray,
+  IsBoolean,
   IsDate,
   IsDefined,
   IsObject,
@@ -9,12 +10,12 @@ import {
   Min,
   ValidateNested,
 } from 'class-validator';
+import { InputAction } from 'src/common/schema/enums/input-action.enum';
 import { GraphQLJSONObject } from 'src/common/schema/scalars/json.scalar';
-import { IMenuItemMeta, MenuItemAction } from 'src/common/types';
 
 @InputType()
 export class CreateMenuItemInput {
-  readonly action = MenuItemAction.CREATE;
+  readonly action = InputAction.CREATE;
 
   @Field()
   label: string;
@@ -24,10 +25,10 @@ export class CreateMenuItemInput {
   @Min(1)
   order: number;
 
-  @Field(() => GraphQLJSONObject)
-  @IsDefined()
+  @Field(() => GraphQLJSONObject, { nullable: true })
+  @IsOptional()
   @IsObject()
-  meta: IMenuItemMeta;
+  meta?: Record<string, unknown>;
 
   @Field(() => Int, { nullable: true })
   @IsOptional()
@@ -41,18 +42,17 @@ export class CreateMenuItemInput {
   children?: CreateMenuItemInput[];
 
   @Field(() => Boolean, { nullable: false })
-  @IsOptional()
-  enabled?: boolean;
+  @IsDefined()
+  @IsBoolean()
+  enabled: boolean;
 
   @Field(() => Date, { nullable: true })
   @IsDate()
   @IsOptional()
   startPublication?: Date;
 
-
   @Field(() => Date, { nullable: true })
   @IsDate()
   @IsOptional()
   endPublication?: Date;
-  
 }

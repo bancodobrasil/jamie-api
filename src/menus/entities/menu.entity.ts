@@ -1,8 +1,7 @@
 import { Field, Int, ObjectType, registerEnumType } from '@nestjs/graphql';
 import { TemplateFormat } from 'src/common/enums/template-format.enum';
 import { Connection } from 'src/common/schema/objects/connection.object';
-import MetaScalar from 'src/common/schema/scalars/meta.scalar';
-import { IMenuMeta } from 'src/common/types';
+import { MenuMeta } from 'src/menus/objects/menu-meta.object';
 import { MenuItem } from 'src/menu-items/entities/menu-item.entity';
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
@@ -17,11 +16,12 @@ export class Menu {
   @Column()
   name: string;
 
-  @Field(() => [MetaScalar])
+  @Field(() => [MenuMeta], { nullable: true })
   @Column('text', {
+    nullable: true,
     transformer: { from: JSON.parse, to: JSON.stringify },
   })
-  meta: IMenuMeta[];
+  meta: MenuMeta[];
 
   @Field(() => String, { nullable: true })
   @Column('text', { nullable: true })

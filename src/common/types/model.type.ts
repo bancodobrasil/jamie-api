@@ -1,3 +1,5 @@
+import { InputAction } from '../schema/enums/input-action.enum';
+
 export enum MenuMetaType {
   TEXT = 'text',
   NUMBER = 'number',
@@ -20,18 +22,8 @@ export enum MenuMetaType {
   // OBJECT = 'object',
 }
 
-export interface IMenuMeta {
-  name: string;
-  required: boolean;
-  type: MenuMetaType;
-}
-
 export interface IMenuItemMeta {
-  [key: string]: unknown;
+  [index: number]: unknown;
 }
 
-export enum MenuItemAction {
-  CREATE = 'create',
-  UPDATE = 'update',
-  DELETE = 'delete',
-}
+export type WithAction<T> = T & { action?: InputAction };

@@ -8,9 +8,8 @@ import {
   MinLength,
   ValidateNested,
 } from 'class-validator';
-import MetaScalar from 'src/common/schema/scalars/meta.scalar';
 import { CreateMenuItemInput } from 'src/menu-items/inputs/create-menu-item.input';
-import { MenuMetaInput } from './meta.input';
+import { CreateMenuMetaInput } from './create-menu-meta.input';
 
 @InputType()
 export class CreateMenuInput {
@@ -20,11 +19,12 @@ export class CreateMenuInput {
   @MaxLength(255)
   name: string;
 
-  @Field(() => [MetaScalar])
+  @Field(() => [CreateMenuMetaInput], { nullable: true })
+  @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => MenuMetaInput)
-  meta: MenuMetaInput[];
+  @Type(() => CreateMenuMetaInput)
+  meta?: CreateMenuMetaInput[];
 
   @Field(() => [CreateMenuItemInput], { nullable: true })
   @IsOptional()

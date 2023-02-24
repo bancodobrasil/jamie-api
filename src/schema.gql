@@ -9,19 +9,29 @@ type PageInfo {
   hasNextPage: Boolean!
 }
 
+type MenuMeta {
+  id: Int!
+  name: String!
+  type: String!
+  required: Boolean!
+  order: Int!
+  enabled: Boolean!
+  defaultValue: JSON
+}
+
+"""
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+"""
+scalar JSON
+
 type Menu {
   id: Int!
   name: String!
-  meta: [Meta!]!
+  meta: [MenuMeta!]
   template: String
   templateFormat: String
   items: [MenuItem!]
 }
-
-"""
-The `Meta` scalar type represents a JSON object containing meta data for the menu's items.
-"""
-scalar Meta
 
 type MenuConnection {
   edges: [MenuEdge!]
@@ -38,11 +48,11 @@ type MenuItem {
   id: Int!
   label: String!
   order: Int!
-  meta: JSONObject!
+  meta: JSONObject
   children: [MenuItem!]
   parentId: Int
   menu: Menu!
-  menuId: Int
+  menuId: Int!
   enabled: Boolean!
   startPublication: DateTime
   endPublication: DateTime
@@ -84,14 +94,23 @@ type Mutation {
 
 input CreateMenuInput {
   name: String!
-  meta: [Meta!]!
+  meta: [CreateMenuMetaInput!]
   items: [CreateMenuItemInput!]
+}
+
+input CreateMenuMetaInput {
+  name: String!
+  type: String!
+  required: Boolean!
+  order: Int!
+  enabled: Boolean!
+  defaultValue: JSON
 }
 
 input CreateMenuItemInput {
   label: String!
   order: Int!
-  meta: JSONObject!
+  meta: JSONObject
   parentId: Int
   children: [CreateMenuItemInput!]
   enabled: Boolean!
@@ -101,9 +120,9 @@ input CreateMenuItemInput {
 
 input UpdateMenuInput {
   name: String
-  meta: [Meta!]
   id: Int!
   items: [UpdateMenuItemInput!]
+  meta: [UpdateMenuMetaInput!]
   template: String
   templateFormat: String
 }
@@ -113,12 +132,29 @@ input UpdateMenuItemInput {
   order: Int
   meta: JSONObject
   parentId: Int
-  enabled: Boolean
   startPublication: DateTime
   endPublication: DateTime
-  action: String!
+  action: InputAction!
   id: Int
   children: [UpdateMenuItemInput!]
+  enabled: Boolean
   template: String
   templateFormat: String
+}
+
+enum InputAction {
+  CREATE
+  UPDATE
+  DELETE
+}
+
+input UpdateMenuMetaInput {
+  action: InputAction!
+  id: Int
+  name: String
+  type: String
+  required: Boolean
+  order: Int
+  enabled: Boolean
+  defaultValue: JSON
 }

@@ -3,7 +3,7 @@ import { IsDefined } from 'class-validator';
 import { InputAction } from 'src/common/schema/enums/input-action.enum';
 
 @InputType()
-export class DeleteMenuItemInput {
+export class DeleteMenuMetaInput {
   readonly action = InputAction.DELETE;
 
   @Field(() => Int)

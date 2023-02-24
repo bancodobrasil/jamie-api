@@ -6,8 +6,8 @@ import { CreateMenuItemInput } from './inputs/create-menu-item.input';
 import { MenuItem } from './entities/menu-item.entity';
 import { plainToClass } from 'class-transformer';
 import { UpdateMenuItemInput } from './inputs/update-menu-item.input';
-import { MenuItemAction } from 'src/common/types';
 import { DeleteMenuItemInput } from './inputs/delete-menu-item.input';
+import { InputAction } from 'src/common/schema/enums/input-action.enum';
 
 @Injectable()
 export class MenuItemsService {
@@ -15,13 +15,45 @@ export class MenuItemsService {
     @InjectRepository(MenuItem)
     private menuItemRepository: Repository<MenuItem>,
   ) {}
-  async create(menu: Menu, input: CreateMenuItemInput, manager: EntityManager) {
+  async create(
+    menu: Menu,
+    input: CreateMenuItemInput,
+    manager: EntityManager,
+    index: number,
+    isChildren = false,
+    childrenIndex: number[],
+    siblings: CreateMenuItemInput[],
+  ) {
+    const { children, ...rest } = input;
     const item = manager.getRepository(MenuItem).create({
-      ...input,
-      menu,
+      ...rest,
     });
 
-    return manager.save(item);
+    const saved = await manager.save(MenuItem, {
+      ...item,
+      menu,
+      menuId: menu.id,
+      index,
+      isChildren,
+      childrenIndex,
+      siblings,
+    });
+    if (children?.length) {
+      await Promise.all(
+        children.map(async (child, i) => {
+          child.parentId = saved.id;
+          await this.create(
+            menu,
+            child,
+            manager,
+            index,
+            true,
+            [...childrenIndex, i],
+            children.filter((c, index2) => i !== index2),
+          );
+        }),
+      );
+    }
   }
 
   findAll(query: any) {
@@ -35,28 +67,55 @@ export class MenuItemsService {
     return this.menuItemRepository.findOneBy({ id: id });
   }
 
-  async update(input: UpdateMenuItemInput, manager: EntityManager) {
-    const item = await manager
-      .getRepository(MenuItem)
-      .findOne({ where: { id: input.id } });
-    const children = input.children;
+  async update(
+    menu: Menu,
+    input: UpdateMenuItemInput,
+    manager: EntityManager,
+    index: number,
+    isChildren,
+    childrenIndex: number[],
+    siblings: UpdateMenuItemInput[],
+  ) {
+    const { children } = input;
     delete input.action;
     delete input.children;
-    await manager.update(MenuItem, item.id, input);
+    const item = await manager.save(MenuItem, {
+      ...input,
+      menu,
+      menuId: menu.id,
+      index,
+      isChildren,
+      childrenIndex,
+      siblings,
+    });
     if (children?.length) {
       await Promise.all(
-        children.map(async (child) => {
+        children.map(async (child, i) => {
           switch (child.action) {
-            case MenuItemAction.CREATE:
+            case InputAction.CREATE:
               child.parentId = item.id;
               return this.create(
-                await item.menu,
+                menu,
                 child as CreateMenuItemInput,
                 manager,
+                index,
+                true,
+                [...childrenIndex, i],
+                children.filter(
+                  (c, index2) => i !== index2,
+                ) as CreateMenuItemInput[],
               );
-            case MenuItemAction.UPDATE:
-              return this.update(child as UpdateMenuItemInput, manager);
-            case MenuItemAction.DELETE:
+            case InputAction.UPDATE:
+              return this.update(
+                menu,
+                child as UpdateMenuItemInput,
+                manager,
+                index,
+                true,
+                [...childrenIndex, i],
+                children.filter((c, index2) => i !== index2),
+              );
+            case InputAction.DELETE:
               return this.remove(child as DeleteMenuItemInput, manager);
             default:
               throw new Error('unexpected action');
@@ -74,13 +133,31 @@ export class MenuItemsService {
     menu: Menu,
     input: CreateMenuItemInput | UpdateMenuItemInput | DeleteMenuItemInput,
     manager: EntityManager,
+    index: number,
+    siblings: CreateMenuItemInput[] | UpdateMenuItemInput[],
   ) {
     switch (input.action) {
-      case MenuItemAction.CREATE:
-        return this.create(menu, input as CreateMenuItemInput, manager);
-      case MenuItemAction.UPDATE:
-        return this.update(input as UpdateMenuItemInput, manager);
-      case MenuItemAction.DELETE:
+      case InputAction.CREATE:
+        return this.create(
+          menu,
+          input as CreateMenuItemInput,
+          manager,
+          index,
+          false,
+          [],
+          siblings as CreateMenuItemInput[],
+        );
+      case InputAction.UPDATE:
+        return this.update(
+          menu,
+          input as UpdateMenuItemInput,
+          manager,
+          index,
+          false,
+          [],
+          siblings as UpdateMenuItemInput[],
+        );
+      case InputAction.DELETE:
         return this.remove(input as DeleteMenuItemInput, manager);
       default:
         throw new Error('unexpected action');

@@ -2,6 +2,7 @@ import { Field, InputType, Int, OmitType, PartialType } from '@nestjs/graphql';
 import { Type } from 'class-transformer';
 import {
   IsArray,
+  IsBoolean,
   IsDefined,
   IsEnum,
   IsOptional,
@@ -9,22 +10,21 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { TemplateFormat } from 'src/common/enums/template-format.enum';
-import { MenuItemAction } from 'src/common/types';
+import { InputAction } from 'src/common/schema/enums/input-action.enum';
 import { CreateMenuItemInput } from './create-menu-item.input';
 
 @InputType()
 export class UpdateMenuItemInput extends PartialType(
-  OmitType(CreateMenuItemInput, ['children', 'action']),
+  OmitType(CreateMenuItemInput, ['children', 'action', 'enabled']),
 ) {
-  @Field()
+  @Field(() => InputAction)
   @IsDefined()
-  @IsEnum(MenuItemAction)
-  action: MenuItemAction;
+  @IsEnum(InputAction)
+  action: InputAction;
 
   @Field(() => Int, { nullable: true })
   @ValidateIf(
-    (o) =>
-      o.action === MenuItemAction.UPDATE || o.action === MenuItemAction.DELETE,
+    (o) => o.action === InputAction.UPDATE || o.action === InputAction.DELETE,
   )
   @IsDefined()
   id?: number;
@@ -35,6 +35,12 @@ export class UpdateMenuItemInput extends PartialType(
   @ValidateNested({ each: true })
   @Type(() => UpdateMenuItemInput)
   children?: UpdateMenuItemInput[];
+
+  @Field(() => Boolean, { nullable: true })
+  @ValidateIf((o) => o.action === InputAction.CREATE)
+  @IsDefined()
+  @IsBoolean()
+  enabled?: boolean;
 
   @Field(() => String, { nullable: true })
   @IsOptional()

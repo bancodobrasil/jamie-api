@@ -27,11 +27,12 @@ export class MenuItem {
   @Column()
   order: number;
 
-  @Field(() => GraphQLJSONObject)
+  @Field(() => GraphQLJSONObject, { nullable: true })
   @Column('text', {
+    nullable: true,
     transformer: { from: JSON.parse, to: JSON.stringify },
   })
-  meta: IMenuItemMeta;
+  meta?: IMenuItemMeta;
 
   @Field(() => [MenuItem], { nullable: true })
   @OneToMany(() => MenuItem, (menuItem) => menuItem.parent, {
@@ -40,7 +41,11 @@ export class MenuItem {
   })
   children?: MenuItem[];
 
-  @ManyToOne(() => MenuItem, (menuItem) => menuItem.children, { lazy: true })
+  @ManyToOne(() => MenuItem, (menuItem) => menuItem.children, {
+    lazy: true,
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE',
+  })
   @JoinColumn()
   parent?: MenuItem;
 
@@ -57,8 +62,8 @@ export class MenuItem {
   @JoinColumn()
   menu: Menu;
 
-  @Field(() => Int, { nullable: true })
-  @Column({ nullable: true })
+  @Field(() => Int)
+  @Column()
   menuId?: number;
 
   @Field(() => Boolean, { nullable: false })
