@@ -126,7 +126,7 @@ export class MenusService {
     return updatedMeta.sort((a, b) => a.order - b.order);
   }
 
-  async createRevision(input: CreateMenuRevisionInput) {
+  async createRevision({ setAsCurrent, ...input }: CreateMenuRevisionInput) {
     const menu = await this.menuRepository.findOne({
       where: { id: input.menuId },
     });
@@ -148,19 +148,23 @@ export class MenusService {
       id = revisions.sort((a, b) => b.id - a.id)[0].id + 1;
     }
 
-    const currentRevision = await this.revisionRepository.create({
+    const revision = await this.revisionRepository.create({
       ...input,
       menu,
       snapshot,
       id,
     });
 
-    await this.menuRepository.save({
-      ...menu,
-      currentRevision,
-    });
+    if (setAsCurrent) {
+      await this.menuRepository.save({
+        ...menu,
+        currentRevision: revision,
+      });
+    } else {
+      await this.revisionRepository.save(revision);
+    }
 
-    return currentRevision;
+    return revision;
   }
 
   async restoreRevision(menuId: number, revisionId: number) {

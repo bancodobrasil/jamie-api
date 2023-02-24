@@ -175,4 +175,5 @@ input UpdateMenuMetaInput {
 input CreateMenuRevisionInput {
   menuId: Int!
   description: String!
+  setAsCurrent: Boolean!
 }

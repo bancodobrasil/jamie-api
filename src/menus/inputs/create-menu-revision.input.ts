@@ -1,5 +1,11 @@
 import { Field, InputType, Int } from '@nestjs/graphql';
-import { IsDefined, IsNotEmpty, MaxLength, MinLength } from 'class-validator';
+import {
+  IsBoolean,
+  IsDefined,
+  IsNotEmpty,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 
 @InputType()
 export class CreateMenuRevisionInput {
@@ -12,4 +18,9 @@ export class CreateMenuRevisionInput {
   @MinLength(3)
   @MaxLength(255)
   description: string;
+
+  @Field(() => Boolean)
+  @IsDefined()
+  @IsBoolean()
+  setAsCurrent: boolean;
 }
