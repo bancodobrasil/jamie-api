@@ -54,8 +54,14 @@ export class Menu {
   revisions?: MenuRevision[];
 
   @Field(() => MenuRevision, { nullable: true })
-  @ManyToOne(() => MenuRevision, { nullable: true, eager: true, cascade: true })
-  @JoinColumn({ name: 'current_revision_id', referencedColumnName: 'id' })
+  @ManyToOne(() => MenuRevision, {
+    nullable: true,
+    eager: true,
+    cascade: true,
+    onUpdate: 'CASCADE',
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn()
   currentRevision?: MenuRevision;
 }
 
