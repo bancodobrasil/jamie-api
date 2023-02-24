@@ -24,6 +24,20 @@ The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://
 """
 scalar JSON
 
+type MenuRevision {
+  id: Int!
+  menuId: Int!
+  description: String!
+  snapshot: String!
+  menu: Menu!
+  dateCreated: DateTime!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
 type Menu {
   id: Int!
   name: String!
@@ -31,6 +45,7 @@ type Menu {
   template: String
   templateFormat: String
   items: [MenuItem!]
+  revisions: [MenuRevision!]
 }
 
 type MenuConnection {
@@ -64,11 +79,6 @@ type MenuItem {
 The `JSONObject` scalar type represents JSON objects as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
 """
 scalar JSONObject
-
-"""
-A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
-"""
-scalar DateTime
 
 type Query {
   menus(first: Int, after: String, last: Int, before: String, sort: MenuSort, direction: Direction): MenuConnection!

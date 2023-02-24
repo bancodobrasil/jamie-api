@@ -4,6 +4,7 @@ import { Connection } from 'src/common/schema/objects/connection.object';
 import { MenuMeta } from 'src/menus/objects/menu-meta.object';
 import { MenuItem } from 'src/menu-items/entities/menu-item.entity';
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { MenuRevision } from './menu-revision.entity';
 
 @ObjectType()
 @Entity('menus')
@@ -37,6 +38,13 @@ export class Menu {
     cascade: true,
   })
   items?: MenuItem[];
+
+  @Field(() => [MenuRevision], { nullable: true })
+  @OneToMany(() => MenuRevision, (revision) => revision.menu, {
+    lazy: true,
+    cascade: true,
+  })
+  revisions?: MenuRevision[];
 }
 
 @ObjectType()
