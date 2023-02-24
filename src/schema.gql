@@ -100,6 +100,7 @@ type Mutation {
   createMenu(createMenuInput: CreateMenuInput!): Menu!
   updateMenu(updateMenuInput: UpdateMenuInput!): Menu!
   removeMenu(id: Int!): Boolean!
+  createRevision(createMenuRevisionInput: CreateMenuRevisionInput!): MenuRevision!
 }
 
 input CreateMenuInput {
@@ -167,4 +168,9 @@ input UpdateMenuMetaInput {
   order: Int
   enabled: Boolean
   defaultValue: JSON
+}
+
+input CreateMenuRevisionInput {
+  menuId: Int!
+  description: String!
 }

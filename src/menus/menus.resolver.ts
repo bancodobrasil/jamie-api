@@ -5,6 +5,8 @@ import { CreateMenuInput } from './inputs/create-menu.input';
 import { UpdateMenuInput } from './inputs/update-menu.input';
 import { PaginationArgs } from 'src/common/schema/args/pagination.arg';
 import { FindMenuSortArgs } from './args/find-menu-sort.arg';
+import { MenuRevision } from './entities/menu-revision.entity';
+import { CreateMenuRevisionInput } from './inputs/create-menu-revision.input';
 
 @Resolver(() => Menu)
 export class MenusResolver {
@@ -38,10 +40,11 @@ export class MenusResolver {
     return true;
   }
 
-  // @ResolveField('items', () => [MenuItem])
-  // getItems(@Parent() menu: Menu) {
-  //   //const { id } = menu;
-  //   //return this.menuItemsService.findAll({ menuId: id });
-  //   return menu.items;
-  // }
+  @Mutation(() => MenuRevision)
+  createRevision(
+    @Args('createMenuRevisionInput')
+    createMenuRevisionInput: CreateMenuRevisionInput,
+  ) {
+    return this.menusService.createRevision(createMenuRevisionInput);
+  }
 }

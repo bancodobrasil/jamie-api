@@ -11,6 +11,9 @@ import { paginate } from 'src/common/helpers/paginate.helper';
 import { UpdateMenuMetaInput } from './inputs/update-menu-meta.input';
 import { InputAction } from 'src/common/schema/enums/input-action.enum';
 import { MenuMeta } from './objects/menu-meta.object';
+import { MenuRevision } from './entities/menu-revision.entity';
+import { CreateMenuRevisionInput } from './inputs/create-menu-revision.input';
+import { MenuItem } from 'src/menu-items/entities/menu-item.entity';
 
 @Injectable()
 export class MenusService {
@@ -18,6 +21,10 @@ export class MenusService {
     private dataSource: DataSource,
     @InjectRepository(Menu)
     private menuRepository: Repository<Menu>,
+    @InjectRepository(MenuItem)
+    private itemRepository: Repository<MenuItem>,
+    @InjectRepository(MenuRevision)
+    private revisionRepository: Repository<MenuRevision>,
     private readonly menuItemsService: MenuItemsService,
   ) {}
 
@@ -117,5 +124,33 @@ export class MenusService {
       updatedMeta = [...updatedMeta, ...create];
     }
     return updatedMeta.sort((a, b) => a.order - b.order);
+  }
+
+  async createRevision(input: CreateMenuRevisionInput) {
+    const menu = await this.menuRepository.findOne({
+      where: { id: input.menuId },
+    });
+
+    const items = await this.itemRepository.find({
+      where: { menuId: input.menuId },
+    });
+
+    const snapshot = JSON.stringify({ ...menu, items });
+
+    const revisions = await this.revisionRepository.find({
+      where: { menuId: input.menuId },
+    });
+
+    let id = 1;
+    if (revisions?.length) {
+      id = revisions.sort((a, b) => b.id - a.id)[0].id + 1;
+    }
+
+    return this.revisionRepository.save({
+      ...input,
+      menu,
+      snapshot,
+      id,
+    });
   }
 }
