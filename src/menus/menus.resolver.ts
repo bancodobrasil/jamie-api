@@ -47,4 +47,12 @@ export class MenusResolver {
   ) {
     return this.menusService.createRevision(createMenuRevisionInput);
   }
+
+  @Mutation(() => Menu)
+  restoreRevision(
+    @Args('menuId', { type: () => Int }) menuId: number,
+    @Args('revisionId', { type: () => Int }) revisionId: number,
+  ) {
+    return this.menusService.restoreRevision(menuId, revisionId);
+  }
 }

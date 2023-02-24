@@ -67,11 +67,12 @@ export class MenuItemSubscriber implements EntitySubscriberInterface<MenuItem> {
   ) {
     const menu = await menuItem.menu;
     const items = await menu.items;
-    const allSiblings = items.filter(
-      (i) =>
-        i.parentId === menuItem.parentId &&
-        !siblings.find((s) => s.id === i.id),
-    );
+    const allSiblings =
+      items?.filter(
+        (i) =>
+          i.parentId === menuItem.parentId &&
+          !siblings.find((s) => s.id === i.id),
+      ) || [];
     siblings = [...siblings, ...allSiblings].filter(
       (s: WithAction<MenuItem>) => s.action !== InputAction.DELETE,
     );

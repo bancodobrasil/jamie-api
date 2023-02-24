@@ -153,4 +153,53 @@ export class MenusService {
       id,
     });
   }
+
+  async restoreRevision(menuId: number, revisionId: number) {
+    const queryRunner = this.dataSource.createQueryRunner();
+
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const revision = await queryRunner.manager
+        .getRepository(MenuRevision)
+        .findOne({ where: { menuId, id: revisionId } });
+
+      let menu = await queryRunner.manager
+        .getRepository(Menu)
+        .findOne({ where: { id: menuId } });
+
+      const previousItems = await queryRunner.manager
+        .getRepository(MenuItem)
+        .find({ where: { menuId } });
+
+      await queryRunner.manager.remove(previousItems);
+
+      const { items, ...snapshot } = JSON.parse(revision.snapshot);
+
+      menu = await queryRunner.manager.save(Menu, {
+        ...menu,
+        ...snapshot,
+      });
+
+      const itemsWithMenu = items.map((i, index) => {
+        const siblings = items.filter((m2, i2) => i2 !== index);
+        return { ...i, menu, index, siblings };
+      });
+
+      await queryRunner.manager.save(MenuItem, itemsWithMenu);
+
+      await queryRunner.commitTransaction();
+
+      return this.menuRepository.findOne({
+        where: { id: menuId },
+        relations: ['items'],
+      });
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      throw err;
+    } finally {
+      await queryRunner.release();
+    }
+  }
 }
