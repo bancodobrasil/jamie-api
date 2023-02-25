@@ -64,6 +64,17 @@ export class Menu extends VersionedTimestamped {
   })
   @JoinColumn()
   currentRevision?: MenuRevision;
+
+  @Field(() => MenuRevision, { nullable: true })
+  @ManyToOne(() => MenuRevision, {
+    nullable: true,
+    eager: true,
+    cascade: true,
+    onUpdate: 'CASCADE',
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn()
+  publishedRevision?: MenuRevision;
 }
 
 @ObjectType()

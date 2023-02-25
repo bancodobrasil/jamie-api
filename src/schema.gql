@@ -50,6 +50,7 @@ type Menu {
   items: [MenuItem!]
   revisions: [MenuRevision!]
   currentRevision: MenuRevision
+  publishedRevision: MenuRevision
 }
 
 type MenuConnection {
