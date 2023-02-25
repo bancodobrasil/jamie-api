@@ -143,14 +143,18 @@ export class MenusService {
 
   async createRevision({ setAsCurrent, ...input }: CreateMenuRevisionInput) {
     try {
-      const menu = await this.menuRepository.findOneOrFail({
+      const { id: menuId, ...menu } = await this.menuRepository.findOneOrFail({
         where: { id: input.menuId },
       });
 
       delete menu.currentRevision;
+      delete menu.createdAt;
+      delete menu.updatedAt;
+      delete menu.deletedAt;
+      delete menu.version;
 
       const items = await this.itemRepository.find({
-        where: { menuId: input.menuId },
+        where: { menuId },
       });
 
       const snapshot = JSON.stringify({ ...menu, items });
@@ -166,14 +170,14 @@ export class MenusService {
 
       const revision = await this.revisionRepository.create({
         ...input,
-        menu,
+        menuId,
         snapshot,
         id,
       });
 
       if (setAsCurrent) {
         await this.menuRepository.save({
-          ...menu,
+          id: menuId,
           currentRevision: revision,
         });
       } else {
@@ -196,13 +200,22 @@ export class MenusService {
     await queryRunner.startTransaction();
 
     try {
-      const revision = await queryRunner.manager
-        .getRepository(MenuRevision)
-        .findOne({ where: { menuId, id: revisionId } });
+      let revision;
+      try {
+        revision = await queryRunner.manager
+          .getRepository(MenuRevision)
+          .findOneOrFail({ where: { menuId, id: revisionId } });
+      } catch (err) {
+        throw new EntityNotFoundError(MenuRevision, revisionId);
+      }
 
       let menu = await queryRunner.manager
         .getRepository(Menu)
         .findOneOrFail({ where: { id: menuId } });
+
+      if (menu.currentRevision?.id === revisionId) {
+        return menu;
+      }
 
       const previousItems = await queryRunner.manager
         .getRepository(MenuItem)
