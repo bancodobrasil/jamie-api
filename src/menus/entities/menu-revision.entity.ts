@@ -17,7 +17,7 @@ export class MenuRevision {
 
   @Field(() => Int)
   @PrimaryColumn()
-  menuId?: number;
+  menuId: number;
 
   @Field()
   @Column('text')
