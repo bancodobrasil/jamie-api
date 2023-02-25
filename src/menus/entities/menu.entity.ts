@@ -12,10 +12,11 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { MenuRevision } from './menu-revision.entity';
+import { VersionedTimestamped } from 'src/common/schema/objects/versioned-timestamped.object';
 
 @ObjectType()
 @Entity('menus')
-export class Menu {
+export class Menu extends VersionedTimestamped {
   @Field(() => Int)
   @PrimaryGeneratedColumn()
   id: number;
