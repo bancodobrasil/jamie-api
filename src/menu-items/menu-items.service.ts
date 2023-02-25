@@ -31,7 +31,6 @@ export class MenuItemsService {
 
     const saved = await manager.save(MenuItem, {
       ...item,
-      menu,
       menuId: menu.id,
       index,
       isChildren,
@@ -81,7 +80,6 @@ export class MenuItemsService {
     delete input.children;
     const item = await manager.save(MenuItem, {
       ...input,
-      menu,
       menuId: menu.id,
       index,
       isChildren,
@@ -116,7 +114,7 @@ export class MenuItemsService {
                 children.filter((c, index2) => i !== index2),
               );
             case InputAction.DELETE:
-              return this.remove(child as DeleteMenuItemInput, manager);
+              return this.remove(menu, child as DeleteMenuItemInput, manager);
             default:
               throw new Error('unexpected action');
           }
@@ -125,8 +123,8 @@ export class MenuItemsService {
     }
   }
 
-  async remove(input: DeleteMenuItemInput, manager: EntityManager) {
-    await manager.remove(plainToClass(MenuItem, { ...input }));
+  async remove(menu: Menu, input: DeleteMenuItemInput, manager: EntityManager) {
+    await manager.remove(plainToClass(MenuItem, { ...input, menuId: menu.id }));
   }
 
   handle(
@@ -158,7 +156,7 @@ export class MenuItemsService {
           siblings as UpdateMenuItemInput[],
         );
       case InputAction.DELETE:
-        return this.remove(input as DeleteMenuItemInput, manager);
+        return this.remove(menu, input as DeleteMenuItemInput, manager);
       default:
         throw new Error('unexpected action');
     }

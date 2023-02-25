@@ -2,6 +2,7 @@ import { Logger } from '@nestjs/common';
 import FieldValidationError from 'src/common/errors/field-validation.error';
 import { InputAction } from 'src/common/schema/enums/input-action.enum';
 import { WithAction, MenuMetaType } from 'src/common/types';
+import { Menu } from 'src/menus/entities/menu.entity';
 import {
   EntitySubscriberInterface,
   EventSubscriber,
@@ -19,7 +20,12 @@ export class MenuItemSubscriber implements EntitySubscriberInterface<MenuItem> {
   }
 
   async beforeInsert(event: InsertEvent<MenuItem>) {
-    const { index, isChildren, childrenIndex, siblings } = event.entity as any;
+    const { index, isChildren, childrenIndex, siblings, menuId } =
+      event.entity as any;
+    if (!event.entity.menu) {
+      const menu = await event.manager.findOne(Menu, { where: { id: menuId } });
+      event.entity.menu = menu;
+    }
     await this.validateMenuItem(
       event.entity,
       siblings,
@@ -27,8 +33,9 @@ export class MenuItemSubscriber implements EntitySubscriberInterface<MenuItem> {
       isChildren,
       childrenIndex,
     );
-    event.entity = await this.setMetaIds(event.entity);
+    event.entity = await this.setMeta(event.entity);
     await this.validateMeta(event.entity, index, isChildren, childrenIndex);
+    await this.setId(event.entity);
   }
 
   async afterInsert(event: InsertEvent<MenuItem>): Promise<any> {
@@ -43,9 +50,10 @@ export class MenuItemSubscriber implements EntitySubscriberInterface<MenuItem> {
   }
 
   async beforeUpdate(event: UpdateEvent<MenuItem>) {
-    const { index, isChildren, childrenIndex, siblings } = event.entity;
+    const { index, isChildren, childrenIndex, siblings, menuId } = event.entity;
+    const menu = await event.manager.findOne(Menu, { where: { id: menuId } });
     const { databaseEntity } = event;
-    let menuItem = { ...databaseEntity, ...event.entity };
+    let menuItem = { ...databaseEntity, ...event.entity, menu };
     await this.validateMenuItem(
       menuItem,
       siblings,
@@ -53,9 +61,31 @@ export class MenuItemSubscriber implements EntitySubscriberInterface<MenuItem> {
       isChildren,
       childrenIndex,
     );
-    menuItem = await this.setMetaIds(menuItem);
+    menuItem = await this.setMeta(menuItem);
     event.entity.meta = menuItem.meta;
     await this.validateMeta(menuItem, index, isChildren, childrenIndex);
+  }
+
+  private async setId(menuItem: MenuItem) {
+    if (menuItem.id) return;
+    const menu = await menuItem.menu;
+    const allItems = [];
+    const items = await menu.items;
+    await Promise.all(
+      items.map(async (i) => {
+        const children = await i.children;
+        allItems.push(...[i, ...(children || [])]);
+      }),
+    );
+    let lastId = allItems.reduce((acc, i) => (i.id > acc ? i.id : acc), 0);
+    menuItem.id = ++lastId;
+    const setChildrenId = (children: MenuItem[]) => {
+      children.forEach((c) => {
+        c.id = ++lastId;
+        if (c.children) setChildrenId(c.children);
+      });
+    };
+    if (menuItem.children) setChildrenId(menuItem.children);
   }
 
   private async validateMenuItem(
@@ -115,13 +145,14 @@ export class MenuItemSubscriber implements EntitySubscriberInterface<MenuItem> {
     }
   }
 
-  private async setMetaIds(menuItem: MenuItem): Promise<MenuItem> {
+  private async setMeta(menuItem: MenuItem): Promise<MenuItem> {
     const menu = await menuItem.menu;
     if (!menu.meta?.length) return;
     const meta = {};
     menu.meta.forEach((m) => {
       if (menuItem.meta?.[m.id]) meta[m.id] = menuItem.meta[m.id];
-      if (menuItem.meta?.[m.name]) meta[m.id] = menuItem.meta[m.name];
+      else if (menuItem.meta?.[m.name]) meta[m.id] = menuItem.meta[m.name];
+      else if (m.defaultValue) meta[m.id] = m.defaultValue;
     });
     menuItem.meta = { ...meta };
     return menuItem;
