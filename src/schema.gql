@@ -30,7 +30,7 @@ type MenuRevision {
   description: String!
   snapshot: String!
   menu: Menu!
-  dateCreated: DateTime!
+  createdAt: DateTime!
 }
 
 """

@@ -37,5 +37,5 @@ export class MenuRevision {
 
   @Field(() => Date)
   @CreateDateColumn()
-  dateCreated: Date;
+  createdAt: Date;
 }
