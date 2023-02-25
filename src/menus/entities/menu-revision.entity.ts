@@ -6,6 +6,7 @@ import {
   ManyToOne,
   PrimaryColumn,
 } from 'typeorm';
+import { MenuRevisionSnapshot } from '../objects/menu-revision-snapshot.object';
 import { Menu } from './menu.entity';
 
 @ObjectType()
@@ -23,9 +24,9 @@ export class MenuRevision {
   @Column('text')
   description: string;
 
-  @Field()
-  @Column('text')
-  snapshot: string;
+  @Field(() => MenuRevisionSnapshot)
+  @Column('text', { transformer: { from: JSON.parse, to: JSON.stringify } })
+  snapshot: MenuRevisionSnapshot;
 
   @Field(() => Menu)
   @ManyToOne(() => Menu, (menu) => menu.revisions, {

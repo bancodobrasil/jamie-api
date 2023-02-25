@@ -156,13 +156,13 @@ export class MenusService {
         where: { menuId },
       });
 
-      const snapshot = JSON.stringify({
+      const snapshot = {
         name,
         meta,
         template,
         templateFormat,
         items,
-      });
+      };
 
       const revisions = await this.revisionRepository.find({
         where: { menuId },
@@ -228,7 +228,7 @@ export class MenusService {
 
       await queryRunner.manager.remove(previousItems);
 
-      const { items, ...snapshot } = JSON.parse(revision.snapshot);
+      const { items, ...snapshot } = revision.snapshot;
 
       menu = await queryRunner.manager.save(
         Menu,

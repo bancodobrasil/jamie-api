@@ -24,11 +24,19 @@ The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://
 """
 scalar JSON
 
+type MenuRevisionSnapshot {
+  name: String
+  meta: [MenuMeta!]
+  items: [MenuItem!]
+  template: String
+  templateFormat: String
+}
+
 type MenuRevision {
   id: Int!
   menuId: Int!
   description: String!
-  snapshot: String!
+  snapshot: MenuRevisionSnapshot!
   menu: Menu!
   createdAt: DateTime!
 }
