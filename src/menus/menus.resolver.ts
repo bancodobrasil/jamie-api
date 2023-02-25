@@ -33,11 +33,8 @@ export class MenusResolver {
   }
 
   @Mutation(() => Boolean)
-  async removeMenu(@Args('id', { type: () => Int }) id: number) {
-    //return this.menusService.remove(id);
-    await this.menusService.remove(id);
-
-    return true;
+  removeMenu(@Args('id', { type: () => Int }) id: number) {
+    return this.menusService.remove(id);
   }
 
   @Mutation(() => MenuRevision)

@@ -4,10 +4,10 @@ import { Menu } from 'src/menus/entities/menu.entity';
 import { EntityManager, Repository } from 'typeorm';
 import { CreateMenuItemInput } from './inputs/create-menu-item.input';
 import { MenuItem } from './entities/menu-item.entity';
-import { plainToClass } from 'class-transformer';
 import { UpdateMenuItemInput } from './inputs/update-menu-item.input';
 import { DeleteMenuItemInput } from './inputs/delete-menu-item.input';
 import { InputAction } from 'src/common/schema/enums/input-action.enum';
+import { EntityNotFoundError } from 'src/common/errors/entity-not-found.error';
 
 @Injectable()
 export class MenuItemsService {
@@ -78,6 +78,13 @@ export class MenuItemsService {
     const { children } = input;
     delete input.action;
     delete input.children;
+    try {
+      await manager
+        .getRepository(MenuItem)
+        .findOneOrFail({ where: { id: input.id, menuId: menu.id } });
+    } catch (error) {
+      throw new EntityNotFoundError(MenuItem, input.id);
+    }
     const item = await manager.save(MenuItem, {
       ...input,
       menuId: menu.id,
@@ -124,7 +131,15 @@ export class MenuItemsService {
   }
 
   async remove(menu: Menu, input: DeleteMenuItemInput, manager: EntityManager) {
-    await manager.remove(plainToClass(MenuItem, { ...input, menuId: menu.id }));
+    try {
+      const item = await manager
+        .getRepository(MenuItem)
+        .findOneOrFail({ where: { id: input.id, menuId: menu.id } });
+      await manager.remove(item);
+      return true;
+    } catch (err) {
+      throw new EntityNotFoundError(MenuItem, input.id);
+    }
   }
 
   handle(
