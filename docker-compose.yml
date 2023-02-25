@@ -17,7 +17,8 @@ services:
       MYSQL_DATABASE: 'api'
       MYSQL_USER: 'api'
       MYSQL_PASSWORD: 'api'
-    command: --default-time-zone=America/Sao_Paulo
+      TZ: '+00:00'
+    command: --default-time-zone=+00:00
 
   prometheus:
     image: bitnami/prometheus

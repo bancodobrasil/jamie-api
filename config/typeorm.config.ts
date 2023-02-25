@@ -13,6 +13,7 @@ export const typeOrmConfig: TypeOrmConfig = (configService: ConfigService) => {
     username: configService.get('JAMIE_API_DATABASE_USER'),
     password: configService.get('JAMIE_API_DATABASE_PASSWORD'),
     database: configService.get('JAMIE_API_DATABASE_NAME'),
+    timezone: 'Z',
     entities: [join(__dirname, '..', 'src', '**', '*.entity{.js,.ts}')],
     subscribers: [join(__dirname, '..', 'src', '**', '*.subscriber{.js,.ts}')],
     migrationsRun: true,
