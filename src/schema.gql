@@ -110,6 +110,7 @@ type Mutation {
   removeMenu(id: Int!): Boolean!
   createRevision(createMenuRevisionInput: CreateMenuRevisionInput!): MenuRevision!
   restoreRevision(menuId: Int!, revisionId: Int!): Menu!
+  publishRevision(menuId: Int!, revisionId: Int!): Menu!
 }
 
 input CreateMenuInput {

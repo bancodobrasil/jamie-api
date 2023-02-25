@@ -200,18 +200,22 @@ export class MenusService {
     await queryRunner.startTransaction();
 
     try {
-      let revision;
+      let menu;
       try {
-        revision = await queryRunner.manager
-          .getRepository(MenuRevision)
-          .findOneOrFail({ where: { menuId, id: revisionId } });
+        menu = await queryRunner.manager
+          .getRepository(Menu)
+          .findOneOrFail({ where: { id: menuId } });
       } catch (err) {
-        throw new EntityNotFoundError(MenuRevision, revisionId);
+        throw new EntityNotFoundError(Menu, menuId);
       }
 
-      let menu = await queryRunner.manager
-        .getRepository(Menu)
-        .findOneOrFail({ where: { id: menuId } });
+      if (menu.publishedRevision?.id === revisionId) {
+        return menu;
+      }
+
+      const revision = await queryRunner.manager
+        .getRepository(MenuRevision)
+        .findOneOrFail({ where: { menuId, id: revisionId } });
 
       if (menu.currentRevision?.id === revisionId) {
         return menu;
@@ -255,11 +259,47 @@ export class MenusService {
     } catch (err) {
       await queryRunner.rollbackTransaction();
       if (err instanceof EntityNotFoundErrorTypeOrm) {
-        throw new EntityNotFoundError(Menu, menuId);
+        throw new EntityNotFoundError(MenuRevision, revisionId);
       }
       throw err;
     } finally {
       await queryRunner.release();
+    }
+  }
+
+  async publishRevision(menuId: number, revisionId: number) {
+    try {
+      let menu;
+      try {
+        menu = await this.menuRepository.findOneOrFail({
+          where: { id: menuId },
+          relations: ['items'],
+        });
+      } catch (err) {
+        throw new EntityNotFoundError(Menu, menuId);
+      }
+
+      if (menu.publishedRevision?.id === revisionId) {
+        return menu;
+      }
+
+      const revision = await this.revisionRepository.findOneOrFail({
+        where: { menuId, id: revisionId },
+      });
+
+      // TODO: publish on service
+
+      menu = await this.menuRepository.save({
+        ...menu,
+        publishedRevision: revision,
+      });
+
+      return menu;
+    } catch (err) {
+      if (err instanceof EntityNotFoundErrorTypeOrm) {
+        throw new EntityNotFoundError(MenuRevision, revisionId);
+      }
+      throw err;
     }
   }
 }

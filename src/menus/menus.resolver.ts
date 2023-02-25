@@ -52,4 +52,12 @@ export class MenusResolver {
   ) {
     return this.menusService.restoreRevision(menuId, revisionId);
   }
+
+  @Mutation(() => Menu)
+  publishRevision(
+    @Args('menuId', { type: () => Int }) menuId: number,
+    @Args('revisionId', { type: () => Int }) revisionId: number,
+  ) {
+    return this.menusService.publishRevision(menuId, revisionId);
+  }
 }
