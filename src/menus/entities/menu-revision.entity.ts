@@ -1,4 +1,6 @@
 import { Field, Int, ObjectType } from '@nestjs/graphql';
+import { GraphQLJSONObject } from 'src/common/schema/scalars/json.scalar';
+import { MenuRevisionSnapshot } from 'src/common/types';
 import {
   Column,
   CreateDateColumn,
@@ -6,7 +8,6 @@ import {
   ManyToOne,
   PrimaryColumn,
 } from 'typeorm';
-import { MenuRevisionSnapshot } from '../objects/menu-revision-snapshot.object';
 import { Menu } from './menu.entity';
 
 @ObjectType()
@@ -24,7 +25,7 @@ export class MenuRevision {
   @Column('text')
   description: string;
 
-  @Field(() => MenuRevisionSnapshot)
+  @Field(() => GraphQLJSONObject)
   @Column('text', { transformer: { from: JSON.parse, to: JSON.stringify } })
   snapshot: MenuRevisionSnapshot;
 
