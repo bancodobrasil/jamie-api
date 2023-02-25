@@ -64,6 +64,9 @@ type MenuEdge {
 }
 
 type MenuItem {
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  version: Int!
   id: Int!
   label: String!
   order: Int!
