@@ -141,26 +141,31 @@ export class MenusService {
     return updatedMeta.sort((a, b) => a.order - b.order);
   }
 
-  async createRevision({ setAsCurrent, ...input }: CreateMenuRevisionInput) {
+  async createRevision({
+    setAsCurrent,
+    menuId,
+    description,
+  }: CreateMenuRevisionInput) {
     try {
-      const { id: menuId, ...menu } = await this.menuRepository.findOneOrFail({
-        where: { id: input.menuId },
-      });
-
-      delete menu.currentRevision;
-      delete menu.createdAt;
-      delete menu.updatedAt;
-      delete menu.deletedAt;
-      delete menu.version;
+      const { name, meta, template, templateFormat } =
+        await this.menuRepository.findOneOrFail({
+          where: { id: menuId },
+        });
 
       const items = await this.itemRepository.find({
         where: { menuId },
       });
 
-      const snapshot = JSON.stringify({ ...menu, items });
+      const snapshot = JSON.stringify({
+        name,
+        meta,
+        template,
+        templateFormat,
+        items,
+      });
 
       const revisions = await this.revisionRepository.find({
-        where: { menuId: input.menuId },
+        where: { menuId },
       });
 
       let id = 1;
@@ -169,7 +174,7 @@ export class MenusService {
       }
 
       const revision = await this.revisionRepository.create({
-        ...input,
+        description,
         menuId,
         snapshot,
         id,
@@ -187,7 +192,7 @@ export class MenusService {
       return revision;
     } catch (err) {
       if (err instanceof EntityNotFoundErrorTypeOrm) {
-        throw new EntityNotFoundError(Menu, input.menuId);
+        throw new EntityNotFoundError(Menu, menuId);
       }
       throw err;
     }
