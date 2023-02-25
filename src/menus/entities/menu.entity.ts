@@ -65,6 +65,10 @@ export class Menu extends VersionedTimestamped {
   @JoinColumn()
   currentRevision?: MenuRevision;
 
+  @Field(() => Int, { nullable: true })
+  @Column({ nullable: true })
+  currentRevisionId?: number;
+
   @Field(() => MenuRevision, { nullable: true })
   @ManyToOne(() => MenuRevision, {
     nullable: true,
@@ -75,6 +79,10 @@ export class Menu extends VersionedTimestamped {
   })
   @JoinColumn()
   publishedRevision?: MenuRevision;
+
+  @Field(() => Int, { nullable: true })
+  @Column({ nullable: true })
+  publishedRevisionId?: number;
 }
 
 @ObjectType()

@@ -50,7 +50,9 @@ type Menu {
   items: [MenuItem!]
   revisions: [MenuRevision!]
   currentRevision: MenuRevision
+  currentRevisionId: Int
   publishedRevision: MenuRevision
+  publishedRevisionId: Int
 }
 
 type MenuConnection {
