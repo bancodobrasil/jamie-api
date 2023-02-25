@@ -209,17 +209,13 @@ export class MenusService {
         throw new EntityNotFoundError(Menu, menuId);
       }
 
-      if (menu.publishedRevision?.id === revisionId) {
+      if (menu.currentRevision?.id === revisionId) {
         return menu;
       }
 
       const revision = await queryRunner.manager
         .getRepository(MenuRevision)
         .findOneOrFail({ where: { menuId, id: revisionId } });
-
-      if (menu.currentRevision?.id === revisionId) {
-        return menu;
-      }
 
       const previousItems = await queryRunner.manager
         .getRepository(MenuItem)
