@@ -1,4 +1,5 @@
 import { InputAction } from '../schema/enums/input-action.enum';
+import { PageInfo } from '../schema/objects/page-info.object';
 
 export enum MenuMetaType {
   TEXT = 'text',
@@ -27,3 +28,14 @@ export interface IMenuItemMeta {
 }
 
 export type WithAction<T> = T & { action?: InputAction };
+
+export interface Edge<T> {
+  cursor: string;
+  node: T;
+}
+
+export interface Connection<T> {
+  edges: Edge<T>[];
+  pageInfo: PageInfo;
+  totalCount: number;
+}

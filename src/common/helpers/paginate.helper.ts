@@ -3,9 +3,10 @@ import { PageInfo } from '../schema/objects/page-info.object';
 import { PaginationArgs } from '../schema/args/pagination.arg';
 import { SelectQueryBuilder, MoreThan, LessThan } from 'typeorm';
 import { Direction } from '../schema/enums/direction.enum';
+import { Connection } from '../types';
 
 /**
- * Based on https://gist.github.com/VojtaSim/6b03466f1964a6c81a3dbf1f8cec8d5c
+ * Based on https://gist.github.com/tumainimosha/6652deb0aea172f7f2c4b2077c72d16c
  */
 export async function paginate<T>(
   query: SelectQueryBuilder<T>,
@@ -13,7 +14,7 @@ export async function paginate<T>(
   cursorColumn = 'id',
   direction = Direction.ASC,
   defaultLimit = 25,
-): Promise<any> {
+): Promise<Connection<T>> {
   const logger = new Logger('Pagination');
 
   // pagination ordering
@@ -27,7 +28,7 @@ export async function paginate<T>(
       const offsetId = Number(
         Buffer.from(paginationArgs.after, 'base64').toString('ascii'),
       );
-      logger.verbose(`Paginate AfterID: ${offsetId}`);
+      logger.verbose(`Paginate After ID: ${offsetId}`);
       query.where({ [cursorColumn]: MoreThan(offsetId) });
     }
 
@@ -41,7 +42,7 @@ export async function paginate<T>(
     const offsetId = Number(
       Buffer.from(paginationArgs.before, 'base64').toString('ascii'),
     );
-    logger.verbose(`Paginate BeforeID: ${offsetId}`);
+    logger.verbose(`Paginate Before ID: ${offsetId}`);
 
     const limit = paginationArgs.last ?? defaultLimit;
 
@@ -81,8 +82,8 @@ export async function paginate<T>(
       .getCount();
   }
 
-  logger.debug(`CountBefore:${countBefore}`);
-  logger.debug(`CountAfter:${countAfter}`);
+  logger.verbose(`CountBefore: ${countBefore}`);
+  logger.verbose(`CountAfter: ${countAfter}`);
 
   const edges = result.map((value) => {
     return {
