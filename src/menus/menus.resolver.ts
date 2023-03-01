@@ -5,7 +5,6 @@ import { CreateMenuInput } from './inputs/create-menu.input';
 import { UpdateMenuInput } from './inputs/update-menu.input';
 import { PaginationArgs } from 'src/common/schema/args/pagination.arg';
 import { FindMenuSortArgs } from './args/find-menu-sort.arg';
-import { MenuRevision } from './entities/menu-revision.entity';
 import { CreateMenuRevisionInput } from './inputs/create-menu-revision.input';
 
 @Resolver(() => Menu)
@@ -37,7 +36,7 @@ export class MenusResolver {
     return this.menusService.remove(id);
   }
 
-  @Mutation(() => MenuRevision)
+  @Mutation(() => Menu)
   createRevision(
     @Args('createMenuRevisionInput')
     createMenuRevisionInput: CreateMenuRevisionInput,

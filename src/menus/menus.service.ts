@@ -193,7 +193,10 @@ export class MenusService {
         await this.revisionRepository.save(revision);
       }
 
-      return revision;
+      return this.menuRepository.findOne({
+        where: { id: menuId },
+        relations: ['items', 'revisions'],
+      });
     } catch (err) {
       if (err instanceof EntityNotFoundErrorTypeOrm) {
         throw new EntityNotFoundError(Menu, menuId);
