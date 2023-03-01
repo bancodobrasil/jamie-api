@@ -60,7 +60,11 @@ export class MenusService {
   }
 
   findOne(id: number) {
-    return this.menuRepository.findOneBy({ id: id });
+    try {
+      return this.menuRepository.findOneByOrFail({ id: id });
+    } catch (err) {
+      throw new EntityNotFoundError(Menu, id);
+    }
   }
 
   async update(id: number, updateMenuInput: UpdateMenuInput) {
