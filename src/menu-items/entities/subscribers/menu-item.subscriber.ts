@@ -147,7 +147,7 @@ export class MenuItemSubscriber implements EntitySubscriberInterface<MenuItem> {
 
   private async setMeta(menuItem: MenuItem): Promise<MenuItem> {
     const menu = await menuItem.menu;
-    if (!menu.meta?.length) return;
+    if (!menu.meta?.length) return menuItem;
     const meta = {};
     menu.meta.forEach((m) => {
       if (menuItem.meta?.[m.id]) meta[m.id] = menuItem.meta[m.id];

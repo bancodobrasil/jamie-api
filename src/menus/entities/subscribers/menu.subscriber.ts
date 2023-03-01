@@ -23,7 +23,7 @@ export class MenuSubscriber implements EntitySubscriberInterface<Menu> {
     }
   }
 
-  beforeUpdate(event: UpdateEvent<Menu>): void {
+  async beforeUpdate(event: UpdateEvent<Menu>): Promise<void> {
     if (event.entity.meta) {
       if (event.queryRunner.data.replaceMeta) {
         this.validateMeta(event.entity.meta);
@@ -37,6 +37,9 @@ export class MenuSubscriber implements EntitySubscriberInterface<Menu> {
           return { ...dbMeta, ...meta };
         })
         .filter((m) => m.action !== InputAction.DELETE);
+      const deletedMeta = event.entity.meta.filter(
+        (m) => m.action === InputAction.DELETE,
+      );
       const newMeta = event.entity.meta
         .filter((m) => m.action === InputAction.CREATE)
         .map((m) => {
@@ -44,6 +47,28 @@ export class MenuSubscriber implements EntitySubscriberInterface<Menu> {
           return m;
         });
       event.entity.meta = [...updatedMeta, ...newMeta];
+      const items = await event.databaseEntity.items;
+      if (items?.length) {
+        Promise.all(
+          items.map(async (item: any, index) => {
+            if (item.meta) {
+              item.meta = Object.keys(item.meta)
+                .filter(
+                  (metaId) => !deletedMeta.find((m) => m.id === Number(metaId)),
+                )
+                .reduce((acc, metaId) => {
+                  acc[metaId] = item.meta[metaId];
+                  return acc;
+                }, {});
+            }
+            item.index = index;
+            item.siblings = items.filter(
+              (i, index2) => index !== index2 && i.parentId === item.parentId,
+            );
+            await event.manager.save(MenuItem, item);
+          }),
+        );
+      }
     }
   }
 
