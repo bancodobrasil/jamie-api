@@ -256,7 +256,10 @@ export class MenusService {
 
       menu.items = savedItems;
 
-      return menu;
+      return this.menuRepository.findOne({
+        where: { id: menu.id },
+        relations: ['items', 'revisions'],
+      });
     } catch (err) {
       await queryRunner.rollbackTransaction();
       if (err instanceof EntityNotFoundErrorTypeOrm) {
@@ -295,7 +298,10 @@ export class MenusService {
         publishedRevision: revision,
       });
 
-      return menu;
+      return this.menuRepository.findOne({
+        where: { id: menu.id },
+        relations: ['items', 'revisions'],
+      });
     } catch (err) {
       if (err instanceof EntityNotFoundErrorTypeOrm) {
         throw new EntityNotFoundError(MenuRevision, revisionId);
