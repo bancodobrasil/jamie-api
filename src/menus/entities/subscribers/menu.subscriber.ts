@@ -115,8 +115,11 @@ export class MenuSubscriber implements EntitySubscriberInterface<Menu> {
   ): void {
     const metaWithIndex = meta.map((m, index) => ({ ...m, index }));
     const errors = {};
-    const { IS_UNIQUE, META_TYPE_CANNOT_BE_CHANGED } =
-      FieldValidationError.constraints;
+    const {
+      IS_UNIQUE,
+      META_TYPE_CANNOT_BE_CHANGED,
+      META_DEFAULT_VALUE_REQUIRED,
+    } = FieldValidationError.constraints;
     // Check if ids are unique
     metaWithIndex
       .filter((m) => {
@@ -260,6 +263,23 @@ export class MenuSubscriber implements EntitySubscriberInterface<Menu> {
                 `Menu meta types cannot be changed. Found changed type: ${m.type}`,
               ],
               constraints: [META_TYPE_CANNOT_BE_CHANGED],
+            },
+          };
+        });
+      // Check if default value is set when required
+      metaWithIndex
+        .filter((m) => {
+          const dbMetaItem = dbMeta.find((m2) => m2.id === m.id);
+          const required =
+            m.required !== undefined ? m.required : dbMetaItem.required;
+          return dbMetaItem && required && !m.defaultValue;
+        })
+        .forEach((m) => {
+          errors[`meta[${m.index}]`] = {
+            ...errors[`meta[${m.index}]`],
+            defaultValue: {
+              errors: [`Menu meta default value must be set when required.`],
+              constraints: [META_DEFAULT_VALUE_REQUIRED],
             },
           };
         });
