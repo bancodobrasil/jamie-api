@@ -23,8 +23,12 @@ export class MenuSubscriber implements EntitySubscriberInterface<Menu> {
     }
   }
 
-  beforeUpdate(event: UpdateEvent<Menu>): void {
+  async beforeUpdate(event: UpdateEvent<Menu>): Promise<void> {
     if (event.entity.meta) {
+      if (event.queryRunner.data.replaceMeta) {
+        this.validateMeta(event.entity.meta);
+        return;
+      }
       this.validateMeta(event.entity.meta, event.databaseEntity.meta);
       const updatedMeta = event.databaseEntity.meta
         .map((dbMeta) => {
@@ -33,6 +37,9 @@ export class MenuSubscriber implements EntitySubscriberInterface<Menu> {
           return { ...dbMeta, ...meta };
         })
         .filter((m) => m.action !== InputAction.DELETE);
+      const deletedMeta = event.entity.meta.filter(
+        (m) => m.action === InputAction.DELETE,
+      );
       const newMeta = event.entity.meta
         .filter((m) => m.action === InputAction.CREATE)
         .map((m) => {
@@ -40,6 +47,28 @@ export class MenuSubscriber implements EntitySubscriberInterface<Menu> {
           return m;
         });
       event.entity.meta = [...updatedMeta, ...newMeta];
+      const items = await event.databaseEntity.items;
+      if (items?.length) {
+        Promise.all(
+          items.map(async (item: any, index) => {
+            if (item.meta) {
+              item.meta = Object.keys(item.meta)
+                .filter(
+                  (metaId) => !deletedMeta.find((m) => m.id === Number(metaId)),
+                )
+                .reduce((acc, metaId) => {
+                  acc[metaId] = item.meta[metaId];
+                  return acc;
+                }, {});
+            }
+            item.index = index;
+            item.siblings = items.filter(
+              (i, index2) => index !== index2 && i.parentId === item.parentId,
+            );
+            await event.manager.save(MenuItem, item);
+          }),
+        );
+      }
     }
   }
 
@@ -86,8 +115,11 @@ export class MenuSubscriber implements EntitySubscriberInterface<Menu> {
   ): void {
     const metaWithIndex = meta.map((m, index) => ({ ...m, index }));
     const errors = {};
-    const { IS_UNIQUE, META_TYPE_CANNOT_BE_CHANGED } =
-      FieldValidationError.constraints;
+    const {
+      IS_UNIQUE,
+      META_TYPE_CANNOT_BE_CHANGED,
+      META_DEFAULT_VALUE_REQUIRED,
+    } = FieldValidationError.constraints;
     // Check if ids are unique
     metaWithIndex
       .filter((m) => {
@@ -231,6 +263,23 @@ export class MenuSubscriber implements EntitySubscriberInterface<Menu> {
                 `Menu meta types cannot be changed. Found changed type: ${m.type}`,
               ],
               constraints: [META_TYPE_CANNOT_BE_CHANGED],
+            },
+          };
+        });
+      // Check if default value is set when required
+      metaWithIndex
+        .filter((m) => {
+          const dbMetaItem = dbMeta.find((m2) => m2.id === m.id);
+          const required =
+            m.required !== undefined ? m.required : dbMetaItem.required;
+          return dbMetaItem && required && !m.defaultValue;
+        })
+        .forEach((m) => {
+          errors[`meta[${m.index}]`] = {
+            ...errors[`meta[${m.index}]`],
+            defaultValue: {
+              errors: [`Menu meta default value must be set when required.`],
+              constraints: [META_DEFAULT_VALUE_REQUIRED],
             },
           };
         });

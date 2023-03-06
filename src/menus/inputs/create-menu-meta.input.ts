@@ -4,9 +4,9 @@ import {
   IsDefined,
   IsEnum,
   IsNotEmpty,
-  IsOptional,
   MaxLength,
   MinLength,
+  ValidateIf,
 } from 'class-validator';
 import { InputAction } from 'src/common/schema/enums/input-action.enum';
 import GraphQLJSON from 'src/common/schema/scalars/json.scalar';
@@ -41,6 +41,8 @@ export class CreateMenuMetaInput {
   enabled: boolean;
 
   @Field(() => GraphQLJSON, { nullable: true })
-  @IsOptional()
+  @ValidateIf((o) => o.required)
+  @IsDefined()
+  @IsNotEmpty()
   defaultValue?: any;
 }

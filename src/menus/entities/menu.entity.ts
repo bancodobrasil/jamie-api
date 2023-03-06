@@ -3,11 +3,20 @@ import { TemplateFormat } from 'src/common/enums/template-format.enum';
 import { Connection } from 'src/common/schema/objects/connection.object';
 import { MenuMeta } from 'src/menus/objects/menu-meta.object';
 import { MenuItem } from 'src/menu-items/entities/menu-item.entity';
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+import { MenuRevision } from './menu-revision.entity';
+import { VersionedTimestamped } from 'src/common/schema/objects/versioned-timestamped.object';
 
 @ObjectType()
 @Entity('menus')
-export class Menu {
+export class Menu extends VersionedTimestamped {
   @Field(() => Int)
   @PrimaryGeneratedColumn()
   id: number;
@@ -37,6 +46,43 @@ export class Menu {
     cascade: true,
   })
   items?: MenuItem[];
+
+  @Field(() => [MenuRevision], { nullable: true })
+  @OneToMany(() => MenuRevision, (revision) => revision.menu, {
+    lazy: true,
+    cascade: true,
+  })
+  revisions?: MenuRevision[];
+
+  @Field(() => MenuRevision, { nullable: true })
+  @ManyToOne(() => MenuRevision, {
+    nullable: true,
+    eager: true,
+    cascade: true,
+    onUpdate: 'CASCADE',
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn()
+  currentRevision?: MenuRevision;
+
+  @Field(() => Int, { nullable: true })
+  @Column({ nullable: true })
+  currentRevisionId?: number;
+
+  @Field(() => MenuRevision, { nullable: true })
+  @ManyToOne(() => MenuRevision, {
+    nullable: true,
+    eager: true,
+    cascade: true,
+    onUpdate: 'CASCADE',
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn()
+  publishedRevision?: MenuRevision;
+
+  @Field(() => Int, { nullable: true })
+  @Column({ nullable: true })
+  publishedRevisionId?: number;
 }
 
 @ObjectType()

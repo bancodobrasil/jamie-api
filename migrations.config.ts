@@ -15,6 +15,7 @@ export default new DataSource({
   username: configService.get('JAMIE_API_DATABASE_USER'),
   password: configService.get('JAMIE_API_DATABASE_PASSWORD'),
   database: configService.get('JAMIE_API_DATABASE_NAME'),
+  timezone: 'Z',
   entities: [join(__dirname, 'dist', 'src', '**', '*.entity.js')],
   migrations: [join(__dirname, 'dist', 'migrations', '*.js')],
   namingStrategy: new SnakeNamingStrategy(),

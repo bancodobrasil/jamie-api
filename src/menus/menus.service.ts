@@ -1,7 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MenuItemsService } from 'src/menu-items/menu-items.service';
-import { DataSource, Repository } from 'typeorm';
+import {
+  DataSource,
+  EntityNotFoundError as EntityNotFoundErrorTypeOrm,
+  Repository,
+} from 'typeorm';
 import { CreateMenuInput } from './inputs/create-menu.input';
 import { UpdateMenuInput } from './inputs/update-menu.input';
 import { Menu } from './entities/menu.entity';
@@ -11,6 +15,10 @@ import { paginate } from 'src/common/helpers/paginate.helper';
 import { UpdateMenuMetaInput } from './inputs/update-menu-meta.input';
 import { InputAction } from 'src/common/schema/enums/input-action.enum';
 import { MenuMeta } from './objects/menu-meta.object';
+import { MenuRevision } from './entities/menu-revision.entity';
+import { CreateMenuRevisionInput } from './inputs/create-menu-revision.input';
+import { MenuItem } from 'src/menu-items/entities/menu-item.entity';
+import { EntityNotFoundError } from 'src/common/errors/entity-not-found.error';
 
 @Injectable()
 export class MenusService {
@@ -18,6 +26,10 @@ export class MenusService {
     private dataSource: DataSource,
     @InjectRepository(Menu)
     private menuRepository: Repository<Menu>,
+    @InjectRepository(MenuItem)
+    private itemRepository: Repository<MenuItem>,
+    @InjectRepository(MenuRevision)
+    private revisionRepository: Repository<MenuRevision>,
     private readonly menuItemsService: MenuItemsService,
   ) {}
 
@@ -48,7 +60,11 @@ export class MenusService {
   }
 
   findOne(id: number) {
-    return this.menuRepository.findOneBy({ id: id });
+    try {
+      return this.menuRepository.findOneByOrFail({ id: id });
+    } catch (err) {
+      throw new EntityNotFoundError(Menu, id);
+    }
   }
 
   async update(id: number, updateMenuInput: UpdateMenuInput) {
@@ -58,25 +74,26 @@ export class MenusService {
     await queryRunner.startTransaction();
 
     try {
-      const { meta, ...rest } = updateMenuInput;
+      const { meta, items, ...rest } = updateMenuInput;
       const menu = await queryRunner.manager
         .getRepository(Menu)
-        .preload({ id, ...rest });
+        .findOneOrFail({ where: { id } });
+      Object.assign(menu, rest);
 
       const updatedMeta = this.handleMeta(menu, meta);
       menu.meta = updatedMeta as MenuMeta[];
 
       const saved = await queryRunner.manager.save(menu);
 
-      if (updateMenuInput.items) {
+      if (items) {
         await Promise.all(
-          updateMenuInput.items.map((mii, i) =>
+          items.map((mii, i) =>
             this.menuItemsService.handle(
               saved,
               mii,
               queryRunner.manager,
               i,
-              updateMenuInput.items.filter((m2, i2) => i2 !== i),
+              items.filter((m2, i2) => i2 !== i),
             ),
           ),
         );
@@ -90,14 +107,23 @@ export class MenusService {
       });
     } catch (err) {
       await queryRunner.rollbackTransaction();
+      if (err instanceof EntityNotFoundErrorTypeOrm) {
+        throw new EntityNotFoundError(Menu, id);
+      }
       throw err;
     } finally {
       await queryRunner.release();
     }
   }
 
-  remove(id: number) {
-    return this.menuRepository.delete(id);
+  async remove(id: number) {
+    try {
+      const menu = await this.menuRepository.findOneOrFail({ where: { id } });
+      await this.menuRepository.remove(menu);
+      return true;
+    } catch (err) {
+      throw new EntityNotFoundError(Menu, id);
+    }
   }
 
   handleMeta(menu: Menu, input?: UpdateMenuMetaInput[]) {
@@ -117,5 +143,173 @@ export class MenusService {
       updatedMeta = [...updatedMeta, ...create];
     }
     return updatedMeta.sort((a, b) => a.order - b.order);
+  }
+
+  async createRevision({
+    setAsCurrent,
+    menuId,
+    description,
+  }: CreateMenuRevisionInput) {
+    try {
+      const { name, meta, template, templateFormat } =
+        await this.menuRepository.findOneOrFail({
+          where: { id: menuId },
+        });
+
+      const items = await this.itemRepository.find({
+        where: { menuId },
+      });
+
+      const snapshot = {
+        name,
+        meta,
+        template,
+        templateFormat,
+        items,
+      };
+
+      const revisions = await this.revisionRepository.find({
+        where: { menuId },
+      });
+
+      let id = 1;
+      if (revisions?.length) {
+        id = revisions.sort((a, b) => b.id - a.id)[0].id + 1;
+      }
+
+      const revision = await this.revisionRepository.create({
+        description,
+        menuId,
+        snapshot,
+        id,
+      });
+
+      if (setAsCurrent) {
+        await this.menuRepository.save({
+          id: menuId,
+          currentRevision: revision,
+        });
+      } else {
+        await this.revisionRepository.save(revision);
+      }
+
+      return this.menuRepository.findOne({
+        where: { id: menuId },
+        relations: ['items', 'revisions'],
+      });
+    } catch (err) {
+      if (err instanceof EntityNotFoundErrorTypeOrm) {
+        throw new EntityNotFoundError(Menu, menuId);
+      }
+      throw err;
+    }
+  }
+
+  async restoreRevision(menuId: number, revisionId: number) {
+    const queryRunner = this.dataSource.createQueryRunner();
+
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      let menu;
+      try {
+        menu = await queryRunner.manager
+          .getRepository(Menu)
+          .findOneOrFail({ where: { id: menuId } });
+      } catch (err) {
+        throw new EntityNotFoundError(Menu, menuId);
+      }
+
+      const revision = await queryRunner.manager
+        .getRepository(MenuRevision)
+        .findOneOrFail({ where: { menuId, id: revisionId } });
+
+      const previousItems = await queryRunner.manager
+        .getRepository(MenuItem)
+        .find({ where: { menuId } });
+
+      await queryRunner.manager.remove(previousItems);
+
+      const { items, ...snapshot } = revision.snapshot;
+
+      menu = await queryRunner.manager.save(
+        Menu,
+        {
+          ...menu,
+          ...snapshot,
+          currentRevision: revision,
+        },
+        { data: { replaceMeta: true } },
+      );
+
+      const itemsWithMenu = items.map((i, index) => {
+        const siblings = items.filter(
+          (m2, i2) => i2 !== index && m2.parentId === i.parentId,
+        );
+        return { ...i, menu, index, siblings };
+      });
+
+      const savedItems = await queryRunner.manager.save(
+        MenuItem,
+        itemsWithMenu,
+      );
+
+      await queryRunner.commitTransaction();
+
+      menu.items = savedItems;
+
+      return this.menuRepository.findOne({
+        where: { id: menu.id },
+        relations: ['items', 'revisions'],
+      });
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      if (err instanceof EntityNotFoundErrorTypeOrm) {
+        throw new EntityNotFoundError(MenuRevision, revisionId);
+      }
+      throw err;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  async publishRevision(menuId: number, revisionId: number) {
+    try {
+      let menu;
+      try {
+        menu = await this.menuRepository.findOneOrFail({
+          where: { id: menuId },
+          relations: ['items'],
+        });
+      } catch (err) {
+        throw new EntityNotFoundError(Menu, menuId);
+      }
+
+      if (menu.publishedRevision?.id === revisionId) {
+        return menu;
+      }
+
+      const revision = await this.revisionRepository.findOneOrFail({
+        where: { menuId, id: revisionId },
+      });
+
+      // TODO: publish on service
+
+      menu = await this.menuRepository.save({
+        ...menu,
+        publishedRevision: revision,
+      });
+
+      return this.menuRepository.findOne({
+        where: { id: menu.id },
+        relations: ['items', 'revisions'],
+      });
+    } catch (err) {
+      if (err instanceof EntityNotFoundErrorTypeOrm) {
+        throw new EntityNotFoundError(MenuRevision, revisionId);
+      }
+      throw err;
+    }
   }
 }

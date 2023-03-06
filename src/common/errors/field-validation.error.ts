@@ -57,6 +57,7 @@ class FieldValidationError extends GraphQLError {
     IS_UNIQUE: 'isUnique',
     // Menu Meta
     META_TYPE_CANNOT_BE_CHANGED: 'metaTypeCannotBeChanged',
+    META_DEFAULT_VALUE_REQUIRED: 'metaDefaultValueRequired',
     // Menu Item Meta
     META_REQUIRED: 'metaRequired',
   };

@@ -56,7 +56,8 @@ export class UpdateMenuMetaInput {
   enabled?: boolean;
 
   @Field(() => GraphQLJSON, { nullable: true })
-  @ValidateIf((o) => o.action === InputAction.UPDATE && o.required)
+  @ValidateIf((o) => o.required)
   @IsDefined()
+  @IsNotEmpty()
   defaultValue?: any;
 }

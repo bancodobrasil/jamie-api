@@ -1,4 +1,7 @@
+import { MenuItem } from 'src/menu-items/entities/menu-item.entity';
+import { MenuMeta } from 'src/menus/objects/menu-meta.object';
 import { InputAction } from '../schema/enums/input-action.enum';
+import { PageInfo } from '../schema/objects/page-info.object';
 
 export enum MenuMetaType {
   TEXT = 'text',
@@ -26,4 +29,23 @@ export interface IMenuItemMeta {
   [index: number]: unknown;
 }
 
+export interface MenuRevisionSnapshot {
+  name: string;
+  meta?: MenuMeta[];
+  items?: MenuItem[];
+  template?: string;
+  templateFormat?: string;
+}
+
 export type WithAction<T> = T & { action?: InputAction };
+
+export interface Edge<T> {
+  cursor: string;
+  node: T;
+}
+
+export interface Connection<T> {
+  edges: Edge<T>[];
+  pageInfo: PageInfo;
+  totalCount: number;
+}

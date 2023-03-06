@@ -1,5 +1,6 @@
 import { Field, Int, ObjectType } from '@nestjs/graphql';
 import { TemplateFormat } from 'src/common/enums/template-format.enum';
+import { VersionedTimestamped } from 'src/common/schema/objects/versioned-timestamped.object';
 import { GraphQLJSONObject } from 'src/common/schema/scalars/json.scalar';
 import { IMenuItemMeta } from 'src/common/types';
 import { Menu } from 'src/menus/entities/menu.entity';
@@ -9,14 +10,14 @@ import {
   JoinColumn,
   ManyToOne,
   OneToMany,
-  PrimaryGeneratedColumn,
+  PrimaryColumn,
 } from 'typeorm';
 
 @ObjectType()
 @Entity('menu_items')
-export class MenuItem {
+export class MenuItem extends VersionedTimestamped {
   @Field(() => Int)
-  @PrimaryGeneratedColumn()
+  @PrimaryColumn()
   id: number;
 
   @Field()
@@ -63,7 +64,7 @@ export class MenuItem {
   menu: Menu;
 
   @Field(() => Int)
-  @Column()
+  @PrimaryColumn()
   menuId?: number;
 
   @Field(() => Boolean, { nullable: false })
