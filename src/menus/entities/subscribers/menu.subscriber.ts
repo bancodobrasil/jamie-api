@@ -10,6 +10,7 @@ import {
   UpdateEvent,
 } from 'typeorm';
 import { Menu } from '../menu.entity';
+import { v4 } from 'uuid';
 
 @EventSubscriber()
 export class MenuSubscriber implements EntitySubscriberInterface<Menu> {
@@ -17,10 +18,17 @@ export class MenuSubscriber implements EntitySubscriberInterface<Menu> {
     return Menu;
   }
 
-  beforeInsert(event: InsertEvent<Menu>): void {
+  async beforeInsert(event: InsertEvent<Menu>): Promise<void> {
     if (event.entity.meta) {
       this.validateMeta(event.entity.meta);
     }
+    let uuid = v4();
+    let existing = await event.manager.findOne(Menu, { where: { uuid } });
+    while (existing) {
+      uuid = v4();
+      existing = await event.manager.findOne(Menu, { where: { uuid } });
+    }
+    event.entity.uuid = uuid;
   }
 
   async beforeUpdate(event: UpdateEvent<Menu>): Promise<void> {
