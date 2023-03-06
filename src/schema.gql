@@ -48,6 +48,7 @@ type Menu {
   updatedAt: DateTime!
   version: Int!
   id: Int!
+  uuid: ID!
   name: String!
   meta: [MenuMeta!]
   template: String

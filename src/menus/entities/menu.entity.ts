@@ -1,4 +1,4 @@
-import { Field, Int, ObjectType, registerEnumType } from '@nestjs/graphql';
+import { Field, ID, Int, ObjectType, registerEnumType } from '@nestjs/graphql';
 import { TemplateFormat } from 'src/common/enums/template-format.enum';
 import { Connection } from 'src/common/schema/objects/connection.object';
 import { MenuMeta } from 'src/menus/objects/menu-meta.object';
@@ -6,6 +6,7 @@ import { MenuItem } from 'src/menu-items/entities/menu-item.entity';
 import {
   Column,
   Entity,
+  Generated,
   JoinColumn,
   ManyToOne,
   OneToMany,
@@ -20,6 +21,11 @@ export class Menu extends VersionedTimestamped {
   @Field(() => Int)
   @PrimaryGeneratedColumn()
   id: number;
+
+  @Field(() => ID)
+  @Column({ unique: true })
+  @Generated('uuid')
+  uuid: string;
 
   @Field()
   @Column()
