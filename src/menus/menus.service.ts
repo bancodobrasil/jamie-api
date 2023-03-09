@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { get } from 'env-var';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MenuItemsService } from 'src/menu-items/menu-items.service';
 import {
@@ -19,6 +20,8 @@ import { MenuRevision } from './entities/menu-revision.entity';
 import { CreateMenuRevisionInput } from './inputs/create-menu-revision.input';
 import { MenuItem } from 'src/menu-items/entities/menu-item.entity';
 import { EntityNotFoundError } from 'src/common/errors/entity-not-found.error';
+import { Client } from 'minio';
+import { storeConfig } from '../../config/store.config';
 
 @Injectable()
 export class MenusService {
@@ -294,7 +297,11 @@ export class MenusService {
         where: { menuId, id: revisionId },
       });
 
-      // TODO: publish on service
+      const rendered = await this.renderMenu(revision.menu);
+
+      await this.persistOnStore(menu.uuid, `${revisionId}`, rendered);
+
+      await this.persistOnStore(menu.uuid, 'current', rendered);
 
       menu = await this.menuRepository.save({
         ...menu,
@@ -311,5 +318,25 @@ export class MenusService {
       }
       throw err;
     }
+  }
+
+  async persistOnStore(uuid: string, revisionId: string, content: string) {
+    const cfg = storeConfig();
+    if (cfg.target == 's3') {
+      const minioClient = new Client(cfg.s3);
+
+      await minioClient.putObject(
+        cfg.s3.bucket,
+        `${uuid}/${revisionId}.jamie`,
+        content,
+      );
+      return;
+    }
+
+    throw new Error('wrong store target');
+  }
+
+  async renderMenu(menu: Menu) {
+    return '{}';
   }
 }
