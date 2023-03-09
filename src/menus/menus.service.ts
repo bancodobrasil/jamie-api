@@ -297,11 +297,11 @@ export class MenusService {
         where: { menuId, id: revisionId },
       });
 
-      const rendered = await this.renderMenu(revision.snapshot as Menu);
+      const content = await this.renderMenu(revision.snapshot as Menu);
 
-      await this.persistOnStore(menu.uuid, `${revisionId}`, rendered);
+      await this.persistOnStore(menu.uuid, `${revisionId}`, content);
 
-      await this.persistOnStore(menu.uuid, 'current', rendered);
+      await this.persistOnStore(menu.uuid, 'current', content);
 
       menu = await this.menuRepository.save({
         ...menu,
