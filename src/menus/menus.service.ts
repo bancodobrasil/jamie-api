@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { render } from 'ejs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MenuItemsService } from 'src/menu-items/menu-items.service';
 import {
@@ -19,6 +20,8 @@ import { MenuRevision } from './entities/menu-revision.entity';
 import { CreateMenuRevisionInput } from './inputs/create-menu-revision.input';
 import { MenuItem } from 'src/menu-items/entities/menu-item.entity';
 import { EntityNotFoundError } from 'src/common/errors/entity-not-found.error';
+import { Client } from 'minio';
+import { storeConfig } from '../../config/store.config';
 
 @Injectable()
 export class MenusService {
@@ -294,7 +297,11 @@ export class MenusService {
         where: { menuId, id: revisionId },
       });
 
-      // TODO: publish on service
+      const content = await this.renderMenu(revision.snapshot as Menu);
+
+      await this.persistOnStore(menu.uuid, `${revisionId}`, content);
+
+      await this.persistOnStore(menu.uuid, 'current', content);
 
       menu = await this.menuRepository.save({
         ...menu,
@@ -310,6 +317,96 @@ export class MenusService {
         throw new EntityNotFoundError(MenuRevision, revisionId);
       }
       throw err;
+    }
+  }
+
+  async persistOnStore(uuid: string, revisionId: string, content: string) {
+    const cfg = storeConfig();
+    if (cfg.target == 's3') {
+      const minioClient = new Client(cfg.s3);
+
+      await minioClient.putObject(
+        cfg.s3.bucket,
+        `${uuid}/${revisionId}.jamie`,
+        content,
+      );
+      return;
+    }
+
+    throw new Error('wrong store target');
+  }
+
+  async renderMenu(menu: Menu) {
+    let items: MenuItem[] = menu.items || [];
+    const getChildren = (parent: MenuItem): MenuItem[] => {
+      const children = items
+        .filter((item) => item.parentId === parent.id)
+        .map((item: MenuItem) => {
+          const { template, templateFormat, ...rest } = item;
+          let formattedTemplate = template;
+          if (template) {
+            formattedTemplate = render(template, {
+              item: {
+                ...rest,
+                children: getChildren(item),
+                templateFormat,
+              },
+            });
+            if (templateFormat === 'json') {
+              formattedTemplate = JSON.parse(formattedTemplate);
+            }
+          }
+          return {
+            ...rest,
+            children: getChildren(item),
+            template: formattedTemplate,
+            templateFormat,
+          };
+        })
+        .sort((a, b) => a.order - b.order);
+      return children;
+    };
+    items =
+      items
+        .map((item: MenuItem) => {
+          const { template, templateFormat, ...rest } = item;
+          let formattedTemplate = template;
+          if (template) {
+            formattedTemplate = render(template, {
+              item: {
+                ...rest,
+                children: getChildren(item),
+                templateFormat,
+              },
+            });
+            if (templateFormat === 'json') {
+              formattedTemplate = JSON.parse(formattedTemplate);
+            }
+          }
+          return {
+            ...rest,
+            children: getChildren(item),
+            template: formattedTemplate,
+            templateFormat,
+          };
+        })
+        .filter((item) => !item.parentId)
+        .sort((a, b) => a.order - b.order) || [];
+    try {
+      const { ...rest } = menu;
+      if (rest.meta)
+        rest.meta = rest.meta.map((meta: MenuMeta) => {
+          const { ...rest } = meta;
+          return rest;
+        });
+      return render(menu.template, {
+        menu: {
+          ...rest,
+          items,
+        },
+      });
+    } catch (error) {
+      throw error;
     }
   }
 }
