@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { get } from 'env-var';
+import { render } from 'ejs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MenuItemsService } from 'src/menu-items/menu-items.service';
 import {
@@ -297,7 +297,7 @@ export class MenusService {
         where: { menuId, id: revisionId },
       });
 
-      const rendered = await this.renderMenu(revision.menu);
+      const rendered = await this.renderMenu(revision.snapshot as Menu);
 
       await this.persistOnStore(menu.uuid, `${revisionId}`, rendered);
 
@@ -337,6 +337,76 @@ export class MenusService {
   }
 
   async renderMenu(menu: Menu) {
-    return '{}';
+    let items: MenuItem[] = menu.items || [];
+    const getChildren = (parent: MenuItem): MenuItem[] => {
+      const children = items
+        .filter((item) => item.parentId === parent.id)
+        .map((item: MenuItem) => {
+          const { template, templateFormat, ...rest } = item;
+          let formattedTemplate = template;
+          if (template) {
+            formattedTemplate = render(template, {
+              item: {
+                ...rest,
+                children: getChildren(item),
+                templateFormat,
+              },
+            });
+            if (templateFormat === 'json') {
+              formattedTemplate = JSON.parse(formattedTemplate);
+            }
+          }
+          return {
+            ...rest,
+            children: getChildren(item),
+            template: formattedTemplate,
+            templateFormat,
+          };
+        })
+        .sort((a, b) => a.order - b.order);
+      return children;
+    };
+    items =
+      items
+        .map((item: MenuItem) => {
+          const { template, templateFormat, ...rest } = item;
+          let formattedTemplate = template;
+          if (template) {
+            formattedTemplate = render(template, {
+              item: {
+                ...rest,
+                children: getChildren(item),
+                templateFormat,
+              },
+            });
+            if (templateFormat === 'json') {
+              formattedTemplate = JSON.parse(formattedTemplate);
+            }
+          }
+          return {
+            ...rest,
+            children: getChildren(item),
+            template: formattedTemplate,
+            templateFormat,
+          };
+        })
+        .filter((item) => !item.parentId)
+        .sort((a, b) => a.order - b.order) || [];
+    try {
+      const { ...rest } = menu;
+      if (rest.meta)
+        rest.meta = rest.meta.map((meta: MenuMeta) => {
+          const { ...rest } = meta;
+          return rest;
+        });
+      return render(menu.template, {
+        menu: {
+          ...rest,
+          items,
+        },
+      });
+    } catch (error) {
+      throw error;
+    }
   }
 }
