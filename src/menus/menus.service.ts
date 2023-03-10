@@ -386,8 +386,8 @@ export class MenusService {
     const result: Record<string, unknown> = {};
     if (!meta) return result;
     menu.meta?.forEach((item: MenuMeta) => {
-      if (item.enabled && meta[item.id]) {
-        result[item.name] = meta[item.id];
+      if (item.enabled) {
+        result[item.name] = meta[item.id] || item.defaultValue;
       }
     });
     return result;

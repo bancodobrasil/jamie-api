@@ -19,7 +19,7 @@ export default class MenuItemInitialTemplate extends InitialTemplate {
 
   @Field(() => String)
   [TemplateFormat.XML] = `{{#with item}}
-<item id="{{id}}" label="{{label}}" order="{{order}}" {{~#unless (and meta (length children))}}/>{{else}}>
+<item id="{{id}}" label="{{label}}" order="{{order}}" {{~#unless (or meta (length children))}}/>{{else}}>
   {{~#each meta as |meta|}}
 
   <meta key="{{@key}}" value="{{meta}}" />
