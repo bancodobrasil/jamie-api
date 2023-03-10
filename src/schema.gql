@@ -94,6 +94,7 @@ type MenuItem {
 type Query {
   menus(first: Int, after: String, last: Int, before: String, sort: MenuSort, direction: Direction): MenuConnection!
   menu(id: Int!): Menu!
+  renderMenuTemplate(renderMenuTemplateInput: RenderMenuTemplateInput!): String!
   menuItem(id: Int!): MenuItem!
 }
 
@@ -105,6 +106,38 @@ enum MenuSort {
 enum Direction {
   ASC
   DESC
+}
+
+input RenderMenuTemplateInput {
+  name: String!
+  template: String!
+  templateFormat: String!
+  meta: [MenuMetaInput!]
+  items: [RenderMenuItemTemplateInput!]
+}
+
+input MenuMetaInput {
+  id: Int!
+  name: String!
+  type: String!
+  required: Boolean!
+  order: Int!
+  enabled: Boolean!
+  defaultValue: JSON
+}
+
+input RenderMenuItemTemplateInput {
+  id: Int!
+  label: String!
+  order: Int!
+  template: String
+  templateFormat: String
+  meta: JSONObject
+  parentId: Int
+  children: [RenderMenuItemTemplateInput!]
+  enabled: Boolean!
+  startPublication: DateTime
+  endPublication: DateTime
 }
 
 type Mutation {

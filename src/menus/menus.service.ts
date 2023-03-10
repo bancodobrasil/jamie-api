@@ -23,6 +23,8 @@ import { EntityNotFoundError } from 'src/common/errors/entity-not-found.error';
 import TemplateHelpers from 'src/common/helpers/template.helper';
 import { IMenuItemMeta } from 'src/common/types';
 import { StoreService } from 'src/store/store.service';
+import { RenderMenuTemplateInput } from './inputs/render-menu-template.input';
+import { RenderMenuItemTemplateInput } from './inputs/render-menu-item-template.input';
 
 @Injectable()
 export class MenusService {
@@ -299,7 +301,9 @@ export class MenusService {
         where: { menuId, id: revisionId },
       });
 
-      const content = await this.renderMenu(revision.snapshot as Menu);
+      const content = await this.renderMenuTemplate(
+        revision.snapshot as RenderMenuTemplateInput,
+      );
 
       await this.storeService.put(`${menu.uuid}/${revisionId}.jamie`, content);
       await this.storeService.put(`${menu.uuid}/current.jamie`, content);
@@ -321,9 +325,9 @@ export class MenusService {
     }
   }
 
-  async renderMenu(menu: Menu) {
+  async renderMenuTemplate(menu: RenderMenuTemplateInput): Promise<string> {
     TemplateHelpers.registerHelpers();
-    let items: MenuItem[] = menu.items || [];
+    let items: RenderMenuItemTemplateInput[] = menu.items || [];
     const getItemMeta = (meta: IMenuItemMeta): Record<string, unknown> => {
       const result: Record<string, unknown> = {};
       if (!meta) return result;
@@ -334,10 +338,12 @@ export class MenusService {
       });
       return result;
     };
-    const getChildren = (parent: MenuItem): MenuItem[] => {
-      const children = items
+    const getChildren = (
+      parent: RenderMenuItemTemplateInput,
+    ): RenderMenuItemTemplateInput[] => {
+      const children = parent.children
         .filter((item) => item.parentId === parent.id)
-        .map((item: MenuItem) => {
+        .map((item: RenderMenuItemTemplateInput) => {
           const { template, templateFormat, ...rest } = item;
           const meta = getItemMeta(rest.meta);
           let formattedTemplate = template;
@@ -367,7 +373,7 @@ export class MenusService {
     };
     items =
       items
-        .map((item: MenuItem) => {
+        .map((item: RenderMenuItemTemplateInput) => {
           const { template, templateFormat, ...rest } = item;
           const meta = getItemMeta(rest.meta);
           let formattedTemplate = template;
