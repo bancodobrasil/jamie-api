@@ -1,19 +1,8 @@
 import { get } from 'env-var';
-import { ClientOptions } from 'minio';
+import { StoreOptions, StoreTarget } from 'src/store/store.options';
 
-type StoreConfigOptions = {
-  target?: string;
-  endPoint?: string;
-  s3?: S3StoreConfigOptions;
-};
-
-type S3StoreConfigOptions = ClientOptions & {
-  bucket?: string;
-};
-
-export const storeConfig = (): StoreConfigOptions => ({
-  target: get('JAMIE_API_STORE_TARGET').default('s3').asString(),
-  endPoint: get('JAMIE_API_STORE_S3_ENDPOINT').asString(),
+export const storeConfig = (): StoreOptions => ({
+  target: get('JAMIE_API_STORE_TARGET').default('s3').asString() as StoreTarget,
   s3: {
     endPoint: get('JAMIE_API_STORE_S3_ENDPOINT').asString(),
     port: get('JAMIE_API_STORE_S3_PORT').default('443').asIntPositive(),

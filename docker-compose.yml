@@ -68,3 +68,11 @@ services:
       - 6832:6832 
       - 9411:9411
 
+  minio:
+    image: minio/minio
+    ports:
+      - 9000:9000
+      - 9001:9001
+    volumes:
+      - ./data/minio:/data
+    command: server /data --console-address ":9001"

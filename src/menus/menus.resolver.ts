@@ -6,6 +6,8 @@ import { UpdateMenuInput } from './inputs/update-menu.input';
 import { PaginationArgs } from 'src/common/schema/args/pagination.arg';
 import { FindMenuSortArgs } from './args/find-menu-sort.arg';
 import { CreateMenuRevisionInput } from './inputs/create-menu-revision.input';
+import { RenderMenuTemplateInput } from './inputs/render-menu-template.input';
+import { RenderMenuItemTemplateInput } from './inputs/render-menu-item-template.input';
 
 @Resolver(() => Menu)
 export class MenusResolver {
@@ -58,5 +60,26 @@ export class MenusResolver {
     @Args('revisionId', { type: () => Int }) revisionId: number,
   ) {
     return this.menusService.publishRevision(menuId, revisionId);
+  }
+
+  @Query(() => String)
+  renderMenuTemplate(
+    @Args('renderMenuTemplateInput')
+    renderMenuTemplateInput: RenderMenuTemplateInput,
+  ) {
+    return this.menusService.renderMenuTemplate(renderMenuTemplateInput);
+  }
+
+  @Query(() => String)
+  renderMenuItemTemplate(
+    @Args('renderMenuItemTemplateInput')
+    renderMenuItemTemplateInput: RenderMenuItemTemplateInput,
+    @Args('renderMenuTemplateInput')
+    renderMenuTemplateInput: RenderMenuTemplateInput,
+  ) {
+    return this.menusService.renderMenuItemTemplate(
+      renderMenuItemTemplateInput,
+      renderMenuTemplateInput,
+    );
   }
 }

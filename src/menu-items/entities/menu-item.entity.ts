@@ -12,6 +12,7 @@ import {
   OneToMany,
   PrimaryColumn,
 } from 'typeorm';
+import MenuItemInitialTemplate from '../objects/menu-item-initial-template.object';
 
 @ObjectType()
 @Entity('menu_items')
@@ -86,4 +87,7 @@ export class MenuItem extends VersionedTimestamped {
   @Field(() => String, { nullable: true })
   @Column('text', { nullable: true })
   templateFormat?: TemplateFormat;
+
+  @Field(() => MenuItemInitialTemplate)
+  defaultTemplate: MenuItemInitialTemplate = new MenuItemInitialTemplate();
 }

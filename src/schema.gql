@@ -43,6 +43,18 @@ A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date
 """
 scalar DateTime
 
+type MenuInitialTemplate implements InitialTemplate {
+  json: String!
+  xml: String!
+  plain: String!
+}
+
+interface InitialTemplate {
+  json: String!
+  xml: String!
+  plain: String!
+}
+
 type Menu {
   createdAt: DateTime!
   updatedAt: DateTime!
@@ -53,6 +65,7 @@ type Menu {
   meta: [MenuMeta!]
   template: String
   templateFormat: String
+  defaultTemplate: MenuInitialTemplate!
   items: [MenuItem!]
   revisions: [MenuRevision!]
   currentRevision: MenuRevision
@@ -72,6 +85,12 @@ type MenuEdge {
   node: Menu!
 }
 
+type MenuItemInitialTemplate implements InitialTemplate {
+  json: String!
+  xml: String!
+  plain: String!
+}
+
 type MenuItem {
   createdAt: DateTime!
   updatedAt: DateTime!
@@ -89,11 +108,14 @@ type MenuItem {
   endPublication: DateTime
   template: String
   templateFormat: String
+  defaultTemplate: MenuItemInitialTemplate!
 }
 
 type Query {
   menus(first: Int, after: String, last: Int, before: String, sort: MenuSort, direction: Direction): MenuConnection!
   menu(id: Int!): Menu!
+  renderMenuTemplate(renderMenuTemplateInput: RenderMenuTemplateInput!): String!
+  renderMenuItemTemplate(renderMenuItemTemplateInput: RenderMenuItemTemplateInput!, renderMenuTemplateInput: RenderMenuTemplateInput!): String!
   menuItem(id: Int!): MenuItem!
 }
 
@@ -105,6 +127,38 @@ enum MenuSort {
 enum Direction {
   ASC
   DESC
+}
+
+input RenderMenuTemplateInput {
+  name: String!
+  template: String
+  templateFormat: String
+  meta: [MenuMetaInput!]
+  items: [RenderMenuItemTemplateInput!]
+}
+
+input MenuMetaInput {
+  id: Int!
+  name: String!
+  type: String!
+  required: Boolean!
+  order: Int!
+  enabled: Boolean!
+  defaultValue: JSON
+}
+
+input RenderMenuItemTemplateInput {
+  id: Int!
+  label: String!
+  order: Int!
+  template: String
+  templateFormat: String
+  meta: JSONObject
+  parentId: Int
+  children: [RenderMenuItemTemplateInput!]
+  enabled: Boolean!
+  startPublication: DateTime
+  endPublication: DateTime
 }
 
 type Mutation {

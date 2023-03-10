@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { render } from 'ejs';
+import Handlebars from 'handlebars';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MenuItemsService } from 'src/menu-items/menu-items.service';
 import {
@@ -20,8 +20,11 @@ import { MenuRevision } from './entities/menu-revision.entity';
 import { CreateMenuRevisionInput } from './inputs/create-menu-revision.input';
 import { MenuItem } from 'src/menu-items/entities/menu-item.entity';
 import { EntityNotFoundError } from 'src/common/errors/entity-not-found.error';
-import { Client } from 'minio';
-import { storeConfig } from '../../config/store.config';
+import TemplateHelpers from 'src/common/helpers/template.helper';
+import { IMenuItemMeta } from 'src/common/types';
+import { StoreService } from 'src/store/store.service';
+import { RenderMenuTemplateInput } from './inputs/render-menu-template.input';
+import { RenderMenuItemTemplateInput } from './inputs/render-menu-item-template.input';
 
 @Injectable()
 export class MenusService {
@@ -34,6 +37,7 @@ export class MenusService {
     @InjectRepository(MenuRevision)
     private revisionRepository: Repository<MenuRevision>,
     private readonly menuItemsService: MenuItemsService,
+    private readonly storeService: StoreService,
   ) {}
 
   async create(createMenuInput: CreateMenuInput) {
@@ -297,11 +301,12 @@ export class MenusService {
         where: { menuId, id: revisionId },
       });
 
-      const content = await this.renderMenu(revision.snapshot as Menu);
+      const content = this.renderMenuTemplate(
+        revision.snapshot as RenderMenuTemplateInput,
+      );
 
-      await this.persistOnStore(menu.uuid, `${revisionId}`, content);
-
-      await this.persistOnStore(menu.uuid, 'current', content);
+      await this.storeService.put(`${menu.uuid}/${revisionId}.jamie`, content);
+      await this.storeService.put(`${menu.uuid}/current.jamie`, content);
 
       menu = await this.menuRepository.save({
         ...menu,
@@ -320,44 +325,85 @@ export class MenusService {
     }
   }
 
-  async persistOnStore(uuid: string, revisionId: string, content: string) {
-    const cfg = storeConfig();
-    if (cfg.target == 's3') {
-      const minioClient = new Client(cfg.s3);
-
-      await minioClient.putObject(
-        cfg.s3.bucket,
-        `${uuid}/${revisionId}.jamie`,
-        content,
-      );
-      return;
-    }
-
-    throw new Error('wrong store target');
+  renderMenuTemplate(menu: RenderMenuTemplateInput): string {
+    TemplateHelpers.registerHelpers();
+    const items =
+      menu.items
+        ?.map((item: RenderMenuItemTemplateInput) =>
+          this.getItemForTemplate(item, menu),
+        )
+        .filter((item) => !item.parentId)
+        .sort((a, b) => a.order - b.order) || [];
+    return Handlebars.compile(menu.template)({
+      menu: {
+        ...menu,
+        items,
+      },
+    });
   }
 
-  async renderMenu(menu: Menu) {
-    let items: MenuItem[] = menu.items || [];
-    const getChildren = (parent: MenuItem): MenuItem[] => {
-      const children = items
+  renderMenuItemTemplate(
+    item: RenderMenuItemTemplateInput,
+    menu: RenderMenuTemplateInput,
+  ): string {
+    TemplateHelpers.registerHelpers();
+    const children =
+      item.children
+        ?.map((item: RenderMenuItemTemplateInput) =>
+          this.getItemForTemplate(item, menu),
+        )
+        .sort((a, b) => a.order - b.order) || [];
+    const meta = this.getItemMetaForTemplate(item.meta, menu);
+    const result = Handlebars.compile(item.template)({
+      item: {
+        ...item,
+        meta,
+        children,
+      },
+    });
+    return result;
+  }
+
+  private getItemMetaForTemplate = (
+    meta: IMenuItemMeta,
+    menu: RenderMenuTemplateInput,
+  ): Record<string, unknown> => {
+    const result: Record<string, unknown> = {};
+    if (!meta) return result;
+    menu.meta?.forEach((item: MenuMeta) => {
+      if (item.enabled && meta[item.id]) {
+        result[item.name] = meta[item.id];
+      }
+    });
+    return result;
+  };
+
+  private getItemForTemplate(
+    item: RenderMenuItemTemplateInput,
+    menu: RenderMenuTemplateInput,
+  ) {
+    const getChildren = (
+      parent: RenderMenuItemTemplateInput,
+    ): RenderMenuItemTemplateInput[] => {
+      const children = parent.children
         .filter((item) => item.parentId === parent.id)
-        .map((item: MenuItem) => {
+        .map((item: RenderMenuItemTemplateInput) => {
           const { template, templateFormat, ...rest } = item;
+          const meta = this.getItemMetaForTemplate(rest.meta, menu);
           let formattedTemplate = template;
           if (template) {
-            formattedTemplate = render(template, {
+            formattedTemplate = Handlebars.compile(template)({
               item: {
                 ...rest,
+                meta,
                 children: getChildren(item),
                 templateFormat,
               },
             });
-            if (templateFormat === 'json') {
-              formattedTemplate = JSON.parse(formattedTemplate);
-            }
           }
           return {
             ...rest,
+            meta,
             children: getChildren(item),
             template: formattedTemplate,
             templateFormat,
@@ -366,47 +412,25 @@ export class MenusService {
         .sort((a, b) => a.order - b.order);
       return children;
     };
-    items =
-      items
-        .map((item: MenuItem) => {
-          const { template, templateFormat, ...rest } = item;
-          let formattedTemplate = template;
-          if (template) {
-            formattedTemplate = render(template, {
-              item: {
-                ...rest,
-                children: getChildren(item),
-                templateFormat,
-              },
-            });
-            if (templateFormat === 'json') {
-              formattedTemplate = JSON.parse(formattedTemplate);
-            }
-          }
-          return {
-            ...rest,
-            children: getChildren(item),
-            template: formattedTemplate,
-            templateFormat,
-          };
-        })
-        .filter((item) => !item.parentId)
-        .sort((a, b) => a.order - b.order) || [];
-    try {
-      const { ...rest } = menu;
-      if (rest.meta)
-        rest.meta = rest.meta.map((meta: MenuMeta) => {
-          const { ...rest } = meta;
-          return rest;
-        });
-      return render(menu.template, {
-        menu: {
-          ...rest,
-          items,
+    const meta = this.getItemMetaForTemplate(item.meta, menu);
+    let formattedTemplate = item.template;
+    const children = getChildren(item);
+    if (item.template) {
+      formattedTemplate = Handlebars.compile(item.template)({
+        item: {
+          ...item,
+          meta,
+          children,
+          templateFormat: item.templateFormat,
         },
       });
-    } catch (error) {
-      throw error;
     }
+    return {
+      ...item,
+      meta,
+      children,
+      template: formattedTemplate,
+      templateFormat: item.templateFormat,
+    };
   }
 }

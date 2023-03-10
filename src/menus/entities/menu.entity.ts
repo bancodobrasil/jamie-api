@@ -14,6 +14,7 @@ import {
 } from 'typeorm';
 import { MenuRevision } from './menu-revision.entity';
 import { VersionedTimestamped } from 'src/common/schema/objects/versioned-timestamped.object';
+import MenuInitialTemplate from '../objects/menu-initial-template.object';
 
 @ObjectType()
 @Entity('menus')
@@ -45,6 +46,9 @@ export class Menu extends VersionedTimestamped {
   @Field(() => String, { nullable: true })
   @Column('text', { nullable: true })
   templateFormat?: TemplateFormat;
+
+  @Field(() => MenuInitialTemplate)
+  defaultTemplate: MenuInitialTemplate = new MenuInitialTemplate();
 
   @Field(() => [MenuItem], { nullable: true })
   @OneToMany(() => MenuItem, (menuItem) => menuItem.menu, {
