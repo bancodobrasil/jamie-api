@@ -1,7 +1,7 @@
 import { Field, ObjectType } from '@nestjs/graphql';
-import { InitialTemplate } from 'src/common/schema/objects/initial-template.object';
+import { InitialTemplate } from 'src/common/schema/interfaces/initial-template.interface';
 
-@ObjectType()
+@ObjectType({ implements: () => [InitialTemplate] })
 export default class MenuInitialTemplate extends InitialTemplate {
   @Field(() => String)
   JSON = `{{#with menu}}

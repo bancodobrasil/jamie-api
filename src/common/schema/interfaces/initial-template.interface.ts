@@ -1,6 +1,6 @@
-import { Field, ObjectType } from '@nestjs/graphql';
+import { Field, InterfaceType } from '@nestjs/graphql';
 
-@ObjectType({ isAbstract: true })
+@InterfaceType()
 export abstract class InitialTemplate {
   @Field(() => String)
   JSON: string;
