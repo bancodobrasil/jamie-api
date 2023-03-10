@@ -51,11 +51,7 @@ export default class TemplateHelpers {
     if (!items || !items.length) return TemplateHelpers.json([], options);
     const renderItem = (item: MenuItem): Record<string, unknown> => {
       if (!item.enabled) return null;
-      if (item.template) return JSON.parse(item.template);
-      let children = item.children?.map(renderItem).filter((v) => v !== null);
-      if (!children?.length) children = undefined;
-      const { id, label, order, meta } = item;
-      return { id, label, order, meta, children };
+      return JSON.parse(item.template);
     };
     return JSON.stringify(
       items.map(renderItem).filter((v) => v !== null),

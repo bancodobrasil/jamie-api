@@ -62,8 +62,8 @@ export class MenuItemsService {
     });
   }
 
-  findOne(id: number) {
-    return this.menuItemRepository.findOneBy({ id: id });
+  findOne(id: number, menuId: number) {
+    return this.menuItemRepository.findOneBy({ id, menuId });
   }
 
   async update(
