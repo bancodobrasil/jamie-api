@@ -116,7 +116,7 @@ type Query {
   menu(id: Int!): Menu!
   renderMenuTemplate(renderMenuTemplateInput: RenderMenuTemplateInput!): String!
   renderMenuItemTemplate(renderMenuItemTemplateInput: RenderMenuItemTemplateInput!, renderMenuTemplateInput: RenderMenuTemplateInput!): String!
-  menuItem(id: Int!): MenuItem!
+  menuItem(id: Int!, menuId: Int!): MenuItem!
 }
 
 enum MenuSort {
