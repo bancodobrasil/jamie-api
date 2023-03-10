@@ -95,6 +95,7 @@ type Query {
   menus(first: Int, after: String, last: Int, before: String, sort: MenuSort, direction: Direction): MenuConnection!
   menu(id: Int!): Menu!
   renderMenuTemplate(renderMenuTemplateInput: RenderMenuTemplateInput!): String!
+  renderMenuItemTemplate(renderMenuItemTemplateInput: RenderMenuItemTemplateInput!, renderMenuTemplateInput: RenderMenuTemplateInput!): String!
   menuItem(id: Int!): MenuItem!
 }
 
@@ -110,8 +111,8 @@ enum Direction {
 
 input RenderMenuTemplateInput {
   name: String!
-  template: String!
-  templateFormat: String!
+  template: String
+  templateFormat: String
   meta: [MenuMetaInput!]
   items: [RenderMenuItemTemplateInput!]
 }

@@ -23,15 +23,17 @@ export class RenderMenuTemplateInput {
   @IsNotEmpty()
   name: string;
 
-  @Field(() => String)
+  @Field(() => String, { nullable: true })
+  @IsOptional()
   @IsDefined()
   @IsString()
   @IsNotEmpty()
-  template: string;
+  template?: string;
 
-  @Field(() => String)
+  @Field(() => String, { nullable: true })
+  @IsOptional()
   @IsEnum(TemplateFormat)
-  templateFormat: TemplateFormat;
+  templateFormat?: TemplateFormat;
 
   @Field(() => [MenuMetaInput], { nullable: true })
   @IsOptional()

@@ -301,7 +301,7 @@ export class MenusService {
         where: { menuId, id: revisionId },
       });
 
-      const content = await this.renderMenuTemplate(
+      const content = this.renderMenuTemplate(
         revision.snapshot as RenderMenuTemplateInput,
       );
 
@@ -325,19 +325,63 @@ export class MenusService {
     }
   }
 
-  async renderMenuTemplate(menu: RenderMenuTemplateInput): Promise<string> {
+  renderMenuTemplate(menu: RenderMenuTemplateInput): string {
     TemplateHelpers.registerHelpers();
-    let items: RenderMenuItemTemplateInput[] = menu.items || [];
-    const getItemMeta = (meta: IMenuItemMeta): Record<string, unknown> => {
-      const result: Record<string, unknown> = {};
-      if (!meta) return result;
-      menu.meta?.forEach((item: MenuMeta) => {
-        if (item.enabled && meta[item.id]) {
-          result[item.name] = meta[item.id];
-        }
-      });
-      return result;
-    };
+    const items =
+      menu.items
+        ?.map((item: RenderMenuItemTemplateInput) =>
+          this.getItemForTemplate(item, menu),
+        )
+        .filter((item) => !item.parentId)
+        .sort((a, b) => a.order - b.order) || [];
+    return Handlebars.compile(menu.template)({
+      menu: {
+        ...menu,
+        items,
+      },
+    });
+  }
+
+  renderMenuItemTemplate(
+    item: RenderMenuItemTemplateInput,
+    menu: RenderMenuTemplateInput,
+  ): string {
+    TemplateHelpers.registerHelpers();
+    const children =
+      item.children
+        ?.map((item: RenderMenuItemTemplateInput) =>
+          this.getItemForTemplate(item, menu),
+        )
+        .sort((a, b) => a.order - b.order) || [];
+    const meta = this.getItemMetaForTemplate(item.meta, menu);
+    const result = Handlebars.compile(item.template)({
+      item: {
+        ...item,
+        meta,
+        children,
+      },
+    });
+    return result;
+  }
+
+  private getItemMetaForTemplate = (
+    meta: IMenuItemMeta,
+    menu: RenderMenuTemplateInput,
+  ): Record<string, unknown> => {
+    const result: Record<string, unknown> = {};
+    if (!meta) return result;
+    menu.meta?.forEach((item: MenuMeta) => {
+      if (item.enabled && meta[item.id]) {
+        result[item.name] = meta[item.id];
+      }
+    });
+    return result;
+  };
+
+  private getItemForTemplate(
+    item: RenderMenuItemTemplateInput,
+    menu: RenderMenuTemplateInput,
+  ) {
     const getChildren = (
       parent: RenderMenuItemTemplateInput,
     ): RenderMenuItemTemplateInput[] => {
@@ -345,7 +389,7 @@ export class MenusService {
         .filter((item) => item.parentId === parent.id)
         .map((item: RenderMenuItemTemplateInput) => {
           const { template, templateFormat, ...rest } = item;
-          const meta = getItemMeta(rest.meta);
+          const meta = this.getItemMetaForTemplate(rest.meta, menu);
           let formattedTemplate = template;
           if (template) {
             formattedTemplate = Handlebars.compile(template)({
@@ -356,9 +400,6 @@ export class MenusService {
                 templateFormat,
               },
             });
-            if (templateFormat === 'json') {
-              formattedTemplate = JSON.parse(formattedTemplate);
-            }
           }
           return {
             ...rest,
@@ -371,44 +412,25 @@ export class MenusService {
         .sort((a, b) => a.order - b.order);
       return children;
     };
-    items =
-      items
-        .map((item: RenderMenuItemTemplateInput) => {
-          const { template, templateFormat, ...rest } = item;
-          const meta = getItemMeta(rest.meta);
-          let formattedTemplate = template;
-          if (template) {
-            formattedTemplate = Handlebars.compile(template)({
-              item: {
-                ...rest,
-                meta,
-                children: getChildren(item),
-                templateFormat,
-              },
-            });
-            if (templateFormat === 'json') {
-              formattedTemplate = JSON.parse(formattedTemplate);
-            }
-          }
-          return {
-            ...rest,
-            meta,
-            children: getChildren(item),
-            template: formattedTemplate,
-            templateFormat,
-          };
-        })
-        .filter((item) => !item.parentId)
-        .sort((a, b) => a.order - b.order) || [];
-    try {
-      return Handlebars.compile(menu.template)({
-        menu: {
-          ...menu,
-          items,
+    const meta = this.getItemMetaForTemplate(item.meta, menu);
+    let formattedTemplate = item.template;
+    const children = getChildren(item);
+    if (item.template) {
+      formattedTemplate = Handlebars.compile(item.template)({
+        item: {
+          ...item,
+          meta,
+          children,
+          templateFormat: item.templateFormat,
         },
       });
-    } catch (error) {
-      throw error;
     }
+    return {
+      ...item,
+      meta,
+      children,
+      template: formattedTemplate,
+      templateFormat: item.templateFormat,
+    };
   }
 }
