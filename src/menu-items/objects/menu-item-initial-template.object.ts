@@ -20,16 +20,25 @@ export default class MenuItemInitialTemplate extends InitialTemplate {
   @Field(() => String)
   [TemplateFormat.XML] = `{{#with item}}
 <item id="{{id}}" label="{{label}}" order="{{order}}" {{~#unless (and meta (length children))}}/>{{else}}>
-  {{log meta}}
   {{~#each meta as |meta|}}
 
   <meta key="{{@key}}" value="{{meta}}" />
   {{~/each}}
 
-{{{renderItemsXML children isChildren=true}}}
+{{~#each children as |child|}}
+
+  <children>
+{{~#withIndent spaces=(max (mul @index 2) 4)}}
+  
+{{{child.template}}}
+{{~/withIndent}}
+
+  </children>
+{{~/each}}
+  
 </item>
-{{/unless}}
-{{/with}}`;
+{{~/unless}}
+{{~/with}}`;
 
   @Field(() => String)
   [TemplateFormat.PLAIN] = `{{#with item}}

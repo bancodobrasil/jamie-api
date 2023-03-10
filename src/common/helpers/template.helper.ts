@@ -82,49 +82,16 @@ export default class TemplateHelpers {
     );
   }
 
-  public static renderItemsXML(
-    items: MenuItem[],
-    options: Handlebars.HelperOptions,
-  ) {
+  public static renderItemsXML(items: MenuItem[]) {
     if (!items || !items.length) return '';
-    const renderItem = (
-      item: MenuItem,
-      spaces = '    ',
-      isChildren = false,
-    ): string => {
+    const renderItem = (item: MenuItem): string => {
       if (!item.enabled) return '';
-      if (item.template) return item.template;
-      const tag = isChildren ? 'child' : 'item';
-      let itemXml = `${spaces}<${tag} id="${item.id}" label="${item.label}" order="${item.order}"`;
-      if (!item.meta && !item.children) {
-        itemXml += '/>';
-        return itemXml;
-      }
-      itemXml += '>';
-      if (item.meta) {
-        itemXml += '\n';
-        Object.keys(item.meta).forEach((key) => {
-          const value = item.meta[key];
-          itemXml += `${spaces}  <meta key="${key}" value="${value}" />\n`;
-        });
-      }
-      if (item.children && item.children.length) {
-        itemXml += `${spaces}  <children>`;
-        item.children.forEach((child) => {
-          itemXml += `\n${renderItem(child, `${spaces}    `, true)}`;
-        });
-        itemXml += `\n${spaces}  </children>\n`;
-      }
-      itemXml += `${spaces}</${tag}>`;
-      return itemXml;
+      return item.template;
     };
-    const rootTag = options.hash.isChildren ? 'children' : 'items';
     let xml = '';
-    xml += `  <${rootTag}>`;
     items.forEach((item) => {
-      xml += `\n${renderItem(item, '    ', options.hash.isChildren)}`;
+      xml += `${renderItem(item)}\n`;
     });
-    xml += `\n  </${rootTag}>`;
-    return xml;
+    return xml.substring(0, xml.length - 1);
   }
 }

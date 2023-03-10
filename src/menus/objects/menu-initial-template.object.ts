@@ -17,15 +17,21 @@ export default class MenuInitialTemplate extends InitialTemplate {
 
   @Field(() => String)
   [TemplateFormat.XML] = `{{#with menu}}
-<menu name="{{name}}" {{~#unless (and (length meta) (length items))}}/>{{else}}>
+<menu name="{{name}}" {{~#unless (or (length meta) (length items))}}/>{{else}}>
   {{~#each meta as |meta|}}
   {{~#if meta.enabled}}
 
   <meta id="{{meta.id}}" name="{{meta.name}}" type="{{meta.type}}" required="{{meta.required}}" defaultValue="{{meta.defaultValue}}" />
   {{~/if}}
   {{~/each}}
+  
+  <items>
+{{~#withIndent spaces=4}}
 
 {{{renderItemsXML items}}}
+{{~/withIndent}}
+
+  </items>
 </menu>
 {{/unless}}
 {{/with}}`;
