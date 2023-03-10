@@ -9,6 +9,7 @@ export default class TemplateHelpers {
     Handlebars.registerHelper('length', TemplateHelpers.getLength);
     Handlebars.registerHelper('json', TemplateHelpers.json);
     Handlebars.registerHelper('jsonFormatter', TemplateHelpers.jsonFormatter);
+    Handlebars.registerHelper('withIndent', TemplateHelpers.withIndent);
     Handlebars.registerHelper(
       'renderItemsJSON',
       TemplateHelpers.renderItemsJSON,
@@ -55,6 +56,14 @@ export default class TemplateHelpers {
       null,
       options.hash.spaces,
     );
+  }
+
+  public static withIndent(options: Handlebars.HelperOptions) {
+    let indent = options.hash.indent;
+    indent =
+      indent || options.hash.spaces ? ' '.repeat(options.hash.spaces) : '\t';
+    const lines = options.fn(this).split('\n');
+    return lines.map((line) => indent + line).join('\n');
   }
 
   public static renderItemsJSON(
