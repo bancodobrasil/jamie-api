@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { render } from 'ejs';
+import Handlebars from 'handlebars';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MenuItemsService } from 'src/menu-items/menu-items.service';
 import {
@@ -22,6 +22,8 @@ import { MenuItem } from 'src/menu-items/entities/menu-item.entity';
 import { EntityNotFoundError } from 'src/common/errors/entity-not-found.error';
 import { Client } from 'minio';
 import { storeConfig } from '../../config/store.config';
+import TemplateHelpers from 'src/common/helpers/template.helper';
+import { IMenuItemMeta } from 'src/common/types';
 
 @Injectable()
 export class MenusService {
@@ -337,17 +339,30 @@ export class MenusService {
   }
 
   async renderMenu(menu: Menu) {
+    TemplateHelpers.registerHelpers();
     let items: MenuItem[] = menu.items || [];
+    const getItemMeta = (meta: IMenuItemMeta): Record<string, unknown> => {
+      const result: Record<string, unknown> = {};
+      if (!meta) return result;
+      menu.meta?.forEach((item: MenuMeta) => {
+        if (item.enabled && meta[item.id]) {
+          result[item.name] = meta[item.id];
+        }
+      });
+      return result;
+    };
     const getChildren = (parent: MenuItem): MenuItem[] => {
       const children = items
         .filter((item) => item.parentId === parent.id)
         .map((item: MenuItem) => {
           const { template, templateFormat, ...rest } = item;
+          const meta = getItemMeta(rest.meta);
           let formattedTemplate = template;
           if (template) {
-            formattedTemplate = render(template, {
+            formattedTemplate = Handlebars.compile(template)({
               item: {
                 ...rest,
+                meta,
                 children: getChildren(item),
                 templateFormat,
               },
@@ -358,6 +373,7 @@ export class MenusService {
           }
           return {
             ...rest,
+            meta,
             children: getChildren(item),
             template: formattedTemplate,
             templateFormat,
@@ -370,11 +386,13 @@ export class MenusService {
       items
         .map((item: MenuItem) => {
           const { template, templateFormat, ...rest } = item;
+          const meta = getItemMeta(rest.meta);
           let formattedTemplate = template;
           if (template) {
-            formattedTemplate = render(template, {
+            formattedTemplate = Handlebars.compile(template)({
               item: {
                 ...rest,
+                meta,
                 children: getChildren(item),
                 templateFormat,
               },
@@ -385,6 +403,7 @@ export class MenusService {
           }
           return {
             ...rest,
+            meta,
             children: getChildren(item),
             template: formattedTemplate,
             templateFormat,
@@ -393,15 +412,9 @@ export class MenusService {
         .filter((item) => !item.parentId)
         .sort((a, b) => a.order - b.order) || [];
     try {
-      const { ...rest } = menu;
-      if (rest.meta)
-        rest.meta = rest.meta.map((meta: MenuMeta) => {
-          const { ...rest } = meta;
-          return rest;
-        });
-      return render(menu.template, {
+      return Handlebars.compile(menu.template)({
         menu: {
-          ...rest,
+          ...menu,
           items,
         },
       });
