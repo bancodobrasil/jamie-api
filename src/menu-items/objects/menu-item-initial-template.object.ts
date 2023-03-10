@@ -11,8 +11,8 @@ export default class MenuItemInitialTemplate extends InitialTemplate {
   "id": {{id}},
   "label": "{{label}}",
   "order": {{order}},
-  "meta": {{{json meta}}},
-  "children": {{{renderItemsJSON children}}}
+  "meta": {{{json meta}}}{{#if (length children)}},
+  "children": {{{renderItemsJSON children}}}{{/if}}
 }
 {{/jsonFormatter}}
 {{/with}}`;

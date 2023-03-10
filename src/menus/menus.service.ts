@@ -331,15 +331,16 @@ export class MenusService {
   }
 
   renderMenuTemplate(menu: RenderMenuTemplateInput): string {
-    let items = menu.items?.map((item: RenderMenuItemTemplateInput) => {
-      const template =
+    let items = menu.items?.map((item: RenderMenuItemTemplateInput) =>
+      this.getItemForTemplate(
+        item,
+        menu,
         item.template ||
-        this.menuItemInitialTemplate[
-          item.templateFormat || menu.templateFormat
-        ];
-      const i = this.getItemForTemplate(item, menu, template);
-      return i;
-    });
+          this.menuItemInitialTemplate[
+            item.templateFormat || menu.templateFormat
+          ],
+      ),
+    );
     items =
       items
         .filter((item) => !item.parentId)
@@ -360,12 +361,11 @@ export class MenusService {
     const template =
       item.template ||
       this.menuItemInitialTemplate[item.templateFormat || menu.templateFormat];
-    const children =
-      item.children
-        ?.map((item: RenderMenuItemTemplateInput) => {
-          return this.getItemForTemplate(item, menu, template);
-        })
-        .sort((a, b) => a.order - b.order) || [];
+    const children = item.children
+      ?.map((item: RenderMenuItemTemplateInput) =>
+        this.getItemForTemplate(item, menu, template),
+      )
+      .sort((a, b) => a.order - b.order);
     const meta = this.getItemMetaForTemplate(item.meta, menu);
     TemplateHelpers.registerHelpers();
     const result = Handlebars.compile(template)({
@@ -403,7 +403,7 @@ export class MenusService {
       defaultTemplate: string,
     ): RenderMenuItemTemplateInput[] => {
       const children = parent.children
-        .filter((item) => item.parentId === parent.id)
+        ?.filter((item) => item.parentId === parent.id)
         .map((item: RenderMenuItemTemplateInput) => {
           const { template, templateFormat, ...rest } = item;
           const meta = this.getItemMetaForTemplate(rest.meta, menu);
