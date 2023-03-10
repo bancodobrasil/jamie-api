@@ -20,10 +20,9 @@ import { MenuRevision } from './entities/menu-revision.entity';
 import { CreateMenuRevisionInput } from './inputs/create-menu-revision.input';
 import { MenuItem } from 'src/menu-items/entities/menu-item.entity';
 import { EntityNotFoundError } from 'src/common/errors/entity-not-found.error';
-import { Client } from 'minio';
-import { storeConfig } from '../../config/store.config';
 import TemplateHelpers from 'src/common/helpers/template.helper';
 import { IMenuItemMeta } from 'src/common/types';
+import { StoreService } from 'src/store/store.service';
 
 @Injectable()
 export class MenusService {
@@ -36,6 +35,7 @@ export class MenusService {
     @InjectRepository(MenuRevision)
     private revisionRepository: Repository<MenuRevision>,
     private readonly menuItemsService: MenuItemsService,
+    private readonly storeService: StoreService,
   ) {}
 
   async create(createMenuInput: CreateMenuInput) {
@@ -301,9 +301,8 @@ export class MenusService {
 
       const content = await this.renderMenu(revision.snapshot as Menu);
 
-      await this.persistOnStore(menu.uuid, `${revisionId}`, content);
-
-      await this.persistOnStore(menu.uuid, 'current', content);
+      await this.storeService.put(`${menu.uuid}/${revisionId}.jamie`, content);
+      await this.storeService.put(`${menu.uuid}/current.jamie`, content);
 
       menu = await this.menuRepository.save({
         ...menu,
@@ -320,22 +319,6 @@ export class MenusService {
       }
       throw err;
     }
-  }
-
-  async persistOnStore(uuid: string, revisionId: string, content: string) {
-    const cfg = storeConfig();
-    if (cfg.target == 's3') {
-      const minioClient = new Client(cfg.s3);
-
-      await minioClient.putObject(
-        cfg.s3.bucket,
-        `${uuid}/${revisionId}.jamie`,
-        content,
-      );
-      return;
-    }
-
-    throw new Error('wrong store target');
   }
 
   async renderMenu(menu: Menu) {

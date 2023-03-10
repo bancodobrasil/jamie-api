@@ -6,10 +6,15 @@ import { Menu } from './entities/menu.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MenuRevision } from './entities/menu-revision.entity';
 import { MenuItem } from 'src/menu-items/entities/menu-item.entity';
+import { StoreModule } from 'src/store/store.module';
+import { storeConfig } from 'config/store.config';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Menu, MenuItem, MenuRevision]),
+    StoreModule.registerAsync({
+      useFactory: storeConfig,
+    }),
     MenuItemsModule,
   ],
   providers: [MenusResolver, MenusService],
