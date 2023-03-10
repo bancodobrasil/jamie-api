@@ -7,7 +7,10 @@ export class MenuItemsResolver {
   constructor(private readonly menusService: MenuItemsService) {}
 
   @Query(() => MenuItem, { name: 'menuItem' })
-  findOne(@Args('id', { type: () => Int }) id: number) {
-    return this.menusService.findOne(id);
+  findOne(
+    @Args('id', { type: () => Int }) id: number,
+    @Args('menuId', { type: () => Int }) menuId: number,
+  ) {
+    return this.menusService.findOne(id, menuId);
   }
 }
