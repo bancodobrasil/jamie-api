@@ -43,6 +43,18 @@ A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date
 """
 scalar DateTime
 
+type MenuInitialTemplate implements InitialTemplate {
+  JSON: String!
+  XML: String!
+  PLAIN: String!
+}
+
+interface InitialTemplate {
+  JSON: String!
+  XML: String!
+  PLAIN: String!
+}
+
 type Menu {
   createdAt: DateTime!
   updatedAt: DateTime!
@@ -53,19 +65,13 @@ type Menu {
   meta: [MenuMeta!]
   template: String
   templateFormat: String
-  defaultTemplate: InitialTemplate!
+  defaultTemplate: MenuInitialTemplate!
   items: [MenuItem!]
   revisions: [MenuRevision!]
   currentRevision: MenuRevision
   currentRevisionId: Int
   publishedRevision: MenuRevision
   publishedRevisionId: Int
-}
-
-type InitialTemplate {
-  JSON: String!
-  XML: String!
-  PLAIN: String!
 }
 
 type MenuConnection {
@@ -77,6 +83,12 @@ type MenuConnection {
 type MenuEdge {
   cursor: String!
   node: Menu!
+}
+
+type MenuItemInitialTemplate implements InitialTemplate {
+  JSON: String!
+  XML: String!
+  PLAIN: String!
 }
 
 type MenuItem {
@@ -96,6 +108,7 @@ type MenuItem {
   endPublication: DateTime
   template: String
   templateFormat: String
+  defaultTemplate: MenuItemInitialTemplate!
 }
 
 type Query {
