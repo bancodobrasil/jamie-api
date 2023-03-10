@@ -4,6 +4,7 @@ import { MenuItem } from 'src/menu-items/entities/menu-item.entity';
 
 export default class TemplateHelpers {
   public static registerHelpers() {
+    Handlebars.registerHelper(TemplateHelpers.mathOperators);
     Handlebars.registerHelper(TemplateHelpers.logicOperators);
     Handlebars.registerHelper('length', TemplateHelpers.getLength);
     Handlebars.registerHelper('json', TemplateHelpers.json);
@@ -14,6 +15,18 @@ export default class TemplateHelpers {
     );
     Handlebars.registerHelper('renderItemsXML', TemplateHelpers.renderItemsXML);
   }
+
+  public static mathOperators = {
+    add: (v1, v2) => v1 + v2,
+    sub: (v1, v2) => v1 - v2,
+    mul: (v1, v2) => v1 * v2,
+    div: (v1, v2) => v1 / v2,
+    mod: (v1, v2) => v1 % v2,
+    pow: (v1, v2) => v1 ** v2,
+    sqrt: (v) => Math.sqrt(v),
+    max: (v1, v2) => Math.max(v1, v2),
+    min: (v1, v2) => Math.min(v1, v2),
+  };
 
   public static logicOperators = {
     eq: (v1, v2) => v1 === v2,
