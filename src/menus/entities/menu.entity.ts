@@ -48,7 +48,7 @@ export class Menu extends VersionedTimestamped {
   templateFormat?: TemplateFormat;
 
   @Field(() => MenuInitialTemplate)
-  defaultTemplate: MenuInitialTemplate;
+  defaultTemplate: MenuInitialTemplate = new MenuInitialTemplate();
 
   @Field(() => [MenuItem], { nullable: true })
   @OneToMany(() => MenuItem, (menuItem) => menuItem.menu, {

@@ -89,5 +89,5 @@ export class MenuItem extends VersionedTimestamped {
   templateFormat?: TemplateFormat;
 
   @Field(() => MenuItemInitialTemplate)
-  defaultTemplate: MenuItemInitialTemplate;
+  defaultTemplate: MenuItemInitialTemplate = new MenuItemInitialTemplate();
 }

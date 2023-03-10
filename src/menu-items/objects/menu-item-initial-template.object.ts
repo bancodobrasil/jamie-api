@@ -1,10 +1,11 @@
 import { Field, ObjectType } from '@nestjs/graphql';
+import { TemplateFormat } from 'src/common/enums/template-format.enum';
 import { InitialTemplate } from 'src/common/schema/interfaces/initial-template.interface';
 
 @ObjectType({ implements: () => [InitialTemplate] })
 export default class MenuItemInitialTemplate extends InitialTemplate {
   @Field(() => String)
-  JSON = `{{#with item}}
+  [TemplateFormat.JSON] = `{{#with item}}
 {{#jsonFormatter spaces=2}}
 {
   "id": {{id}},
@@ -17,7 +18,7 @@ export default class MenuItemInitialTemplate extends InitialTemplate {
 {{/with}}`;
 
   @Field(() => String)
-  XML = `{{#with item}}
+  [TemplateFormat.XML] = `{{#with item}}
 <item id="{{id}}" label="{{label}}" order="{{order}}" {{~#unless (and meta (length children))}}/>{{else}}>
   {{~#each meta as |meta|}}
 
@@ -30,10 +31,10 @@ export default class MenuItemInitialTemplate extends InitialTemplate {
 {{/with}}`;
 
   @Field(() => String)
-  PLAIN = `{{#with item}}
+  [TemplateFormat.PLAIN] = `{{#with item}}
 id = {{id}};
 label = "{{label}}";
 meta = {{{json meta spaces=2}}};
-children = {{{json children spaces=2}}};
+children = {{{renderItemsJSON children spaces=2}}};
 {{/with}}`;
 }

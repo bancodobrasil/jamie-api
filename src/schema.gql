@@ -44,15 +44,15 @@ A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date
 scalar DateTime
 
 type MenuInitialTemplate implements InitialTemplate {
-  JSON: String!
-  XML: String!
-  PLAIN: String!
+  json: String!
+  xml: String!
+  plain: String!
 }
 
 interface InitialTemplate {
-  JSON: String!
-  XML: String!
-  PLAIN: String!
+  json: String!
+  xml: String!
+  plain: String!
 }
 
 type Menu {
@@ -86,9 +86,9 @@ type MenuEdge {
 }
 
 type MenuItemInitialTemplate implements InitialTemplate {
-  JSON: String!
-  XML: String!
-  PLAIN: String!
+  json: String!
+  xml: String!
+  plain: String!
 }
 
 type MenuItem {

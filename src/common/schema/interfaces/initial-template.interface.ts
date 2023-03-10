@@ -1,13 +1,14 @@
 import { Field, InterfaceType } from '@nestjs/graphql';
+import { TemplateFormat } from 'src/common/enums/template-format.enum';
 
 @InterfaceType()
 export abstract class InitialTemplate {
   @Field(() => String)
-  JSON: string;
+  [TemplateFormat.JSON]: string;
 
   @Field(() => String)
-  XML: string;
+  [TemplateFormat.XML]: string;
 
   @Field(() => String)
-  PLAIN: string;
+  [TemplateFormat.PLAIN]: string;
 }
