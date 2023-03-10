@@ -6,7 +6,6 @@ export enum StoreTarget {
 
 export type StoreOptions = {
   target: StoreTarget;
-  endPoint?: string;
   s3?: S3StoreOptions;
 };
 
