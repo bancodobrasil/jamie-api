@@ -53,12 +53,19 @@ type Menu {
   meta: [MenuMeta!]
   template: String
   templateFormat: String
+  defaultTemplate: InitialTemplate!
   items: [MenuItem!]
   revisions: [MenuRevision!]
   currentRevision: MenuRevision
   currentRevisionId: Int
   publishedRevision: MenuRevision
   publishedRevisionId: Int
+}
+
+type InitialTemplate {
+  JSON: String!
+  XML: String!
+  PLAIN: String!
 }
 
 type MenuConnection {
