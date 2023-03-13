@@ -10,6 +10,7 @@ export default class TemplateHelpers {
     Handlebars.registerHelper('json', TemplateHelpers.json);
     Handlebars.registerHelper('jsonFormatter', TemplateHelpers.jsonFormatter);
     Handlebars.registerHelper('withIndent', TemplateHelpers.withIndent);
+    Handlebars.registerHelper('recursive', TemplateHelpers.recursive);
     Handlebars.registerHelper(
       'renderItemsJSON',
       TemplateHelpers.renderItemsJSON,
@@ -64,6 +65,15 @@ export default class TemplateHelpers {
       indent || options.hash.spaces ? ' '.repeat(options.hash.spaces) : '\t';
     const lines = options.fn(this).split('\n');
     return lines.map((line) => indent + line).join('\n');
+  }
+
+  public static recursive(items: MenuItem[]) {
+    if (!items || !items.length) return '';
+    const renderItem = (item: MenuItem): string => {
+      if (!item.enabled) return '';
+      return item.template;
+    };
+    return items.map(renderItem);
   }
 
   public static renderItemsJSON(
