@@ -4,16 +4,30 @@ import { MenuItem } from 'src/menu-items/entities/menu-item.entity';
 
 export default class TemplateHelpers {
   public static registerHelpers() {
+    Handlebars.registerHelper(TemplateHelpers.mathOperators);
     Handlebars.registerHelper(TemplateHelpers.logicOperators);
     Handlebars.registerHelper('length', TemplateHelpers.getLength);
     Handlebars.registerHelper('json', TemplateHelpers.json);
     Handlebars.registerHelper('jsonFormatter', TemplateHelpers.jsonFormatter);
+    Handlebars.registerHelper('withIndent', TemplateHelpers.withIndent);
     Handlebars.registerHelper(
       'renderItemsJSON',
       TemplateHelpers.renderItemsJSON,
     );
     Handlebars.registerHelper('renderItemsXML', TemplateHelpers.renderItemsXML);
   }
+
+  public static mathOperators = {
+    add: (v1, v2) => v1 + v2,
+    sub: (v1, v2) => v1 - v2,
+    mul: (v1, v2) => v1 * v2,
+    div: (v1, v2) => v1 / v2,
+    mod: (v1, v2) => v1 % v2,
+    pow: (v1, v2) => v1 ** v2,
+    sqrt: (v) => Math.sqrt(v),
+    max: (v1, v2) => Math.max(v1, v2),
+    min: (v1, v2) => Math.min(v1, v2),
+  };
 
   public static logicOperators = {
     eq: (v1, v2) => v1 === v2,
@@ -44,6 +58,14 @@ export default class TemplateHelpers {
     );
   }
 
+  public static withIndent(options: Handlebars.HelperOptions) {
+    let indent = options.hash.indent;
+    indent =
+      indent || options.hash.spaces ? ' '.repeat(options.hash.spaces) : '\t';
+    const lines = options.fn(this).split('\n');
+    return lines.map((line) => indent + line).join('\n');
+  }
+
   public static renderItemsJSON(
     items: MenuItem[],
     options: Handlebars.HelperOptions,
@@ -51,11 +73,7 @@ export default class TemplateHelpers {
     if (!items || !items.length) return TemplateHelpers.json([], options);
     const renderItem = (item: MenuItem): Record<string, unknown> => {
       if (!item.enabled) return null;
-      if (item.template) return JSON.parse(item.template);
-      let children = item.children?.map(renderItem).filter((v) => v !== null);
-      if (!children?.length) children = undefined;
-      const { id, label, order, meta } = item;
-      return { id, label, order, meta, children };
+      return JSON.parse(item.template);
     };
     return JSON.stringify(
       items.map(renderItem).filter((v) => v !== null),
@@ -64,49 +82,16 @@ export default class TemplateHelpers {
     );
   }
 
-  public static renderItemsXML(
-    items: MenuItem[],
-    options: Handlebars.HelperOptions,
-  ) {
+  public static renderItemsXML(items: MenuItem[]) {
     if (!items || !items.length) return '';
-    const renderItem = (
-      item: MenuItem,
-      spaces = '    ',
-      isChildren = false,
-    ): string => {
+    const renderItem = (item: MenuItem): string => {
       if (!item.enabled) return '';
-      if (item.template) return item.template;
-      const tag = isChildren ? 'child' : 'item';
-      let itemXml = `${spaces}<${tag} id="${item.id}" label="${item.label}" order="${item.order}"`;
-      if (!item.meta && !item.children) {
-        itemXml += '/>';
-        return itemXml;
-      }
-      itemXml += '>';
-      if (item.meta) {
-        itemXml += '\n';
-        Object.keys(item.meta).forEach((key) => {
-          const value = item.meta[key];
-          itemXml += `${spaces}  <meta key="${key}" value="${value}" />\n`;
-        });
-      }
-      if (item.children && item.children.length) {
-        itemXml += `${spaces}  <children>`;
-        item.children.forEach((child) => {
-          itemXml += `\n${renderItem(child, `${spaces}    `, true)}`;
-        });
-        itemXml += `\n${spaces}  </children>\n`;
-      }
-      itemXml += `${spaces}</${tag}>`;
-      return itemXml;
+      return item.template;
     };
-    const rootTag = options.hash.isChildren ? 'children' : 'items';
     let xml = '';
-    xml += `  <${rootTag}>`;
     items.forEach((item) => {
-      xml += `\n${renderItem(item, '    ', options.hash.isChildren)}`;
+      xml += `${renderItem(item)}\n`;
     });
-    xml += `\n  </${rootTag}>`;
-    return xml;
+    return xml.substring(0, xml.length - 1);
   }
 }
