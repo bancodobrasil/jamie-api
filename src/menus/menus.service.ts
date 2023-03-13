@@ -335,10 +335,7 @@ export class MenusService {
       this.getItemForTemplate(
         item,
         menu,
-        item.template ||
-          this.menuItemInitialTemplate[
-            item.templateFormat || menu.templateFormat
-          ],
+        item.template || this.menuInitialTemplate[menu.templateFormat],
       ),
     );
     items =
@@ -347,10 +344,7 @@ export class MenusService {
         .sort((a, b) => a.order - b.order) || [];
     TemplateHelpers.registerHelpers();
     return Handlebars.compile(menu.template)({
-      menu: {
-        ...menu,
-        items,
-      },
+      items,
     });
   }
 
@@ -369,12 +363,10 @@ export class MenusService {
     const meta = this.getItemMetaForTemplate(item.meta, menu);
     TemplateHelpers.registerHelpers();
     const result = Handlebars.compile(template)({
-      item: {
-        ...item,
-        meta,
-        children,
-        template,
-      },
+      ...item,
+      meta,
+      items: children,
+      template,
     });
     return result;
   }
@@ -408,21 +400,19 @@ export class MenusService {
           const { template, templateFormat, ...rest } = item;
           const meta = this.getItemMetaForTemplate(rest.meta, menu);
           let formattedTemplate = template || defaultTemplate;
-          const children = getChildren(item, formattedTemplate);
+          const items = getChildren(item, formattedTemplate);
           TemplateHelpers.registerHelpers();
           formattedTemplate = Handlebars.compile(formattedTemplate)({
-            item: {
-              ...rest,
-              meta,
-              children,
-              templateFormat,
-              template: formattedTemplate,
-            },
+            ...rest,
+            meta,
+            items,
+            templateFormat,
+            template: formattedTemplate,
           });
           return {
             ...rest,
             meta,
-            children,
+            items,
             template: formattedTemplate,
             templateFormat,
           };
@@ -432,21 +422,19 @@ export class MenusService {
     };
     const meta = this.getItemMetaForTemplate(item.meta, menu);
     const formattedTemplate = item.template || defaultTemplate;
-    const children = getChildren(item, formattedTemplate);
+    const items = getChildren(item, formattedTemplate);
     TemplateHelpers.registerHelpers();
     const template = Handlebars.compile(formattedTemplate)({
-      item: {
-        ...item,
-        meta,
-        children,
-        templateFormat: item.templateFormat,
-        template: formattedTemplate,
-      },
+      ...item,
+      meta,
+      items,
+      templateFormat: item.templateFormat,
+      template: formattedTemplate,
     });
     return {
       ...item,
       meta,
-      children,
+      items,
       template,
       templateFormat: item.templateFormat,
     };
