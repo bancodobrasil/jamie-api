@@ -7,8 +7,12 @@ export default class MenuInitialTemplate extends InitialTemplate {
   @Field(() => String)
   [TemplateFormat.JSON] = `{{#jsonFormatter spaces=2}}
 [
-  {{#each items}}
-  {{> itemJSON item=this properties=(hash id="id" label="label" meta="meta" items="items") }}{{#unless @last}},{{/unless}}
+  {{#each menu.items}}
+  {{#if this.template}}
+  {{{ this.template }}},
+  {{else}}
+  {{> itemJSON item=this properties=(hash id="id" label="label" meta="meta" children="children") }},
+  {{/if}}
   {{/each}}
 ]
 {{/jsonFormatter}}`;

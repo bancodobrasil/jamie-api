@@ -346,7 +346,10 @@ export class MenusService {
         .sort((a, b) => a.order - b.order) || [];
     TemplateHelpers.setup();
     return Handlebars.compile(menu.template)({
-      items,
+      menu: {
+        ...menu,
+        items,
+      },
     });
   }
 
@@ -365,10 +368,12 @@ export class MenusService {
     const meta = this.getItemMetaForTemplate(item.meta, menu);
     TemplateHelpers.setup();
     const result = Handlebars.compile(template)({
-      ...item,
-      meta,
-      items: children,
-      template,
+      item: {
+        ...item,
+        meta,
+        children,
+        template,
+      },
     });
     return result;
   }
@@ -402,19 +407,21 @@ export class MenusService {
           const { template, templateFormat, ...rest } = item;
           const meta = this.getItemMetaForTemplate(rest.meta, menu);
           let formattedTemplate = template || defaultTemplate;
-          const items = getChildren(item, formattedTemplate);
+          const children = getChildren(item, formattedTemplate);
           TemplateHelpers.setup();
           formattedTemplate = Handlebars.compile(formattedTemplate)({
-            ...rest,
-            meta,
-            items,
-            templateFormat,
-            template: formattedTemplate,
+            item: {
+              ...rest,
+              meta,
+              children,
+              templateFormat,
+              template: formattedTemplate,
+            },
           });
           return {
             ...rest,
             meta,
-            items,
+            children,
             template: formattedTemplate,
             templateFormat,
           };
@@ -424,19 +431,21 @@ export class MenusService {
     };
     const meta = this.getItemMetaForTemplate(item.meta, menu);
     const formattedTemplate = item.template || defaultTemplate;
-    const items = getChildren(item, formattedTemplate);
+    const children = getChildren(item, formattedTemplate);
     TemplateHelpers.setup();
     const template = Handlebars.compile(formattedTemplate)({
-      ...item,
-      meta,
-      items,
-      templateFormat: item.templateFormat,
-      template: formattedTemplate,
+      item: {
+        ...item,
+        meta,
+        children,
+        templateFormat: item.templateFormat,
+        template: formattedTemplate,
+      },
     });
     return {
       ...item,
       meta,
-      items,
+      children,
       template,
       templateFormat: item.templateFormat,
     };

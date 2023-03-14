@@ -118,23 +118,19 @@ export default class TemplateHelpers {
     itemJSON: `{{#jsonFormatter spaces=2}}
 {
   {{#each properties as |prop|}}
-  {{log ../item.label}}
-  {{log prop}}
-  {{log @last}}
-  {{#if (and (eq @key "items") (length ../item.items)) }}
+  {{#if (and (eq @key "children") (length ../item.children)) }}
   "{{prop}}": [
-    {{#each ../item.items as |subItem|}}
-    {{#if subItem.template}}
-    {{{ subItem.template }}}
+    {{#each ../item.children as |children|}}
+    {{#if children.template}}
+    {{{ children.template }}}
     {{else}}
-    {{> itemJSON item=subItem properties=../../properties}}
-    {{/if}}
-    {{#unless @last}},{{/unless}}
+    {{> itemJSON item=children properties=../../properties}}
+    {{/if}},
     {{/each}}
-  ]{{#unless @last}},{{/unless}}
+  ],
   {{else if (and (eq @key "meta") meta) }}
   "{{prop}}": {{{json ../item.meta}}}{{#unless @last}},{{/unless}}
-  {{else if (and (ne @key "items") (ne @key "meta"))}}
+  {{else if (and (ne @key "children") (ne @key "meta"))}}
   "{{prop}}": "{{lookup ../item @key}}"{{#unless @last}},{{/unless}}
   {{/if}}
   {{/each}}
