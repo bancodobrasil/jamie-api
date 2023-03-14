@@ -7,36 +7,32 @@ export default class MenuInitialTemplate extends InitialTemplate {
   @Field(() => String)
   [TemplateFormat.JSON] = `{{#jsonFormatter spaces=2}}
 [
-  {{#each menu.items}}
-  {{#if this.template}}
-  {{{ this.template }}},
+  {{#each menu.items as |item|}}
+  {{#if item.template}}
+  {{{ item.template }}},
   {{else}}
-  {{> itemJSON item=this properties=(hash id="id" label="label" meta="meta" children="children") }},
+  {{> itemJSON item=item properties=(hash id="id" label="label" meta="meta" children="children") }},
   {{/if}}
   {{/each}}
 ]
 {{/jsonFormatter}}`;
 
   @Field(() => String)
-  [TemplateFormat.XML] = `{{#with menu}}
-<menu name="{{name}}" {{~#unless (or (length meta) (length items))}}/>{{else}}>
-  {{~#each meta as |meta|}}
-  {{~#if meta.enabled}}
+  [TemplateFormat.XML] = `<items>
+{{~#withIndent spaces=2}}
+{{~#each menu.items as |item|}}
+{{~#if item.template}}
 
-  <meta id="{{meta.id}}" name="{{meta.name}}" type="{{meta.type}}" required="{{meta.required}}" defaultValue="{{meta.defaultValue}}" />
-  {{~/if}}
-  {{~/each}}
-  
-  <items>
-{{~#withIndent spaces=4}}
+{{{ item.template }}},
+{{~else}}
 
-{{{renderItemsXML items}}}
+{{> itemXML item=item tag="item" properties=(hash id="id" label="label" meta=(hash tag="meta" key="key" value="value") children="children")}}
+{{~/if}}
+{{~/each}}
+
 {{~/withIndent}}
 
-  </items>
-</menu>
-{{/unless}}
-{{/with}}`;
+</items>`;
 
   @Field(() => String)
   [TemplateFormat.PLAIN] = `{{#with menu}}

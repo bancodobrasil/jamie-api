@@ -25,6 +25,7 @@ export default class TemplateHelpers {
 
   public static registerPartials() {
     Handlebars.registerPartial('itemJSON', TemplateHelpers.partials.itemJSON);
+    Handlebars.registerPartial('itemXML', TemplateHelpers.partials.itemXML);
   }
 
   public static mathOperators = {
@@ -137,5 +138,33 @@ export default class TemplateHelpers {
   {{/each}}
 }
 {{/jsonFormatter}}`,
+    itemXML: `<{{tag}} {{#each properties as |prop|}}
+{{~#if (and (ne @key "children") (ne @key "meta"))}}{{prop}}="{{lookup ../item @key}}" {{/if}}
+{{~/each}}{{~#unless (or item.meta (length item.children))}}/>{{else}}>
+{{#withIndent spaces=2}}
+{{~#each item.meta as |meta|}}
+<{{lookup (lookup ../properties "meta") "tag"}} {{lookup (lookup ../properties "meta") "key"}}="{{@key}}" {{lookup (lookup ../properties "meta") "value"}}="{{meta}}" />
+{{~/each}}
+
+{{~#each item.children as |child|}}
+
+<{{lookup ../properties "children"}}>
+{{~#withIndent spaces=2}}
+{{~#if child.template}}
+
+{{{child.template}}}
+{{~else}}
+
+{{> itemXML tag=../../tag item=child properties=../../properties}}
+{{~/if}}
+{{~/withIndent}}
+
+</{{lookup ../properties "children"}}>
+{{~/each}}
+{{~/withIndent}}
+
+</{{tag}}>
+{{~/unless}}
+`,
   };
 }

@@ -8,27 +8,7 @@ export default class MenuItemInitialTemplate extends InitialTemplate {
   [TemplateFormat.JSON] = `{{> itemJSON item=item properties=(hash id="id" label="label" meta="meta" children="children") }}`;
 
   @Field(() => String)
-  [TemplateFormat.XML] = `{{#with item}}
-<item id="{{id}}" label="{{label}}" order="{{order}}" {{~#unless (or meta (length children))}}/>{{else}}>
-  {{~#each meta as |meta|}}
-
-  <meta key="{{@key}}" value="{{meta}}" />
-  {{~/each}}
-
-{{~#each children as |child|}}
-
-  <children>
-{{~#withIndent spaces=(max (mul @index 2) 4)}}
-  
-{{{child.template}}}
-{{~/withIndent}}
-
-  </children>
-{{~/each}}
-  
-</item>
-{{~/unless}}
-{{~/with}}`;
+  [TemplateFormat.XML] = `{{> itemXML item=item tag="item" properties=(hash id="id" label="label" meta=(hash tag="meta" key="key" value="value") children="children")}}`;
 
   @Field(() => String)
   [TemplateFormat.PLAIN] = `{{#with item}}
