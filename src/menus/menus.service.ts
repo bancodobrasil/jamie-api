@@ -307,8 +307,6 @@ export class MenusService {
 
       const menuItems = await menu.items;
 
-      console.log(menuItems);
-
       const getChildren = (menuItems: MenuItem[], item: MenuItem) => {
         const children = menuItems.filter((i) => i.parentId === item.id);
         return children.map((c) => ({
