@@ -155,7 +155,7 @@ export default class TemplateHelpers {
 {{{child.template}}}
 {{~else}}
 
-{{> itemXML tag=../../tag item=child properties=../../properties}}
+{{> itemXML tag=../tag item=child properties=../properties}}
 {{~/if}}
 {{~/withIndent}}
 

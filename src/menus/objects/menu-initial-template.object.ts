@@ -1,6 +1,7 @@
 import { Field, ObjectType } from '@nestjs/graphql';
 import { TemplateFormat } from 'src/common/enums/template-format.enum';
 import { InitialTemplate } from 'src/common/schema/interfaces/initial-template.interface';
+import MenuItemInitialTemplate from 'src/menu-items/objects/menu-item-initial-template.object';
 
 @ObjectType({ implements: () => [InitialTemplate] })
 export default class MenuInitialTemplate extends InitialTemplate {
@@ -11,7 +12,7 @@ export default class MenuInitialTemplate extends InitialTemplate {
   {{#if item.template}}
   {{{ item.template }}},
   {{else}}
-  {{> itemJSON item=item properties=(hash id="id" label="label" meta="meta" children="children") }},
+  ${new MenuItemInitialTemplate()[TemplateFormat.JSON]},
   {{/if}}
   {{/each}}
 ]
@@ -23,10 +24,10 @@ export default class MenuInitialTemplate extends InitialTemplate {
 {{~#each menu.items as |item|}}
 {{~#if item.template}}
 
-{{{ item.template }}},
+{{{ item.template }}}
 {{~else}}
 
-{{> itemXML item=item tag="item" properties=(hash id="id" label="label" meta=(hash tag="meta" key="key" value="value") children="children")}}
+${new MenuItemInitialTemplate()[TemplateFormat.XML]}
 {{~/if}}
 {{~/each}}
 
