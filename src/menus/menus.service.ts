@@ -25,8 +25,8 @@ import { IMenuItemMeta } from 'src/common/types';
 import { StoreService } from 'src/store/store.service';
 import { RenderMenuTemplateInput } from './inputs/render-menu-template.input';
 import { RenderMenuItemTemplateInput } from './inputs/render-menu-item-template.input';
-import MenuInitialTemplate from './objects/menu-initial-template.object';
 import MenuItemInitialTemplate from 'src/menu-items/objects/menu-item-initial-template.object';
+import { TemplateFormat } from 'src/common/enums/template-format.enum';
 
 @Injectable()
 export class MenusService {
@@ -42,8 +42,7 @@ export class MenusService {
     private readonly storeService: StoreService,
   ) {}
 
-  private readonly menuInitialTemplate = new MenuInitialTemplate();
-  private readonly menuItemInitialTemplate = new MenuItemInitialTemplate();
+  private readonly menuIteminitialTemplate = new MenuItemInitialTemplate();
 
   async create(createMenuInput: CreateMenuInput) {
     const { meta, items, ...rest } = createMenuInput;
@@ -306,9 +305,29 @@ export class MenusService {
         where: { menuId, id: revisionId },
       });
 
-      const content = this.renderMenuTemplate(
-        revision.snapshot as RenderMenuTemplateInput,
-      );
+      const menuItems = await menu.items;
+
+      const getChildren = (menuItems: MenuItem[], item: MenuItem) => {
+        const children = menuItems.filter((i) => i.parentId === item.id);
+        return children.map((c) => ({
+          ...c,
+          children: getChildren(menuItems, c),
+        }));
+      };
+
+      const items = menuItems
+        .filter((i) => !i.parentId)
+        .map((i: MenuItem) => ({
+          ...i,
+          children: getChildren(menuItems, i),
+        }));
+
+      const formattedSnapshot = {
+        ...revision.snapshot,
+        templateFormat: TemplateFormat[revision.snapshot.templateFormat],
+        items,
+      };
+      const content = this.renderMenuTemplate(formattedSnapshot);
 
       await this.storeService.put(`${menu.uuid}/${revisionId}.jamie`, content);
       await this.storeService.put(`${menu.uuid}/current.jamie`, content);
@@ -332,20 +351,13 @@ export class MenusService {
 
   renderMenuTemplate(menu: RenderMenuTemplateInput): string {
     let items = menu.items?.map((item: RenderMenuItemTemplateInput) =>
-      this.getItemForTemplate(
-        item,
-        menu,
-        item.template ||
-          this.menuItemInitialTemplate[
-            item.templateFormat || menu.templateFormat
-          ],
-      ),
+      this.getItemForTemplate(item, menu),
     );
     items =
       items
         .filter((item) => !item.parentId)
         .sort((a, b) => a.order - b.order) || [];
-    TemplateHelpers.registerHelpers();
+    TemplateHelpers.setup();
     return Handlebars.compile(menu.template)({
       menu: {
         ...menu,
@@ -358,22 +370,19 @@ export class MenusService {
     item: RenderMenuItemTemplateInput,
     menu: RenderMenuTemplateInput,
   ): string {
-    const template =
-      item.template ||
-      this.menuItemInitialTemplate[item.templateFormat || menu.templateFormat];
     const children = item.children
       ?.map((item: RenderMenuItemTemplateInput) =>
-        this.getItemForTemplate(item, menu, template),
+        this.getItemForTemplate(item, menu),
       )
       .sort((a, b) => a.order - b.order);
     const meta = this.getItemMetaForTemplate(item.meta, menu);
-    TemplateHelpers.registerHelpers();
-    const result = Handlebars.compile(template)({
+    TemplateHelpers.setup();
+    if (!item.template) return '';
+    const result = Handlebars.compile(item.template)({
       item: {
         ...item,
         meta,
         children,
-        template,
       },
     });
     return result;
@@ -396,59 +405,50 @@ export class MenusService {
   private getItemForTemplate(
     item: RenderMenuItemTemplateInput,
     menu: RenderMenuTemplateInput,
-    defaultTemplate: string,
   ) {
     const getChildren = (
       parent: RenderMenuItemTemplateInput,
-      defaultTemplate: string,
     ): RenderMenuItemTemplateInput[] => {
       const children = parent.children
         ?.filter((item) => item.parentId === parent.id)
         .map((item: RenderMenuItemTemplateInput) => {
-          const { template, templateFormat, ...rest } = item;
-          const meta = this.getItemMetaForTemplate(rest.meta, menu);
-          let formattedTemplate = template || defaultTemplate;
-          const children = getChildren(item, formattedTemplate);
-          TemplateHelpers.registerHelpers();
-          formattedTemplate = Handlebars.compile(formattedTemplate)({
-            item: {
-              ...rest,
-              meta,
-              children,
-              templateFormat,
-              template: formattedTemplate,
-            },
-          });
+          const meta = this.getItemMetaForTemplate(item.meta, menu);
+          const children = getChildren(item);
+          TemplateHelpers.setup();
+          if (item.template) {
+            item.template = Handlebars.compile(item.template)({
+              item: {
+                ...item,
+                meta,
+                children,
+              },
+            });
+          }
           return {
-            ...rest,
+            ...item,
             meta,
             children,
-            template: formattedTemplate,
-            templateFormat,
           };
         })
         .sort((a, b) => a.order - b.order);
       return children;
     };
     const meta = this.getItemMetaForTemplate(item.meta, menu);
-    const formattedTemplate = item.template || defaultTemplate;
-    const children = getChildren(item, formattedTemplate);
-    TemplateHelpers.registerHelpers();
-    const template = Handlebars.compile(formattedTemplate)({
-      item: {
-        ...item,
-        meta,
-        children,
-        templateFormat: item.templateFormat,
-        template: formattedTemplate,
-      },
-    });
+    const children = getChildren(item);
+    TemplateHelpers.setup();
+    if (item.template) {
+      item.template = Handlebars.compile(item.template)({
+        item: {
+          ...item,
+          meta,
+          children,
+        },
+      });
+    }
     return {
       ...item,
       meta,
       children,
-      template,
-      templateFormat: item.templateFormat,
     };
   }
 }

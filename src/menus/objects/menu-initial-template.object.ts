@@ -1,45 +1,51 @@
 import { Field, ObjectType } from '@nestjs/graphql';
 import { TemplateFormat } from 'src/common/enums/template-format.enum';
 import { InitialTemplate } from 'src/common/schema/interfaces/initial-template.interface';
+import MenuItemInitialTemplate from 'src/menu-items/objects/menu-item-initial-template.object';
 
 @ObjectType({ implements: () => [InitialTemplate] })
 export default class MenuInitialTemplate extends InitialTemplate {
   @Field(() => String)
-  [TemplateFormat.JSON] = `{{#with menu}}
-{{#jsonFormatter spaces=2}}
-{
-  "name": "{{name}}",
-  "meta": {{{json meta}}},
-  "items": {{{renderItemsJSON items}}}
-}
-{{/jsonFormatter}}
-{{/with}}`;
+  [TemplateFormat.JSON] = `{{#jsonFormatter spaces=2}}
+[
+  {{#each menu.items as |item|}}
+  {{#if item.template}}
+  {{{ item.template }}},
+  {{else}}
+  ${new MenuItemInitialTemplate()[TemplateFormat.JSON]},
+  {{/if}}
+  {{/each}}
+]
+{{/jsonFormatter}}`;
 
   @Field(() => String)
-  [TemplateFormat.XML] = `{{#with menu}}
-<menu name="{{name}}" {{~#unless (or (length meta) (length items))}}/>{{else}}>
-  {{~#each meta as |meta|}}
-  {{~#if meta.enabled}}
+  [TemplateFormat.XML] = `<items>
+{{~#withIndent spaces=2}}
+{{~#each menu.items as |item|}}
+{{~#if item.template}}
 
-  <meta id="{{meta.id}}" name="{{meta.name}}" type="{{meta.type}}" required="{{meta.required}}" defaultValue="{{meta.defaultValue}}" />
-  {{~/if}}
-  {{~/each}}
-  
-  <items>
-{{~#withIndent spaces=4}}
+{{{ item.template }}}
+{{~else}}
 
-{{{renderItemsXML items}}}
+${new MenuItemInitialTemplate()[TemplateFormat.XML]}
+{{~/if}}
+{{~/each}}
+
 {{~/withIndent}}
 
-  </items>
-</menu>
-{{/unless}}
-{{/with}}`;
+</items>`;
 
   @Field(() => String)
-  [TemplateFormat.PLAIN] = `{{#with menu}}
-name = "{{name}}";
-meta = {{{json meta spaces=2}}};
-items = {{{renderItemsJSON items spaces=2}}};
-{{/with}}`;
+  [TemplateFormat.PLAIN] = `items=
+{{~#jsonFormatter spaces=2}}
+[
+  {{#each menu.items as |item|}}
+  {{#if item.template}}
+  {{{ item.template }}},
+  {{else}}
+  {{> itemJSON item=item properties=(hash id="id" label="label" meta="meta" children="children") }},
+  {{/if}}
+  {{/each}}
+]
+{{/jsonFormatter}};`;
 }
