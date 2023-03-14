@@ -26,6 +26,7 @@ import { StoreService } from 'src/store/store.service';
 import { RenderMenuTemplateInput } from './inputs/render-menu-template.input';
 import { RenderMenuItemTemplateInput } from './inputs/render-menu-item-template.input';
 import MenuItemInitialTemplate from 'src/menu-items/objects/menu-item-initial-template.object';
+import { TemplateFormat } from 'src/common/enums/template-format.enum';
 
 @Injectable()
 export class MenusService {
@@ -304,10 +305,31 @@ export class MenusService {
         where: { menuId, id: revisionId },
       });
 
-      const content = this.renderMenuTemplate({
+      const menuItems = await menu.items;
+
+      console.log(menuItems);
+
+      const getChildren = (menuItems: MenuItem[], item: MenuItem) => {
+        const children = menuItems.filter((i) => i.parentId === item.id);
+        return children.map((c) => ({
+          ...c,
+          children: getChildren(menuItems, c),
+        }));
+      };
+
+      const items = menuItems
+        .filter((i) => !i.parentId)
+        .map((i: MenuItem) => ({
+          ...i,
+          children: getChildren(menuItems, i),
+        }));
+
+      const formattedSnapshot = {
         ...revision.snapshot,
-        id: menuId,
-      } as RenderMenuTemplateInput);
+        templateFormat: TemplateFormat[revision.snapshot.templateFormat],
+        items,
+      };
+      const content = this.renderMenuTemplate(formattedSnapshot);
 
       await this.storeService.put(`${menu.uuid}/${revisionId}.jamie`, content);
       await this.storeService.put(`${menu.uuid}/current.jamie`, content);
