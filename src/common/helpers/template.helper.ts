@@ -67,14 +67,15 @@ export default class TemplateHelpers {
   public static getLength = (v) => v?.length;
 
   public static json(context: any, options: Handlebars.HelperOptions) {
-    return JSON.stringify(context, null, options.hash.spaces);
-  }
-
-  public static jsonFormatter(options: Handlebars.HelperOptions) {
-    let str = options.fn(this);
+    let str = options.fn(context);
     // remove trailing commas
     str = str.replace(/,(?=\s*?[\]}])/g, '');
     return JSON.stringify(JSON.parse(str), null, options.hash.spaces);
+  }
+
+  public static jsonFormatter(options: Handlebars.HelperOptions) {
+    // json block helper
+    return TemplateHelpers.json(this, options);
   }
 
   public static withIndent(options: Handlebars.HelperOptions) {
