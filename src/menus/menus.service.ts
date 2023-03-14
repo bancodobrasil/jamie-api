@@ -25,7 +25,6 @@ import { IMenuItemMeta } from 'src/common/types';
 import { StoreService } from 'src/store/store.service';
 import { RenderMenuTemplateInput } from './inputs/render-menu-template.input';
 import { RenderMenuItemTemplateInput } from './inputs/render-menu-item-template.input';
-import MenuInitialTemplate from './objects/menu-initial-template.object';
 import MenuItemInitialTemplate from 'src/menu-items/objects/menu-item-initial-template.object';
 
 @Injectable()
@@ -42,8 +41,7 @@ export class MenusService {
     private readonly storeService: StoreService,
   ) {}
 
-  private readonly menuInitialTemplate = new MenuInitialTemplate();
-  private readonly menuItemInitialTemplate = new MenuItemInitialTemplate();
+  private readonly menuIteminitialTemplate = new MenuItemInitialTemplate();
 
   async create(createMenuInput: CreateMenuInput) {
     const { meta, items, ...rest } = createMenuInput;
@@ -306,9 +304,10 @@ export class MenusService {
         where: { menuId, id: revisionId },
       });
 
-      const content = this.renderMenuTemplate(
-        revision.snapshot as RenderMenuTemplateInput,
-      );
+      const content = this.renderMenuTemplate({
+        ...revision.snapshot,
+        id: menuId,
+      } as RenderMenuTemplateInput);
 
       await this.storeService.put(`${menu.uuid}/${revisionId}.jamie`, content);
       await this.storeService.put(`${menu.uuid}/current.jamie`, content);
@@ -335,14 +334,17 @@ export class MenusService {
       this.getItemForTemplate(
         item,
         menu,
-        item.template || this.menuInitialTemplate[menu.templateFormat],
+        item.template ||
+          this.menuIteminitialTemplate[
+            item.templateFormat || menu.templateFormat
+          ],
       ),
     );
     items =
       items
         .filter((item) => !item.parentId)
         .sort((a, b) => a.order - b.order) || [];
-    TemplateHelpers.registerHelpers();
+    TemplateHelpers.setup();
     return Handlebars.compile(menu.template)({
       items,
     });
@@ -354,14 +356,14 @@ export class MenusService {
   ): string {
     const template =
       item.template ||
-      this.menuItemInitialTemplate[item.templateFormat || menu.templateFormat];
+      this.menuIteminitialTemplate[item.templateFormat || menu.templateFormat];
     const children = item.children
       ?.map((item: RenderMenuItemTemplateInput) =>
         this.getItemForTemplate(item, menu, template),
       )
       .sort((a, b) => a.order - b.order);
     const meta = this.getItemMetaForTemplate(item.meta, menu);
-    TemplateHelpers.registerHelpers();
+    TemplateHelpers.setup();
     const result = Handlebars.compile(template)({
       ...item,
       meta,
@@ -401,7 +403,7 @@ export class MenusService {
           const meta = this.getItemMetaForTemplate(rest.meta, menu);
           let formattedTemplate = template || defaultTemplate;
           const items = getChildren(item, formattedTemplate);
-          TemplateHelpers.registerHelpers();
+          TemplateHelpers.setup();
           formattedTemplate = Handlebars.compile(formattedTemplate)({
             ...rest,
             meta,
@@ -423,7 +425,7 @@ export class MenusService {
     const meta = this.getItemMetaForTemplate(item.meta, menu);
     const formattedTemplate = item.template || defaultTemplate;
     const items = getChildren(item, formattedTemplate);
-    TemplateHelpers.registerHelpers();
+    TemplateHelpers.setup();
     const template = Handlebars.compile(formattedTemplate)({
       ...item,
       meta,

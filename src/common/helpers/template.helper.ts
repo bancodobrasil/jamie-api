@@ -3,19 +3,28 @@ import Handlebars from 'handlebars';
 import { MenuItem } from 'src/menu-items/entities/menu-item.entity';
 
 export default class TemplateHelpers {
+  public static setup() {
+    TemplateHelpers.registerHelpers();
+    TemplateHelpers.registerPartials();
+  }
+
   public static registerHelpers() {
     Handlebars.registerHelper(TemplateHelpers.mathOperators);
     Handlebars.registerHelper(TemplateHelpers.logicOperators);
+    Handlebars.registerHelper('hash', TemplateHelpers.hash);
     Handlebars.registerHelper('length', TemplateHelpers.getLength);
     Handlebars.registerHelper('json', TemplateHelpers.json);
     Handlebars.registerHelper('jsonFormatter', TemplateHelpers.jsonFormatter);
     Handlebars.registerHelper('withIndent', TemplateHelpers.withIndent);
-    Handlebars.registerHelper('recursive', TemplateHelpers.recursive);
     Handlebars.registerHelper(
       'renderItemsJSON',
       TemplateHelpers.renderItemsJSON,
     );
     Handlebars.registerHelper('renderItemsXML', TemplateHelpers.renderItemsXML);
+  }
+
+  public static registerPartials() {
+    Handlebars.registerPartial('itemJSON', TemplateHelpers.partials.itemJSON);
   }
 
   public static mathOperators = {
@@ -45,6 +54,16 @@ export default class TemplateHelpers {
     },
   };
 
+  public static hash = (options: Handlebars.HelperOptions) => {
+    // options.hash comes with keys in reverse order
+    return Object.keys(options.hash)
+      .reverse()
+      .reduce((acc, key) => {
+        acc[key] = options.hash[key];
+        return acc;
+      }, {});
+  };
+
   public static getLength = (v) => v?.length;
 
   public static json(context: any, options: Handlebars.HelperOptions) {
@@ -52,11 +71,10 @@ export default class TemplateHelpers {
   }
 
   public static jsonFormatter(options: Handlebars.HelperOptions) {
-    return JSON.stringify(
-      JSON.parse(options.fn(this)),
-      null,
-      options.hash.spaces,
-    );
+    let str = options.fn(this);
+    // remove trailing commas
+    str = str.replace(/,(?=\s*?[\]}])/g, '');
+    return JSON.stringify(JSON.parse(str), null, options.hash.spaces);
   }
 
   public static withIndent(options: Handlebars.HelperOptions) {
@@ -65,15 +83,6 @@ export default class TemplateHelpers {
       indent || options.hash.spaces ? ' '.repeat(options.hash.spaces) : '\t';
     const lines = options.fn(this).split('\n');
     return lines.map((line) => indent + line).join('\n');
-  }
-
-  public static recursive(items: MenuItem[]) {
-    if (!items || !items.length) return '';
-    const renderItem = (item: MenuItem): string => {
-      if (!item.enabled) return '';
-      return item.template;
-    };
-    return items.map(renderItem);
   }
 
   public static renderItemsJSON(
@@ -104,4 +113,32 @@ export default class TemplateHelpers {
     });
     return xml.substring(0, xml.length - 1);
   }
+
+  public static partials = {
+    itemJSON: `{{#jsonFormatter spaces=2}}
+{
+  {{#each properties as |prop|}}
+  {{log ../item.label}}
+  {{log prop}}
+  {{log @last}}
+  {{#if (and (eq @key "items") (length ../item.items)) }}
+  "{{prop}}": [
+    {{#each ../item.items as |subItem|}}
+    {{#if subItem.template}}
+    {{{ subItem.template }}}
+    {{else}}
+    {{> itemJSON item=subItem properties=../../properties}}
+    {{/if}}
+    {{#unless @last}},{{/unless}}
+    {{/each}}
+  ]{{#unless @last}},{{/unless}}
+  {{else if (and (eq @key "meta") meta) }}
+  "{{prop}}": {{{json ../item.meta}}}{{#unless @last}},{{/unless}}
+  {{else if (and (ne @key "items") (ne @key "meta"))}}
+  "{{prop}}": "{{lookup ../item @key}}"{{#unless @last}},{{/unless}}
+  {{/if}}
+  {{/each}}
+}
+{{/jsonFormatter}}`,
+  };
 }

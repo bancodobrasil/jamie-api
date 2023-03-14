@@ -8,12 +8,7 @@ export default class MenuInitialTemplate extends InitialTemplate {
   [TemplateFormat.JSON] = `{{#jsonFormatter spaces=2}}
 [
   {{#each items}}
-  {
-    "id": {{id}},
-    "label": "{{label}}",
-    "meta": {{{json meta}}}{{#if (length items)}},
-    "items": {{{recursive items}}}{{/if}}
-  }{{#unless @last}},{{/unless}}
+  {{> itemJSON item=this properties=(hash id="id" label="label" meta="meta" items="items") }}{{#unless @last}},{{/unless}}
   {{/each}}
 ]
 {{/jsonFormatter}}`;

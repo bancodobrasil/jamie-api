@@ -5,17 +5,7 @@ import { InitialTemplate } from 'src/common/schema/interfaces/initial-template.i
 @ObjectType({ implements: () => [InitialTemplate] })
 export default class MenuItemInitialTemplate extends InitialTemplate {
   @Field(() => String)
-  [TemplateFormat.JSON] = `{{#with item}}
-{{#jsonFormatter spaces=2}}
-{
-  "id": {{id}},
-  "label": "{{label}}",
-  "order": {{order}},
-  "meta": {{{json meta}}}{{#if (length children)}},
-  "children": {{{renderItemsJSON children}}}{{/if}}
-}
-{{/jsonFormatter}}
-{{/with}}`;
+  [TemplateFormat.JSON] = `{{> itemJSON item=this properties=(hash id="id" label="label" meta="meta" items="items") }}`;
 
   @Field(() => String)
   [TemplateFormat.XML] = `{{#with item}}
