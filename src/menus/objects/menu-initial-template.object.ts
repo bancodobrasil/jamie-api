@@ -36,9 +36,16 @@ ${new MenuItemInitialTemplate()[TemplateFormat.XML]}
 </items>`;
 
   @Field(() => String)
-  [TemplateFormat.PLAIN] = `{{#with menu}}
-name = "{{name}}";
-meta = {{{json meta spaces=2}}};
-items = {{{renderItemsJSON items spaces=2}}};
-{{/with}}`;
+  [TemplateFormat.PLAIN] = `items=
+{{~#jsonFormatter spaces=2}}
+[
+  {{#each menu.items as |item|}}
+  {{#if item.template}}
+  {{{ item.template }}},
+  {{else}}
+  {{> itemJSON item=item properties=(hash id="id" label="label" meta="meta" children="children") }},
+  {{/if}}
+  {{/each}}
+]
+{{/jsonFormatter}};`;
 }
