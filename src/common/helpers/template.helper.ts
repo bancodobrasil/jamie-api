@@ -68,7 +68,7 @@ export default class TemplateHelpers {
   public static getLength = (v) => v?.length;
 
   public static json(context: any, options: Handlebars.HelperOptions) {
-    let str = options.fn(context);
+    let str = options.fn ? options.fn(context) : JSON.stringify(context);
     // remove trailing commas
     str = str.replace(/,(?=\s*?[\]}])/g, '');
     return JSON.stringify(JSON.parse(str), null, options.hash.spaces);
