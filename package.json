@@ -45,6 +45,7 @@
     "env-var": "^7.3.0",
     "graphql": "^16.6.0",
     "handlebars": "^4.7.7",
+    "keycloak-connect": "^21.0.1",
     "minio": "^7.0.32",
     "mysql2": "^2.3.3",
     "nest-keycloak-connect": "^1.9.1",
