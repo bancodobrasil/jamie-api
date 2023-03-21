@@ -32,6 +32,10 @@ export class Menu extends VersionedTimestamped {
   @Column()
   name: string;
 
+  @Field(() => Boolean)
+  @Column({ default: false })
+  mustDeferChanges: boolean;
+
   @Field(() => [MenuMeta], { nullable: true })
   @Column('text', {
     nullable: true,
