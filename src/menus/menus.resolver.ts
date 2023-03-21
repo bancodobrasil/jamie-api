@@ -54,6 +54,16 @@ export class MenusResolver {
   }
 
   @Mutation(() => Menu)
+  @Roles({ roles: ['realm:manager'] })
+  approvePendency(
+    @Args('id', { type: () => Int }) id: number,
+    @Args('menuId', { type: () => Int }) menuId: number,
+    @Req() request: Request,
+  ) {
+    return this.menusService.approvePendency(id, menuId, request.user);
+  }
+
+  @Mutation(() => Menu)
   @Roles({ roles: ['realm:editor'] })
   createRevision(
     @Args('createMenuRevisionInput')

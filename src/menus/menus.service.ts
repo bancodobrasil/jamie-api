@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import Handlebars from 'handlebars';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MenuItemsService } from 'src/menu-items/menu-items.service';
@@ -88,6 +88,24 @@ export class MenusService {
     updateMenuInput: UpdateMenuInput,
     user: KeycloakAccessToken,
   ) {
+    try {
+      const menu = await this.menuRepository.findOneOrFail({ where: { id } });
+
+      if (menu.mustDeferChanges) {
+        await this.createPendency(updateMenuInput, menu, user);
+        return menu;
+      }
+
+      return this.updateMenu(menu, updateMenuInput);
+    } catch (err) {
+      if (err instanceof EntityNotFoundErrorTypeOrm) {
+        throw new EntityNotFoundError(Menu, id);
+      }
+      throw err;
+    }
+  }
+
+  private async updateMenu(menu: Menu, updateMenuInput: UpdateMenuInput) {
     const queryRunner = this.dataSource.createQueryRunner();
 
     await queryRunner.connect();
@@ -95,15 +113,6 @@ export class MenusService {
 
     try {
       const { meta, items, ...rest } = updateMenuInput;
-      const menu = await queryRunner.manager
-        .getRepository(Menu)
-        .findOneOrFail({ where: { id } });
-
-      if (menu.mustDeferChanges) {
-        await this.createPendency(updateMenuInput, menu, user);
-        return menu;
-      }
-
       Object.assign(menu, rest);
 
       const updatedMeta = this.handleMeta(menu, meta);
@@ -133,9 +142,6 @@ export class MenusService {
       });
     } catch (err) {
       await queryRunner.rollbackTransaction();
-      if (err instanceof EntityNotFoundErrorTypeOrm) {
-        throw new EntityNotFoundError(Menu, id);
-      }
       throw err;
     } finally {
       await queryRunner.release();
@@ -189,6 +195,22 @@ export class MenusService {
       input,
     });
     return this.pendencyRepository.save(pendency);
+  }
+
+  async approvePendency(id: number, menuId: number, user: KeycloakAccessToken) {
+    const menu = await this.menuRepository.findOneOrFail({
+      where: { id: menuId },
+    });
+    const pendency = await this.pendencyRepository.findOneOrFail({
+      where: { id, menuId },
+    });
+    const { input, submittedBy } = pendency;
+    if (submittedBy.id === user.sub) {
+      throw new UnauthorizedException('Cannot approve your own pendency');
+    }
+    const updated = await this.updateMenu(menu, input);
+    await this.pendencyRepository.remove(pendency);
+    return updated;
   }
 
   async createRevision({
