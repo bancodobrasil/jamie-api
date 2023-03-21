@@ -213,6 +213,18 @@ export class MenusService {
     return updated;
   }
 
+  async declinePendency(id: number, menuId: number, user: KeycloakAccessToken) {
+    const pendency = await this.pendencyRepository.findOneOrFail({
+      where: { id, menuId },
+    });
+    const { submittedBy } = pendency;
+    if (submittedBy.id === user.sub) {
+      throw new UnauthorizedException('Cannot decline your own pendency');
+    }
+    await this.pendencyRepository.remove(pendency);
+    return true;
+  }
+
   async createRevision({
     setAsCurrent,
     menuId,
