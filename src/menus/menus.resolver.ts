@@ -9,6 +9,8 @@ import { CreateMenuRevisionInput } from './inputs/create-menu-revision.input';
 import { RenderMenuTemplateInput } from './inputs/render-menu-template.input';
 import { RenderMenuItemTemplateInput } from './inputs/render-menu-item-template.input';
 import { Roles } from 'nest-keycloak-connect';
+import { Req } from '@nestjs/common';
+import { Request } from 'express';
 
 @Resolver(() => Menu)
 export class MenusResolver {
@@ -34,8 +36,15 @@ export class MenusResolver {
 
   @Mutation(() => Menu)
   @Roles({ roles: ['realm:editor'] })
-  updateMenu(@Args('updateMenuInput') updateMenuInput: UpdateMenuInput) {
-    return this.menusService.update(updateMenuInput.id, updateMenuInput);
+  updateMenu(
+    @Args('updateMenuInput') updateMenuInput: UpdateMenuInput,
+    @Req() request: Request,
+  ) {
+    return this.menusService.update(
+      updateMenuInput.id,
+      updateMenuInput,
+      request.user.sub,
+    );
   }
 
   @Mutation(() => Boolean)

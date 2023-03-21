@@ -27,6 +27,8 @@ import { RenderMenuTemplateInput } from './inputs/render-menu-template.input';
 import { RenderMenuItemTemplateInput } from './inputs/render-menu-item-template.input';
 import MenuItemInitialTemplate from 'src/menu-items/objects/menu-item-initial-template.object';
 import { TemplateFormat } from 'src/common/enums/template-format.enum';
+import { MenuPendency } from './entities/menu-pendency.entity';
+import { KeycloakUser } from 'src/common/schema/objects/keycloak-user.object';
 
 @Injectable()
 export class MenusService {
@@ -38,6 +40,8 @@ export class MenusService {
     private itemRepository: Repository<MenuItem>,
     @InjectRepository(MenuRevision)
     private revisionRepository: Repository<MenuRevision>,
+    @InjectRepository(MenuPendency)
+    private pendencyRepository: Repository<MenuPendency>,
     private readonly menuItemsService: MenuItemsService,
     private readonly storeService: StoreService,
   ) {}
@@ -78,7 +82,7 @@ export class MenusService {
     }
   }
 
-  async update(id: number, updateMenuInput: UpdateMenuInput) {
+  async update(id: number, updateMenuInput: UpdateMenuInput, userId: string) {
     const queryRunner = this.dataSource.createQueryRunner();
 
     await queryRunner.connect();
@@ -89,6 +93,12 @@ export class MenusService {
       const menu = await queryRunner.manager
         .getRepository(Menu)
         .findOneOrFail({ where: { id } });
+
+      if (menu.mustDeferChanges) {
+        await this.createPendency(updateMenuInput, menu, userId);
+        return menu;
+      }
+
       Object.assign(menu, rest);
 
       const updatedMeta = this.handleMeta(menu, meta);
@@ -154,6 +164,19 @@ export class MenusService {
       updatedMeta = [...updatedMeta, ...create];
     }
     return updatedMeta.sort((a, b) => a.order - b.order);
+  }
+
+  async createPendency(input: UpdateMenuInput, menu: Menu, userId: string) {
+    const submittedBy: KeycloakUser = {
+      id: userId,
+      username: 'test',
+    };
+    const pendency = await this.pendencyRepository.create({
+      menuId: menu.id,
+      submittedBy,
+      input,
+    });
+    return this.pendencyRepository.save(pendency);
   }
 
   async createRevision({
