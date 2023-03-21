@@ -43,7 +43,7 @@ export class MenusResolver {
     return this.menusService.update(
       updateMenuInput.id,
       updateMenuInput,
-      request.user.sub,
+      request.user,
     );
   }
 

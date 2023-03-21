@@ -29,6 +29,7 @@ import MenuItemInitialTemplate from 'src/menu-items/objects/menu-item-initial-te
 import { TemplateFormat } from 'src/common/enums/template-format.enum';
 import { MenuPendency } from './entities/menu-pendency.entity';
 import { KeycloakUser } from 'src/common/schema/objects/keycloak-user.object';
+import { KeycloakAccessToken } from 'src/common/types/keycloak.type';
 
 @Injectable()
 export class MenusService {
@@ -82,7 +83,11 @@ export class MenusService {
     }
   }
 
-  async update(id: number, updateMenuInput: UpdateMenuInput, userId: string) {
+  async update(
+    id: number,
+    updateMenuInput: UpdateMenuInput,
+    user: KeycloakAccessToken,
+  ) {
     const queryRunner = this.dataSource.createQueryRunner();
 
     await queryRunner.connect();
@@ -95,7 +100,7 @@ export class MenusService {
         .findOneOrFail({ where: { id } });
 
       if (menu.mustDeferChanges) {
-        await this.createPendency(updateMenuInput, menu, userId);
+        await this.createPendency(updateMenuInput, menu, user);
         return menu;
       }
 
@@ -166,10 +171,17 @@ export class MenusService {
     return updatedMeta.sort((a, b) => a.order - b.order);
   }
 
-  async createPendency(input: UpdateMenuInput, menu: Menu, userId: string) {
+  async createPendency(
+    input: UpdateMenuInput,
+    menu: Menu,
+    user: KeycloakAccessToken,
+  ) {
     const submittedBy: KeycloakUser = {
-      id: userId,
-      username: 'test',
+      id: user.sub,
+      username: user.username,
+      email: user.email,
+      firstName: user.given_name,
+      lastName: user.family_name,
     };
     const pendency = await this.pendencyRepository.create({
       menuId: menu.id,
