@@ -15,6 +15,7 @@ import {
 import { MenuRevision } from './menu-revision.entity';
 import { VersionedTimestamped } from 'src/common/schema/objects/versioned-timestamped.object';
 import MenuInitialTemplate from '../objects/menu-initial-template.object';
+import { MenuPendency } from './menu-pendency.entity';
 
 @ObjectType()
 @Entity('menus')
@@ -60,6 +61,13 @@ export class Menu extends VersionedTimestamped {
     cascade: true,
   })
   items?: MenuItem[];
+
+  @Field(() => [MenuPendency], { nullable: true })
+  @OneToMany(() => MenuPendency, (pendency) => pendency.menu, {
+    lazy: true,
+    cascade: true,
+  })
+  pendencies?: MenuPendency[];
 
   @Field(() => [MenuRevision], { nullable: true })
   @OneToMany(() => MenuRevision, (revision) => revision.menu, {

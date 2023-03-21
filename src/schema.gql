@@ -61,6 +61,23 @@ type MenuInitialTemplate implements InitialTemplate {
   plain: String!
 }
 
+type KeycloakUser {
+  id: ID!
+  username: String!
+  email: String
+  firstName: String
+  lastName: String
+}
+
+type MenuPendency {
+  id: Int!
+  menuId: Int!
+  submittedBy: KeycloakUser!
+  input: JSONObject!
+  menu: Menu!
+  createdAt: DateTime!
+}
+
 type Menu {
   createdAt: DateTime!
   updatedAt: DateTime!
@@ -74,6 +91,7 @@ type Menu {
   templateFormat: String
   defaultTemplate: MenuInitialTemplate!
   items: [MenuItem!]
+  pendencies: [MenuPendency!]
   revisions: [MenuRevision!]
   currentRevision: MenuRevision
   currentRevisionId: Int
