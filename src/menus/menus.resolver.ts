@@ -72,7 +72,7 @@ export class MenusResolver {
     return this.menusService.approvePendency(id, menuId, context.req.user);
   }
 
-  @Mutation(() => Menu)
+  @Mutation(() => Boolean)
   @Roles({ roles: ['realm:manager'] })
   declinePendency(
     @Args('id', { type: () => Int }) id: number,
