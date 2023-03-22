@@ -1,4 +1,4 @@
-import { Resolver, Query, Mutation, Args, Int } from '@nestjs/graphql';
+import { Resolver, Query, Mutation, Args, Int, Context } from '@nestjs/graphql';
 import { MenusService } from './menus.service';
 import { Menu, MenuConnection } from './entities/menu.entity';
 import { CreateMenuInput } from './inputs/create-menu.input';
@@ -9,9 +9,8 @@ import { CreateMenuRevisionInput } from './inputs/create-menu-revision.input';
 import { RenderMenuTemplateInput } from './inputs/render-menu-template.input';
 import { RenderMenuItemTemplateInput } from './inputs/render-menu-item-template.input';
 import { Roles } from 'nest-keycloak-connect';
-import { Req } from '@nestjs/common';
-import { Request } from 'express';
 import { MenuPendencyConnection } from './entities/menu-pendency.entity';
+import { GraphQLResolverContext } from 'src/common/types/graphql.type';
 
 @Resolver(() => Menu)
 export class MenusResolver {
@@ -39,12 +38,12 @@ export class MenusResolver {
   @Roles({ roles: ['realm:editor'] })
   updateMenu(
     @Args('updateMenuInput') updateMenuInput: UpdateMenuInput,
-    @Req() request: Request,
+    @Context() context: GraphQLResolverContext,
   ) {
     return this.menusService.update(
       updateMenuInput.id,
       updateMenuInput,
-      request.user,
+      context.req.user,
     );
   }
 
@@ -68,9 +67,9 @@ export class MenusResolver {
   approvePendency(
     @Args('id', { type: () => Int }) id: number,
     @Args('menuId', { type: () => Int }) menuId: number,
-    @Req() request: Request,
+    @Context() context: GraphQLResolverContext,
   ) {
-    return this.menusService.approvePendency(id, menuId, request.user);
+    return this.menusService.approvePendency(id, menuId, context.req.user);
   }
 
   @Mutation(() => Menu)
@@ -78,9 +77,9 @@ export class MenusResolver {
   declinePendency(
     @Args('id', { type: () => Int }) id: number,
     @Args('menuId', { type: () => Int }) menuId: number,
-    @Req() request: Request,
+    @Context() context: GraphQLResolverContext,
   ) {
-    return this.menusService.declinePendency(id, menuId, request.user);
+    return this.menusService.declinePendency(id, menuId, context.req.user);
   }
 
   @Mutation(() => Menu)
