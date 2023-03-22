@@ -11,6 +11,7 @@ import { RenderMenuItemTemplateInput } from './inputs/render-menu-item-template.
 import { Roles } from 'nest-keycloak-connect';
 import { Req } from '@nestjs/common';
 import { Request } from 'express';
+import { MenuPendencyConnection } from './entities/menu-pendency.entity';
 
 @Resolver(() => Menu)
 export class MenusResolver {
@@ -51,6 +52,15 @@ export class MenusResolver {
   @Roles({ roles: ['realm:editor'] })
   removeMenu(@Args('id', { type: () => Int }) id: number) {
     return this.menusService.remove(id);
+  }
+
+  @Query(() => MenuPendencyConnection, { name: 'pendencies' })
+  @Roles({ roles: ['realm:manager'] })
+  findAllPendencies(
+    @Args('menuId', { type: () => Int }) menuId: number,
+    @Args() pagination: PaginationArgs,
+  ) {
+    return this.menusService.findAllPendencies(pagination, menuId);
   }
 
   @Mutation(() => Menu)

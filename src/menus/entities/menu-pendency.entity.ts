@@ -1,4 +1,5 @@
 import { Field, Int, ObjectType } from '@nestjs/graphql';
+import { Connection } from 'src/common/schema/objects/connection.object';
 import { KeycloakUser } from 'src/common/schema/objects/keycloak-user.object';
 import { GraphQLJSONObject } from 'src/common/schema/scalars/json.scalar';
 import {
@@ -43,3 +44,6 @@ export class MenuPendency {
   @CreateDateColumn()
   createdAt: Date;
 }
+
+@ObjectType()
+export class MenuPendencyConnection extends Connection(MenuPendency) {}

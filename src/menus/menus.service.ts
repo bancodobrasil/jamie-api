@@ -197,6 +197,16 @@ export class MenusService {
     return this.pendencyRepository.save(pendency);
   }
 
+  async findAllPendencies(paginationArgs: PaginationArgs, menuId: number) {
+    const query = await this.pendencyRepository
+      .createQueryBuilder()
+      .where({
+        menuId,
+      })
+      .select();
+    return paginate(query, paginationArgs);
+  }
+
   async approvePendency(id: number, menuId: number, user: KeycloakAccessToken) {
     const menu = await this.menuRepository.findOneOrFail({
       where: { id: menuId },
