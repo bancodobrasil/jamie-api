@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import Handlebars from 'handlebars';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MenuItemsService } from 'src/menu-items/menu-items.service';
@@ -30,6 +30,7 @@ import { TemplateFormat } from 'src/common/enums/template-format.enum';
 import { MenuPendency } from './entities/menu-pendency.entity';
 import { KeycloakUser } from 'src/common/schema/objects/keycloak-user.object';
 import { KeycloakAccessToken } from 'src/common/types/keycloak.type';
+import { ForbiddenError } from 'apollo-server-express';
 
 @Injectable()
 export class MenusService {
@@ -216,7 +217,7 @@ export class MenusService {
     });
     const { input, submittedBy } = pendency;
     if (submittedBy.id === user.sub) {
-      throw new UnauthorizedException('Cannot approve your own pendency');
+      throw new ForbiddenError('Cannot approve your own pendency');
     }
     const updated = await this.updateMenu(menu, input);
     await this.pendencyRepository.remove(pendency);
@@ -229,7 +230,7 @@ export class MenusService {
     });
     const { submittedBy } = pendency;
     if (submittedBy.id === user.sub) {
-      throw new UnauthorizedException('Cannot decline your own pendency');
+      throw new ForbiddenError('Cannot decline your own pendency');
     }
     await this.pendencyRepository.remove(pendency);
     return true;
