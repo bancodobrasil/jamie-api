@@ -1,7 +1,7 @@
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { GraphQLModule } from '@nestjs/graphql';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import {
@@ -11,7 +11,14 @@ import {
   makeSummaryProvider,
   PrometheusModule,
 } from '@willsoto/nestjs-prometheus';
+import { keycloakConfig } from 'config/keycloak.config';
 import { typeOrmConfig } from 'config/typeorm.config';
+import {
+  AuthGuard,
+  KeycloakConnectModule,
+  ResourceGuard,
+  RoleGuard,
+} from 'nest-keycloak-connect';
 import { join } from 'path';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -33,9 +40,26 @@ import { MetricsInterceptor } from './metrics.interceptor';
       driver: ApolloDriver,
       autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
     }),
+    KeycloakConnectModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: keycloakConfig,
+    }),
     MenusModule,
   ],
   providers: [
+    {
+      provide: APP_GUARD,
+      useClass: AuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: ResourceGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RoleGuard,
+    },
     AppService,
     makeCounterProvider({
       name: 'http_requests_traffic',

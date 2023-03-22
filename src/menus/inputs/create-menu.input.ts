@@ -2,6 +2,7 @@ import { Field, InputType } from '@nestjs/graphql';
 import { Type } from 'class-transformer';
 import {
   IsArray,
+  IsBoolean,
   IsNotEmpty,
   IsOptional,
   MaxLength,
@@ -18,6 +19,11 @@ export class CreateMenuInput {
   @MinLength(3)
   @MaxLength(255)
   name: string;
+
+  @Field(() => Boolean, { nullable: true })
+  @IsOptional()
+  @IsBoolean()
+  mustDeferChanges?: boolean;
 
   @Field(() => [CreateMenuMetaInput], { nullable: true })
   @IsOptional()

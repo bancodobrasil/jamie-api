@@ -27,6 +27,10 @@ import { RenderMenuTemplateInput } from './inputs/render-menu-template.input';
 import { RenderMenuItemTemplateInput } from './inputs/render-menu-item-template.input';
 import MenuItemInitialTemplate from 'src/menu-items/objects/menu-item-initial-template.object';
 import { TemplateFormat } from 'src/common/enums/template-format.enum';
+import { MenuPendency } from './entities/menu-pendency.entity';
+import { KeycloakUser } from 'src/common/schema/objects/keycloak-user.object';
+import { KeycloakAccessToken } from 'src/common/types/keycloak.type';
+import { ForbiddenError } from 'apollo-server-express';
 
 @Injectable()
 export class MenusService {
@@ -38,6 +42,8 @@ export class MenusService {
     private itemRepository: Repository<MenuItem>,
     @InjectRepository(MenuRevision)
     private revisionRepository: Repository<MenuRevision>,
+    @InjectRepository(MenuPendency)
+    private pendencyRepository: Repository<MenuPendency>,
     private readonly menuItemsService: MenuItemsService,
     private readonly storeService: StoreService,
   ) {}
@@ -78,7 +84,29 @@ export class MenusService {
     }
   }
 
-  async update(id: number, updateMenuInput: UpdateMenuInput) {
+  async update(
+    id: number,
+    updateMenuInput: UpdateMenuInput,
+    user: KeycloakAccessToken,
+  ) {
+    try {
+      const menu = await this.menuRepository.findOneOrFail({ where: { id } });
+
+      if (menu.mustDeferChanges) {
+        await this.createPendency(updateMenuInput, menu, user);
+        return menu;
+      }
+
+      return this.updateMenu(menu, updateMenuInput);
+    } catch (err) {
+      if (err instanceof EntityNotFoundErrorTypeOrm) {
+        throw new EntityNotFoundError(Menu, id);
+      }
+      throw err;
+    }
+  }
+
+  private async updateMenu(menu: Menu, updateMenuInput: UpdateMenuInput) {
     const queryRunner = this.dataSource.createQueryRunner();
 
     await queryRunner.connect();
@@ -86,9 +114,6 @@ export class MenusService {
 
     try {
       const { meta, items, ...rest } = updateMenuInput;
-      const menu = await queryRunner.manager
-        .getRepository(Menu)
-        .findOneOrFail({ where: { id } });
       Object.assign(menu, rest);
 
       const updatedMeta = this.handleMeta(menu, meta);
@@ -118,9 +143,6 @@ export class MenusService {
       });
     } catch (err) {
       await queryRunner.rollbackTransaction();
-      if (err instanceof EntityNotFoundErrorTypeOrm) {
-        throw new EntityNotFoundError(Menu, id);
-      }
       throw err;
     } finally {
       await queryRunner.release();
@@ -154,6 +176,64 @@ export class MenusService {
       updatedMeta = [...updatedMeta, ...create];
     }
     return updatedMeta.sort((a, b) => a.order - b.order);
+  }
+
+  async createPendency(
+    input: UpdateMenuInput,
+    menu: Menu,
+    user: KeycloakAccessToken,
+  ) {
+    const submittedBy: KeycloakUser = {
+      id: user.sub,
+      username: user.preferred_username,
+      email: user.email,
+      firstName: user.given_name,
+      lastName: user.family_name,
+    };
+    const pendency = await this.pendencyRepository.create({
+      menuId: menu.id,
+      submittedBy,
+      input,
+    });
+    return this.pendencyRepository.save(pendency);
+  }
+
+  async findAllPendencies(paginationArgs: PaginationArgs, menuId: number) {
+    const query = await this.pendencyRepository
+      .createQueryBuilder()
+      .where({
+        menuId,
+      })
+      .select();
+    return paginate(query, paginationArgs);
+  }
+
+  async approvePendency(id: number, menuId: number, user: KeycloakAccessToken) {
+    const menu = await this.menuRepository.findOneOrFail({
+      where: { id: menuId },
+    });
+    const pendency = await this.pendencyRepository.findOneOrFail({
+      where: { id, menuId },
+    });
+    const { input, submittedBy } = pendency;
+    if (submittedBy.id === user.sub) {
+      throw new ForbiddenError('Cannot approve your own pendency');
+    }
+    const updated = await this.updateMenu(menu, input);
+    await this.pendencyRepository.remove(pendency);
+    return updated;
+  }
+
+  async declinePendency(id: number, menuId: number, user: KeycloakAccessToken) {
+    const pendency = await this.pendencyRepository.findOneOrFail({
+      where: { id, menuId },
+    });
+    const { submittedBy } = pendency;
+    if (submittedBy.id === user.sub) {
+      throw new ForbiddenError('Cannot decline your own pendency');
+    }
+    await this.pendencyRepository.remove(pendency);
+    return true;
   }
 
   async createRevision({

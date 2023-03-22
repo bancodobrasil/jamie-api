@@ -61,6 +61,34 @@ type MenuInitialTemplate implements InitialTemplate {
   plain: String!
 }
 
+type KeycloakUser {
+  id: ID!
+  username: String!
+  email: String
+  firstName: String
+  lastName: String
+}
+
+type MenuPendency {
+  id: Int!
+  menuId: Int!
+  submittedBy: KeycloakUser!
+  input: JSONObject!
+  menu: Menu!
+  createdAt: DateTime!
+}
+
+type MenuPendencyConnection {
+  edges: [MenuPendencyEdge!]
+  pageInfo: PageInfo
+  totalCount: Int
+}
+
+type MenuPendencyEdge {
+  cursor: String!
+  node: MenuPendency!
+}
+
 type Menu {
   createdAt: DateTime!
   updatedAt: DateTime!
@@ -68,11 +96,13 @@ type Menu {
   id: Int!
   uuid: ID!
   name: String!
+  mustDeferChanges: Boolean!
   meta: [MenuMeta!]
   template: String
   templateFormat: String
   defaultTemplate: MenuInitialTemplate!
   items: [MenuItem!]
+  pendencies: [MenuPendency!]
   revisions: [MenuRevision!]
   currentRevision: MenuRevision
   currentRevisionId: Int
@@ -114,6 +144,7 @@ type MenuItem {
 type Query {
   menus(first: Int, after: String, last: Int, before: String, sort: MenuSort, direction: Direction): MenuConnection!
   menu(id: Int!): Menu!
+  pendencies(menuId: Int!, first: Int, after: String, last: Int, before: String): MenuPendencyConnection!
   renderMenuTemplate(renderMenuTemplateInput: RenderMenuTemplateInput!): String!
   renderMenuItemTemplate(renderMenuItemTemplateInput: RenderMenuItemTemplateInput!, renderMenuTemplateInput: RenderMenuTemplateInput!): String!
   menuItem(id: Int!, menuId: Int!): MenuItem!
@@ -165,6 +196,8 @@ type Mutation {
   createMenu(createMenuInput: CreateMenuInput!): Menu!
   updateMenu(updateMenuInput: UpdateMenuInput!): Menu!
   removeMenu(id: Int!): Boolean!
+  approvePendency(id: Int!, menuId: Int!): Menu!
+  declinePendency(id: Int!, menuId: Int!): Boolean!
   createRevision(createMenuRevisionInput: CreateMenuRevisionInput!): Menu!
   restoreRevision(menuId: Int!, revisionId: Int!): Menu!
   publishRevision(menuId: Int!, revisionId: Int!): Menu!
@@ -172,6 +205,7 @@ type Mutation {
 
 input CreateMenuInput {
   name: String!
+  mustDeferChanges: Boolean
   meta: [CreateMenuMetaInput!]
   items: [CreateMenuItemInput!]
 }
@@ -198,6 +232,7 @@ input CreateMenuItemInput {
 
 input UpdateMenuInput {
   name: String
+  mustDeferChanges: Boolean
   id: Int!
   items: [UpdateMenuItemInput!]
   meta: [UpdateMenuMetaInput!]

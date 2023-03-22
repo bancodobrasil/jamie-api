@@ -8,10 +8,11 @@ import { MenuRevision } from './entities/menu-revision.entity';
 import { MenuItem } from 'src/menu-items/entities/menu-item.entity';
 import { StoreModule } from 'src/store/store.module';
 import { storeConfig } from 'config/store.config';
+import { MenuPendency } from './entities/menu-pendency.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Menu, MenuItem, MenuRevision]),
+    TypeOrmModule.forFeature([Menu, MenuItem, MenuRevision, MenuPendency]),
     StoreModule.registerAsync({
       useFactory: storeConfig,
     }),
