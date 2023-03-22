@@ -1,0 +1,7 @@
+# API Client to be used with VS Code REST Client extension
+
+# Keycloak access token
+# POST http://localhost:8080/realms/jamie/protocol/openid-connect/token
+# Content-Type: application/x-www-form-urlencoded
+
+# grant_type=password&client_id=jamie&username=jamie&password=Jamie@2023
