@@ -33,7 +33,7 @@ export class MenuPendency {
   input: UpdateMenuInput;
 
   @Field(() => Menu)
-  @ManyToOne(() => Menu, (menu) => menu.revisions, {
+  @ManyToOne(() => Menu, (menu) => menu.pendencies, {
     lazy: true,
     onUpdate: 'CASCADE',
     onDelete: 'CASCADE',
