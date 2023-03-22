@@ -25,5 +25,4 @@ export interface KeycloakAccessToken {
   family_name?: string;
   email?: string;
   groups?: string[];
-  username?: string;
 }

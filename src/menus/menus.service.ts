@@ -184,7 +184,7 @@ export class MenusService {
   ) {
     const submittedBy: KeycloakUser = {
       id: user.sub,
-      username: user.username,
+      username: user.preferred_username,
       email: user.email,
       firstName: user.given_name,
       lastName: user.family_name,
