@@ -446,6 +446,9 @@ export class MenusService {
           items,
         },
       });
+      if (menu.templateFormat === TemplateFormat.JSON) {
+        JSON.parse(result);
+      }
       return result;
     } catch (err) {
       console.error(err);
@@ -473,6 +476,9 @@ export class MenusService {
           children,
         },
       });
+      if (item.templateFormat === TemplateFormat.JSON) {
+        JSON.parse(result);
+      }
       return result;
     } catch (err) {
       console.error(err);
