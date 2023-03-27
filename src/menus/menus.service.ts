@@ -114,8 +114,23 @@ export class MenusService {
     await queryRunner.startTransaction();
 
     try {
-      const { meta, items, ...rest } = updateMenuInput;
-      Object.assign(menu, rest);
+      const { meta, items, template, templateFormat, ...rest } =
+        updateMenuInput;
+
+      if (template) {
+        if (
+          (templateFormat && templateFormat === TemplateFormat.JSON) ||
+          (!templateFormat && menu.templateFormat === TemplateFormat.JSON)
+        ) {
+          try {
+            JSON.parse(template);
+          } catch (err) {
+            throw new BadTemplateFormatError(err);
+          }
+        }
+      }
+
+      Object.assign(menu, { ...rest, template, templateFormat });
 
       const updatedMeta = this.handleMeta(menu, meta);
       menu.meta = updatedMeta as MenuMeta[];

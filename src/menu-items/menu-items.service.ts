@@ -8,6 +8,8 @@ import { UpdateMenuItemInput } from './inputs/update-menu-item.input';
 import { DeleteMenuItemInput } from './inputs/delete-menu-item.input';
 import { InputAction } from 'src/common/schema/enums/input-action.enum';
 import { EntityNotFoundError } from 'src/common/errors/entity-not-found.error';
+import { TemplateFormat } from 'src/common/enums/template-format.enum';
+import { BadTemplateFormatError } from 'src/menus/errors/bad-template-format.error';
 
 @Injectable()
 export class MenuItemsService {
@@ -75,15 +77,28 @@ export class MenuItemsService {
     childrenIndex: number[],
     siblings: UpdateMenuItemInput[],
   ) {
-    const { children } = input;
+    const { children, template, templateFormat } = input;
     delete input.action;
     delete input.children;
+    let existingItem;
     try {
-      await manager
+      existingItem = await manager
         .getRepository(MenuItem)
         .findOneOrFail({ where: { id: input.id, menuId: menu.id } });
     } catch (error) {
       throw new EntityNotFoundError(MenuItem, input.id);
+    }
+    if (template) {
+      if (
+        (templateFormat && templateFormat === TemplateFormat.JSON) ||
+        (!templateFormat && existingItem.templateFormat === TemplateFormat.JSON)
+      ) {
+        try {
+          JSON.parse(template);
+        } catch (err) {
+          throw new BadTemplateFormatError(err);
+        }
+      }
     }
     const item = await manager.save(MenuItem, {
       ...input,
