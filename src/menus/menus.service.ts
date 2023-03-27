@@ -31,6 +31,7 @@ import { MenuPendency } from './entities/menu-pendency.entity';
 import { KeycloakUser } from 'src/common/schema/objects/keycloak-user.object';
 import { KeycloakAccessToken } from 'src/common/types/keycloak.type';
 import { ForbiddenError } from 'apollo-server-express';
+import { BadTemplateFormatError } from './errors/bad-template-format.error';
 
 @Injectable()
 export class MenusService {
@@ -437,13 +438,19 @@ export class MenusService {
       items
         .filter((item) => !item.parentId)
         .sort((a, b) => a.order - b.order) || [];
-    TemplateHelpers.setup();
-    return Handlebars.compile(menu.template)({
-      menu: {
-        ...menu,
-        items,
-      },
-    });
+    try {
+      TemplateHelpers.setup();
+      const result = Handlebars.compile(menu.template)({
+        menu: {
+          ...menu,
+          items,
+        },
+      });
+      return result;
+    } catch (err) {
+      console.error(err);
+      throw new BadTemplateFormatError(err);
+    }
   }
 
   renderMenuItemTemplate(
@@ -456,16 +463,21 @@ export class MenusService {
       )
       .sort((a, b) => a.order - b.order);
     const meta = this.getItemMetaForTemplate(item.meta, menu);
-    TemplateHelpers.setup();
     if (!item.template) return '';
-    const result = Handlebars.compile(item.template)({
-      item: {
-        ...item,
-        meta,
-        children,
-      },
-    });
-    return result;
+    try {
+      TemplateHelpers.setup();
+      const result = Handlebars.compile(item.template)({
+        item: {
+          ...item,
+          meta,
+          children,
+        },
+      });
+      return result;
+    } catch (err) {
+      console.error(err);
+      throw new BadTemplateFormatError(err);
+    }
   }
 
   private getItemMetaForTemplate = (
