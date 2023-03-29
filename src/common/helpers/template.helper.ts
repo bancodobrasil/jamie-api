@@ -106,10 +106,14 @@ export default class TemplateHelpers {
     itemXML: `<{{tag}} {{#each properties as |prop|}}
 {{~#if (and (ne @key "children") (ne @key "meta"))}}{{prop}}="{{lookup ../item @key}}" {{/if}}
 {{~/each}}{{~#unless (or (and properties.meta item.meta) (length item.children))}}/>{{else}}>
-{{#withIndent spaces=2}}
+
+{{~#withIndent spaces=2}}
+
 {{~#if properties.meta }}
 {{~#each item.meta as |meta|}}
-<{{lookup (lookup ../properties "meta") "tag"}} {{lookup (lookup ../properties "meta") "key"}}="{{@key}}" {{lookup (lookup ../properties "meta") "value"}}="{{meta}}" />
+
+<{{lookup (lookup ../properties "meta") "tag"}} {{lookup (lookup ../properties "meta") "key"}}="{{#if (and ../properties.meta.mapKeys (lookup ../properties.meta.mapKeys @key))}}{{lookup ../properties.meta.mapKeys @key}}{{else}}{{@key}}{{/if}}" {{lookup (lookup ../properties "meta") "value"}}="{{meta}}" />
+
 {{~/each}}
 {{~/if}}
 
