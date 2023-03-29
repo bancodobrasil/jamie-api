@@ -21,7 +21,6 @@ import { CreateMenuRevisionInput } from './inputs/create-menu-revision.input';
 import { MenuItem } from 'src/menu-items/entities/menu-item.entity';
 import { EntityNotFoundError } from 'src/common/errors/entity-not-found.error';
 import TemplateHelpers from 'src/common/helpers/template.helper';
-import { IMenuItemMeta } from 'src/common/types';
 import { StoreService } from 'src/store/store.service';
 import { RenderMenuTemplateInput } from './inputs/render-menu-template.input';
 import { RenderMenuItemTemplateInput } from './inputs/render-menu-item-template.input';
@@ -91,7 +90,10 @@ export class MenusService {
     user: KeycloakAccessToken,
   ) {
     try {
-      const menu = await this.menuRepository.findOneOrFail({ where: { id } });
+      const menu = await this.menuRepository.findOneOrFail({
+        where: { id },
+        relations: ['items'],
+      });
 
       if (menu.mustDeferChanges) {
         await this.createPendency(updateMenuInput, menu, user);
@@ -122,8 +124,38 @@ export class MenusService {
           (templateFormat && templateFormat === TemplateFormat.JSON) ||
           (!templateFormat && menu.templateFormat === TemplateFormat.JSON)
         ) {
+          const menuItems = await menu.items;
+          const getChildren = (
+            parent: MenuItem,
+          ): RenderMenuItemTemplateInput[] => {
+            const children = menuItems
+              .filter((item) => item.parentId === parent.id)
+              .map((item: MenuItem) => {
+                return {
+                  ...item,
+                  children: getChildren(item),
+                };
+              })
+              .sort((a, b) => a.order - b.order);
+            return children;
+          };
+          const inputItems: RenderMenuItemTemplateInput[] =
+            menuItems
+              .map((item: MenuItem) => {
+                return {
+                  ...item,
+                  children: getChildren(item),
+                };
+              })
+              .filter((item) => !item.parentId)
+              .sort((a, b) => a.order - b.order) || [];
+          const inputMenu: RenderMenuTemplateInput = {
+            ...menu,
+            items: inputItems,
+          };
           try {
-            JSON.parse(template);
+            const renderedTemplate = this.renderMenuTemplate(inputMenu);
+            JSON.parse(renderedTemplate);
           } catch (err) {
             throw new BadTemplateFormatError(err);
           }
@@ -447,7 +479,7 @@ export class MenusService {
 
   renderMenuTemplate(menu: RenderMenuTemplateInput): string {
     let items = menu.items?.map((item: RenderMenuItemTemplateInput) =>
-      this.getItemForTemplate(item, menu),
+      this.menuItemsService.getItemForTemplate(item, menu),
     );
     items =
       items
@@ -474,94 +506,7 @@ export class MenusService {
   renderMenuItemTemplate(
     item: RenderMenuItemTemplateInput,
     menu: RenderMenuTemplateInput,
-  ): string {
-    const children = item.children
-      ?.map((item: RenderMenuItemTemplateInput) =>
-        this.getItemForTemplate(item, menu),
-      )
-      .sort((a, b) => a.order - b.order);
-    const meta = this.getItemMetaForTemplate(item.meta, menu);
-    if (!item.template) return '';
-    try {
-      TemplateHelpers.setup();
-      const result = Handlebars.compile(item.template)({
-        item: {
-          ...item,
-          meta,
-          children,
-        },
-      });
-      if (item.templateFormat === TemplateFormat.JSON) {
-        JSON.parse(result);
-      }
-      return result;
-    } catch (err) {
-      console.error(err);
-      throw new BadTemplateFormatError(err);
-    }
-  }
-
-  private getItemMetaForTemplate = (
-    meta: IMenuItemMeta,
-    menu: RenderMenuTemplateInput,
-  ): Record<string, unknown> => {
-    const result: Record<string, unknown> = {};
-    if (!meta) return result;
-    menu.meta?.forEach((item: MenuMeta) => {
-      if (item.enabled) {
-        result[item.name] = meta[item.id] || item.defaultValue;
-      }
-    });
-    return result;
-  };
-
-  private getItemForTemplate(
-    item: RenderMenuItemTemplateInput,
-    menu: RenderMenuTemplateInput,
   ) {
-    const getChildren = (
-      parent: RenderMenuItemTemplateInput,
-    ): RenderMenuItemTemplateInput[] => {
-      const children = parent.children
-        ?.filter((item) => item.parentId === parent.id)
-        .map((item: RenderMenuItemTemplateInput) => {
-          const meta = this.getItemMetaForTemplate(item.meta, menu);
-          const children = getChildren(item);
-          TemplateHelpers.setup();
-          if (item.template) {
-            item.template = Handlebars.compile(item.template)({
-              item: {
-                ...item,
-                meta,
-                children,
-              },
-            });
-          }
-          return {
-            ...item,
-            meta,
-            children,
-          };
-        })
-        .sort((a, b) => a.order - b.order);
-      return children;
-    };
-    const meta = this.getItemMetaForTemplate(item.meta, menu);
-    const children = getChildren(item);
-    TemplateHelpers.setup();
-    if (item.template) {
-      item.template = Handlebars.compile(item.template)({
-        item: {
-          ...item,
-          meta,
-          children,
-        },
-      });
-    }
-    return {
-      ...item,
-      meta,
-      children,
-    };
+    return this.menuItemsService.renderMenuItemTemplate(item, menu);
   }
 }
