@@ -105,11 +105,13 @@ export default class TemplateHelpers {
 {{/jsonFormatter}}`,
     itemXML: `<{{tag}} {{#each properties as |prop|}}
 {{~#if (and (ne @key "children") (ne @key "meta"))}}{{prop}}="{{lookup ../item @key}}" {{/if}}
-{{~/each}}{{~#unless (or item.meta (length item.children))}}/>{{else}}>
+{{~/each}}{{~#unless (or (and properties.meta item.meta) (length item.children))}}/>{{else}}>
 {{#withIndent spaces=2}}
+{{~#if properties.meta }}
 {{~#each item.meta as |meta|}}
 <{{lookup (lookup ../properties "meta") "tag"}} {{lookup (lookup ../properties "meta") "key"}}="{{@key}}" {{lookup (lookup ../properties "meta") "value"}}="{{meta}}" />
 {{~/each}}
+{{~/if}}
 
 {{~#each item.children as |child|}}
 
