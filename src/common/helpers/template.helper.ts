@@ -95,7 +95,7 @@ export default class TemplateHelpers {
     {{/if}},
     {{/each}}
   ],
-  {{else if (and (eq @key "meta") meta) }}
+  {{else if (and (eq @key "meta") ../item.meta) }}
   "{{prop}}": {{{json ../item.meta}}}{{#unless @last}},{{/unless}}
   {{else if (and (ne @key "children") (ne @key "meta"))}}
   "{{prop}}": "{{lookup ../item @key}}"{{#unless @last}},{{/unless}}
