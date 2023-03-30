@@ -21,7 +21,6 @@ import { CreateMenuRevisionInput } from './inputs/create-menu-revision.input';
 import { MenuItem } from 'src/menu-items/entities/menu-item.entity';
 import { EntityNotFoundError } from 'src/common/errors/entity-not-found.error';
 import TemplateHelpers from 'src/common/helpers/template.helper';
-import { IMenuItemMeta } from 'src/common/types';
 import { StoreService } from 'src/store/store.service';
 import { RenderMenuTemplateInput } from './inputs/render-menu-template.input';
 import { RenderMenuItemTemplateInput } from './inputs/render-menu-item-template.input';
@@ -31,6 +30,7 @@ import { MenuPendency } from './entities/menu-pendency.entity';
 import { KeycloakUser } from 'src/common/schema/objects/keycloak-user.object';
 import { KeycloakAccessToken } from 'src/common/types/keycloak.type';
 import { ForbiddenError } from 'apollo-server-express';
+import { BadTemplateFormatError } from './errors/bad-template-format.error';
 
 @Injectable()
 export class MenusService {
@@ -90,7 +90,10 @@ export class MenusService {
     user: KeycloakAccessToken,
   ) {
     try {
-      const menu = await this.menuRepository.findOneOrFail({ where: { id } });
+      const menu = await this.menuRepository.findOneOrFail({
+        where: { id },
+        relations: ['items'],
+      });
 
       if (menu.mustDeferChanges) {
         await this.createPendency(updateMenuInput, menu, user);
@@ -113,8 +116,53 @@ export class MenusService {
     await queryRunner.startTransaction();
 
     try {
-      const { meta, items, ...rest } = updateMenuInput;
-      Object.assign(menu, rest);
+      const { meta, items, template, templateFormat, ...rest } =
+        updateMenuInput;
+
+      if (template) {
+        if (
+          (templateFormat && templateFormat === TemplateFormat.JSON) ||
+          (!templateFormat && menu.templateFormat === TemplateFormat.JSON)
+        ) {
+          const menuItems = await menu.items;
+          const getChildren = (
+            parent: MenuItem,
+          ): RenderMenuItemTemplateInput[] => {
+            const children = menuItems
+              .filter((item) => item.parentId === parent.id)
+              .map((item: MenuItem) => {
+                return {
+                  ...item,
+                  children: getChildren(item),
+                };
+              })
+              .sort((a, b) => a.order - b.order);
+            return children;
+          };
+          const inputItems: RenderMenuItemTemplateInput[] =
+            menuItems
+              .map((item: MenuItem) => {
+                return {
+                  ...item,
+                  children: getChildren(item),
+                };
+              })
+              .filter((item) => !item.parentId)
+              .sort((a, b) => a.order - b.order) || [];
+          const inputMenu: RenderMenuTemplateInput = {
+            ...menu,
+            items: inputItems,
+          };
+          try {
+            const renderedTemplate = this.renderMenuTemplate(inputMenu);
+            JSON.parse(renderedTemplate);
+          } catch (err) {
+            throw new BadTemplateFormatError(err);
+          }
+        }
+      }
+
+      Object.assign(menu, { ...rest, template, templateFormat });
 
       const updatedMeta = this.handleMeta(menu, meta);
       menu.meta = updatedMeta as MenuMeta[];
@@ -431,104 +479,34 @@ export class MenusService {
 
   renderMenuTemplate(menu: RenderMenuTemplateInput): string {
     let items = menu.items?.map((item: RenderMenuItemTemplateInput) =>
-      this.getItemForTemplate(item, menu),
+      this.menuItemsService.getItemForTemplate(item, menu),
     );
     items =
       items
         .filter((item) => !item.parentId)
         .sort((a, b) => a.order - b.order) || [];
-    TemplateHelpers.setup();
-    return Handlebars.compile(menu.template)({
-      menu: {
-        ...menu,
-        items,
-      },
-    });
+    try {
+      TemplateHelpers.setup();
+      const result = Handlebars.compile(menu.template)({
+        menu: {
+          ...menu,
+          items,
+        },
+      });
+      if (menu.templateFormat === TemplateFormat.JSON) {
+        JSON.parse(result);
+      }
+      return result;
+    } catch (err) {
+      console.error(err);
+      throw new BadTemplateFormatError(err);
+    }
   }
 
   renderMenuItemTemplate(
     item: RenderMenuItemTemplateInput,
     menu: RenderMenuTemplateInput,
-  ): string {
-    const children = item.children
-      ?.map((item: RenderMenuItemTemplateInput) =>
-        this.getItemForTemplate(item, menu),
-      )
-      .sort((a, b) => a.order - b.order);
-    const meta = this.getItemMetaForTemplate(item.meta, menu);
-    TemplateHelpers.setup();
-    if (!item.template) return '';
-    const result = Handlebars.compile(item.template)({
-      item: {
-        ...item,
-        meta,
-        children,
-      },
-    });
-    return result;
-  }
-
-  private getItemMetaForTemplate = (
-    meta: IMenuItemMeta,
-    menu: RenderMenuTemplateInput,
-  ): Record<string, unknown> => {
-    const result: Record<string, unknown> = {};
-    if (!meta) return result;
-    menu.meta?.forEach((item: MenuMeta) => {
-      if (item.enabled) {
-        result[item.name] = meta[item.id] || item.defaultValue;
-      }
-    });
-    return result;
-  };
-
-  private getItemForTemplate(
-    item: RenderMenuItemTemplateInput,
-    menu: RenderMenuTemplateInput,
   ) {
-    const getChildren = (
-      parent: RenderMenuItemTemplateInput,
-    ): RenderMenuItemTemplateInput[] => {
-      const children = parent.children
-        ?.filter((item) => item.parentId === parent.id)
-        .map((item: RenderMenuItemTemplateInput) => {
-          const meta = this.getItemMetaForTemplate(item.meta, menu);
-          const children = getChildren(item);
-          TemplateHelpers.setup();
-          if (item.template) {
-            item.template = Handlebars.compile(item.template)({
-              item: {
-                ...item,
-                meta,
-                children,
-              },
-            });
-          }
-          return {
-            ...item,
-            meta,
-            children,
-          };
-        })
-        .sort((a, b) => a.order - b.order);
-      return children;
-    };
-    const meta = this.getItemMetaForTemplate(item.meta, menu);
-    const children = getChildren(item);
-    TemplateHelpers.setup();
-    if (item.template) {
-      item.template = Handlebars.compile(item.template)({
-        item: {
-          ...item,
-          meta,
-          children,
-        },
-      });
-    }
-    return {
-      ...item,
-      meta,
-      children,
-    };
+    return this.menuItemsService.renderMenuItemTemplate(item, menu);
   }
 }
