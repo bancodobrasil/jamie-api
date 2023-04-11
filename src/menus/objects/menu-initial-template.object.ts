@@ -1,25 +1,27 @@
 import { Field, ObjectType } from '@nestjs/graphql';
 import { TemplateFormat } from 'src/common/enums/template-format.enum';
 import { InitialTemplate } from 'src/common/schema/interfaces/initial-template.interface';
-import MenuItemInitialTemplate from 'src/menu-items/objects/menu-item-initial-template.object';
+import { RenderItemPartial } from 'src/menu-items/objects/menu-item-initial-template.object';
 
 @ObjectType({ implements: () => [InitialTemplate] })
 export default class MenuInitialTemplate extends InitialTemplate {
   @Field(() => String)
-  [TemplateFormat.JSON] = `{{#jsonFormatter spaces=2}}
+  [TemplateFormat.JSON] = `${RenderItemPartial[TemplateFormat.JSON]}
+{{#jsonFormatter spaces=2}}
 [
   {{#each menu.items as |item|}}
   {{#if item.template}}
   {{{ item.template }}},
   {{else}}
-  ${new MenuItemInitialTemplate()[TemplateFormat.JSON]},
+  {{> itemJSON item=item}},
   {{/if}}
   {{/each}}
 ]
 {{/jsonFormatter}}`;
 
   @Field(() => String)
-  [TemplateFormat.XML] = `<items>
+  [TemplateFormat.XML] = `${RenderItemPartial[TemplateFormat.XML]}
+<items>
 {{~#withIndent spaces=2}}
 {{~#each menu.items as |item|}}
 {{~#if item.template}}
@@ -27,7 +29,7 @@ export default class MenuInitialTemplate extends InitialTemplate {
 {{{ item.template }}}
 {{~else}}
 
-${new MenuItemInitialTemplate()[TemplateFormat.XML]}
+{{> itemXML item=child}}
 {{~/if}}
 {{~/each}}
 
@@ -36,7 +38,8 @@ ${new MenuItemInitialTemplate()[TemplateFormat.XML]}
 </items>`;
 
   @Field(() => String)
-  [TemplateFormat.PLAIN] = `items=
+  [TemplateFormat.PLAIN] = `${RenderItemPartial[TemplateFormat.JSON]}
+items=
 {{~#jsonFormatter spaces=2}}
 [
   {{#each menu.items as |item|}}
