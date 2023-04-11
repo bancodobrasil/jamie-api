@@ -37,13 +37,14 @@ export class RenderItemPartial {
 {{~/inline}}`;
 
   static [TemplateFormat.XML] = `{{#*inline "renderItem" }}
-{{~#withIndent spaces=2}}
 <item id="{{item.id}}" label="{{item.label}}"
   {{~#unless (or item.meta (length item.children))}}/>{{else}}>
   {{~#each item.meta as |meta|}}
-  <meta {{@key}}="{{meta}}"/>
+
+  <meta key="{{@key}}" value="{{meta}}"/>
   {{~/each}}
   {{~#if (length item.children)}}
+
   <children>
   {{~#each item.children as |child|}}
 
@@ -58,9 +59,11 @@ export class RenderItemPartial {
   {{~/withIndent}}
 
   {{~/each}}
+
   </children>
   {{~/if}}
+
 </item>
-{{~/withIndent}}
+{{~/unless}}
 {{~/inline}}`;
 }
