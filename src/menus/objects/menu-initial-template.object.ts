@@ -13,7 +13,7 @@ export default class MenuInitialTemplate extends InitialTemplate {
   {{#if item.template}}
   {{{ item.template }}},
   {{else}}
-  {{> itemJSON item=item}},
+  {{> renderItem item=item}},
   {{/if}}
   {{/each}}
 ]
@@ -29,7 +29,7 @@ export default class MenuInitialTemplate extends InitialTemplate {
 {{{ item.template }}}
 {{~else}}
 
-{{> itemXML item=child}}
+{{> renderItem item=item}}
 {{~/if}}
 {{~/each}}
 
@@ -46,7 +46,7 @@ items=
   {{#if item.template}}
   {{{ item.template }}},
   {{else}}
-  {{> itemJSON item=item properties=(hash id="id" label="label" meta="meta" children="children") }},
+  {{> renderItem item=item}},
   {{/if}}
   {{/each}}
 ]
