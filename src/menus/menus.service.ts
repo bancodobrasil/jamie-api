@@ -151,6 +151,8 @@ export class MenusService {
               .sort((a, b) => a.order - b.order) || [];
           const inputMenu: RenderMenuTemplateInput = {
             ...menu,
+            template,
+            templateFormat,
             items: inputItems,
           };
           try {
@@ -433,21 +435,21 @@ export class MenusService {
         where: { menuId, id: revisionId },
       });
 
-      const menuItems = await menu.items;
+      const snapshotItems = await revision.snapshot.items;
 
-      const getChildren = (menuItems: MenuItem[], item: MenuItem) => {
-        const children = menuItems.filter((i) => i.parentId === item.id);
+      const getChildren = (snapshotItems: MenuItem[], item: MenuItem) => {
+        const children = snapshotItems.filter((i) => i.parentId === item.id);
         return children.map((c) => ({
           ...c,
-          children: getChildren(menuItems, c),
+          children: getChildren(snapshotItems, c),
         }));
       };
 
-      const items = menuItems
+      const items = snapshotItems
         .filter((i) => !i.parentId)
         .map((i: MenuItem) => ({
           ...i,
-          children: getChildren(menuItems, i),
+          children: getChildren(snapshotItems, i),
         }));
 
       const formattedSnapshot = {

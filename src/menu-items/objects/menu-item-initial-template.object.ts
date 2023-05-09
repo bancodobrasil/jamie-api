@@ -5,11 +5,65 @@ import { InitialTemplate } from 'src/common/schema/interfaces/initial-template.i
 @ObjectType({ implements: () => [InitialTemplate] })
 export default class MenuItemInitialTemplate extends InitialTemplate {
   @Field(() => String)
-  [TemplateFormat.JSON] = `{{> itemJSON item=item properties=(hash id="id" label="label" meta=(hash key="meta") children="children") }}`;
+  [TemplateFormat.JSON] = `${RenderItemPartial[TemplateFormat.JSON]}
+{{> renderItem item=item }}`;
 
   @Field(() => String)
-  [TemplateFormat.XML] = `{{> itemXML item=item tag="item" properties=(hash id="id" label="label" meta=(hash tag="meta" key="key" value="value") children="children")}}`;
+  [TemplateFormat.XML] = `${RenderItemPartial[TemplateFormat.XML]}
+{{> renderItem item=item }}`;
 
   @Field(() => String)
   [TemplateFormat.PLAIN] = this[TemplateFormat.JSON];
+}
+
+export class RenderItemPartial {
+  static [TemplateFormat.JSON] = `{{#*inline "renderItem" }}
+{{#jsonFormatter spaces=2}}
+{
+  "id": {{item.id}},
+  "label": "{{item.label}}",
+  "meta": {{{json item.meta}}},
+  "children": [
+    {{#each item.children as |child|}}
+    {{#if child.template}}
+    {{{ child.template }}}
+    {{else}}
+    {{> renderItem item=child}}
+    {{/if}},
+    {{/each}}
+  ]
+}
+{{/jsonFormatter}}
+{{~/inline}}`;
+
+  static [TemplateFormat.XML] = `{{#*inline "renderItem" }}
+<item id="{{item.id}}" label="{{item.label}}"
+  {{~#unless (or item.meta (length item.children))}}/>{{else}}>
+  {{~#each item.meta as |meta|}}
+
+  <meta key="{{@key}}" value="{{meta}}"/>
+  {{~/each}}
+  {{~#if (length item.children)}}
+
+  <children>
+  {{~#each item.children as |child|}}
+
+  {{~#withIndent spaces=2}}
+  {{~#if child.template}}
+
+  {{{child.template}}}
+  {{~else}}
+
+  {{> renderItem item=child}}
+  {{~/if}}
+  {{~/withIndent}}
+
+  {{~/each}}
+
+  </children>
+  {{~/if}}
+
+</item>
+{{~/unless}}
+{{~/inline}}`;
 }
