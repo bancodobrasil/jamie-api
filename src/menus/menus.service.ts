@@ -151,6 +151,8 @@ export class MenusService {
               .sort((a, b) => a.order - b.order) || [];
           const inputMenu: RenderMenuTemplateInput = {
             ...menu,
+            template,
+            templateFormat,
             items: inputItems,
           };
           try {
