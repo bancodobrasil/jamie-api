@@ -71,11 +71,12 @@ export class MenusService {
       });
       await queryRunner.manager.save(menu, { data: { items } });
       if (menu.hasConditions) {
-        await this.featwsApiService.createRulesheet({
+        const rulesheet = await this.featwsApiService.createRulesheet({
           name: menu.name,
           // TODO: Set the correct initial rulesheet version
           version: '1',
         });
+        await queryRunner.manager.save({ ...menu, rulesheetId: rulesheet.id });
       }
       await queryRunner.commitTransaction();
       return this.menuRepository.findOne({
