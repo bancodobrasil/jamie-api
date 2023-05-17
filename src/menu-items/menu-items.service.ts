@@ -253,7 +253,8 @@ export class MenuItemsService {
     ): RenderMenuItemTemplateInput[] => {
       const children = parent.children
         ?.filter((item) => item.parentId === parent.id)
-        .map((item: RenderMenuItemTemplateInput) => {
+        .map((i: RenderMenuItemTemplateInput) => {
+          const { rules, ...item } = i;
           const meta = this.getItemMetaForTemplate(item.meta, menu);
           const children = getChildren(item);
           TemplateHelpers.setup();
@@ -265,6 +266,9 @@ export class MenuItemsService {
                 children,
               },
             });
+            if (rules) {
+              item.template = `{{if menu_${item.id}}\n${item.template}\n{{end}}`;
+            }
           }
           return {
             ...item,

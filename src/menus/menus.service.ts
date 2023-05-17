@@ -538,7 +538,7 @@ export class MenusService {
         templateFormat: TemplateFormat[revision.snapshot.templateFormat],
         items,
       };
-      const content = this.renderMenuTemplate(formattedSnapshot);
+      const content = this.renderMenuTemplate(formattedSnapshot, false);
 
       await this.storeService.put(`${menu.uuid}/${revisionId}.jamie`, content);
       await this.storeService.put(`${menu.uuid}/current.jamie`, content);
@@ -560,7 +560,10 @@ export class MenusService {
     }
   }
 
-  renderMenuTemplate(menu: RenderMenuTemplateInput): string {
+  renderMenuTemplate(
+    menu: RenderMenuTemplateInput,
+    shouldCheckJson = true,
+  ): string {
     let items = menu.items?.map((item: RenderMenuItemTemplateInput) =>
       this.menuItemsService.getItemForTemplate(item, menu),
     );
@@ -576,7 +579,7 @@ export class MenusService {
           items,
         },
       });
-      if (menu.templateFormat === TemplateFormat.JSON) {
+      if (shouldCheckJson && menu.templateFormat === TemplateFormat.JSON) {
         JSON.parse(result);
       }
       return result;

@@ -195,6 +195,7 @@ input RenderMenuItemTemplateInput {
   enabled: Boolean!
   startPublication: DateTime
   endPublication: DateTime
+  rules: String
 }
 
 type Mutation {
