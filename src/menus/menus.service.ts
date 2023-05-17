@@ -24,7 +24,6 @@ import TemplateHelpers from 'src/common/helpers/template.helper';
 import { StoreService } from 'src/store/store.service';
 import { RenderMenuTemplateInput } from './inputs/render-menu-template.input';
 import { RenderMenuItemTemplateInput } from './inputs/render-menu-item-template.input';
-import MenuItemInitialTemplate from 'src/menu-items/objects/menu-item-initial-template.object';
 import { TemplateFormat } from 'src/common/enums/template-format.enum';
 import { MenuPendency } from './entities/menu-pendency.entity';
 import { KeycloakUser } from 'src/common/schema/objects/keycloak-user.object';
@@ -48,8 +47,6 @@ export class MenusService {
     private readonly menuItemsService: MenuItemsService,
     private readonly storeService: StoreService,
   ) {}
-
-  private readonly menuIteminitialTemplate = new MenuItemInitialTemplate();
 
   async create(createMenuInput: CreateMenuInput) {
     const { meta, items, ...rest } = createMenuInput;
