@@ -1,10 +1,16 @@
-import { HttpModule } from '@nestjs/axios';
+import { HttpModule, HttpService } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
-import { FeatwsApiService } from './featws-api/featws-api.service';
+import { featwsApiOptions } from './featws-api/featws-api.options';
+import { FeatwsApiModule } from './featws-api/featws-api.module';
 
 @Module({
-  imports: [HttpModule],
-  providers: [FeatwsApiService],
-  exports: [FeatwsApiService],
+  imports: [
+    HttpModule,
+    FeatwsApiModule.registerAsync({
+      useFactory: featwsApiOptions,
+      imports: [HttpModule],
+      inject: [HttpService],
+    }),
+  ],
 })
 export class HttpClientsModule {}
