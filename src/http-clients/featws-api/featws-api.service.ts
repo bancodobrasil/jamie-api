@@ -1,8 +1,10 @@
 import { HttpService } from '@nestjs/axios';
 import { Inject, Injectable } from '@nestjs/common';
+import { isAxiosError } from 'axios';
 import { firstValueFrom } from 'rxjs';
 import { CreateRulesheetDto } from './dtos/create-rulesheet.dto';
 import { RulesheetResponseDto } from './dtos/rulesheet-response.dto';
+import { FeatwsApiError } from './featws-api.errors';
 import { MODULE_OPTIONS_TOKEN } from './featws-api.module-definition';
 import { FeatwsApiOptions } from './featws-api.options';
 
@@ -25,15 +27,28 @@ export class FeatwsApiService {
   }
 
   async createRulesheet(createRulesheetDto: CreateRulesheetDto) {
-    const response = await firstValueFrom(
-      this.httpService.post<RulesheetResponseDto>(
-        `${this.options.url}/v1/rulesheets`,
-        createRulesheetDto,
-        {
-          headers: this.defaultHeaders,
-        },
-      ),
-    );
-    return response.data;
+    try {
+      const response = await firstValueFrom(
+        this.httpService.post<RulesheetResponseDto>(
+          `${this.options.url}/v1/rulesheets`,
+          createRulesheetDto,
+          {
+            headers: this.defaultHeaders,
+          },
+        ),
+      );
+      return response.data;
+    } catch (error) {
+      if (isAxiosError(error) && error.response) {
+        throw new FeatwsApiError(
+          error.response.data?.message || error.message,
+          {
+            status: error.response.status,
+          },
+        );
+      } else {
+        throw new FeatwsApiError(error.message);
+      }
+    }
   }
 }
