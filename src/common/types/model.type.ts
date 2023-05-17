@@ -29,10 +29,14 @@ export interface IMenuItemMeta {
   [index: number]: unknown;
 }
 
+export type MenuItemSnapshot = Omit<
+  MenuItem,
+  'defaultTemplate' | 'version' | 'createdAt' | 'updatedAt' | 'deletedAt'
+>;
 export interface MenuRevisionSnapshot {
   name: string;
   meta?: MenuMeta[];
-  items?: MenuItem[];
+  items?: MenuItemSnapshot[];
   template?: string;
   templateFormat?: string;
 }

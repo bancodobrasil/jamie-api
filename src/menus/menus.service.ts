@@ -31,6 +31,7 @@ import { KeycloakUser } from 'src/common/schema/objects/keycloak-user.object';
 import { KeycloakAccessToken } from 'src/common/types/keycloak.type';
 import { ForbiddenError } from 'apollo-server-express';
 import { BadTemplateFormatError } from './errors/bad-template-format.error';
+import { MenuItemSnapshot, MenuRevisionSnapshot } from 'src/common/types';
 
 @Injectable()
 export class MenusService {
@@ -306,7 +307,7 @@ export class MenusService {
         updatedAt,
         deletedAt,
         // Spread the rest of the properties into snapshot
-        ...snapshot
+        ...snapshotOld
       } = await this.menuRepository.findOneOrFail({
         where: { id: menuId },
       });
@@ -315,7 +316,23 @@ export class MenusService {
         where: { menuId },
       });
 
-      snapshot.items = items;
+      const snapshot: MenuRevisionSnapshot = snapshotOld;
+
+      snapshot.items = items.map((i) => {
+        // Removing the following properties from the items object
+        // and mapping ...rest to the snapshot
+        const {
+          menuId,
+          defaultTemplate,
+          version,
+          createdAt,
+          updatedAt,
+          deletedAt,
+          ...rest
+        } = i;
+
+        return rest;
+      });
 
       const revisions = await this.revisionRepository.find({
         where: { menuId },
@@ -445,7 +462,10 @@ export class MenusService {
 
       const snapshotItems = await revision.snapshot.items;
 
-      const getChildren = (snapshotItems: MenuItem[], item: MenuItem) => {
+      const getChildren = (
+        snapshotItems: MenuItemSnapshot[],
+        item: MenuItemSnapshot,
+      ) => {
         const children = snapshotItems.filter((i) => i.parentId === item.id);
         return children.map((c) => ({
           ...c,
@@ -455,7 +475,7 @@ export class MenusService {
 
       const items = snapshotItems
         .filter((i) => !i.parentId)
-        .map((i: MenuItem) => ({
+        .map((i: MenuItemSnapshot) => ({
           ...i,
           children: getChildren(snapshotItems, i),
         }));
