@@ -12,5 +12,6 @@ import { FeatwsApiModule } from './featws-api/featws-api.module';
       inject: [HttpService],
     }),
   ],
+  exports: [FeatwsApiModule],
 })
 export class HttpClientsModule {}

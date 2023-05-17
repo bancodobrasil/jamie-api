@@ -9,6 +9,7 @@ import { MenuItem } from 'src/menu-items/entities/menu-item.entity';
 import { StoreModule } from 'src/store/store.module';
 import { storeConfig } from 'config/store.config';
 import { MenuPendency } from './entities/menu-pendency.entity';
+import { HttpClientsModule } from 'src/http-clients/http-clients.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { MenuPendency } from './entities/menu-pendency.entity';
     StoreModule.registerAsync({
       useFactory: storeConfig,
     }),
+    HttpClientsModule,
     MenuItemsModule,
   ],
   providers: [MenusResolver, MenusService],

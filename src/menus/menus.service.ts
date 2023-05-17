@@ -31,6 +31,7 @@ import { KeycloakAccessToken } from 'src/common/types/keycloak.type';
 import { ForbiddenError } from 'apollo-server-express';
 import { BadTemplateFormatError } from './errors/bad-template-format.error';
 import { MenuItemSnapshot, MenuRevisionSnapshot } from 'src/common/types';
+import { FeatwsApiService } from 'src/http-clients/featws-api/featws-api.service';
 
 @Injectable()
 export class MenusService {
@@ -46,6 +47,7 @@ export class MenusService {
     private pendencyRepository: Repository<MenuPendency>,
     private readonly menuItemsService: MenuItemsService,
     private readonly storeService: StoreService,
+    private readonly featwsApiService: FeatwsApiService,
   ) {}
 
   async create(createMenuInput: CreateMenuInput) {
@@ -62,6 +64,10 @@ export class MenusService {
       meta: metaWithIds,
     });
     await this.menuRepository.save(menu, { data: { items } });
+    await this.featwsApiService.createRulesheet({
+      name: menu.name,
+      version: '1',
+    });
     return this.menuRepository.findOne({
       where: { id: menu.id },
       relations: ['items'],
