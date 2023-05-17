@@ -51,29 +51,43 @@ export class MenusService {
   ) {}
 
   async create(createMenuInput: CreateMenuInput) {
-    const { meta, items, ...rest } = createMenuInput;
-    const metaWithIds = meta
-      ?.sort((a, b) => a.order - b.order)
-      .map((m, index) => {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { action, ...rest } = m;
-        return { ...rest, id: index + 1 };
+    const queryRunner = this.dataSource.createQueryRunner();
+
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const { meta, items, ...rest } = createMenuInput;
+      const metaWithIds = meta
+        ?.sort((a, b) => a.order - b.order)
+        .map((m, index) => {
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { action, ...rest } = m;
+          return { ...rest, id: index + 1 };
+        });
+      const menu = await this.menuRepository.create({
+        ...rest,
+        meta: metaWithIds,
       });
-    const menu = await this.menuRepository.create({
-      ...rest,
-      meta: metaWithIds,
-    });
-    await this.menuRepository.save(menu, { data: { items } });
-    if (menu.hasConditions) {
-      await this.featwsApiService.createRulesheet({
-        name: menu.name,
-        version: '1',
+      await queryRunner.manager.save(menu, { data: { items } });
+      if (menu.hasConditions) {
+        await this.featwsApiService.createRulesheet({
+          name: menu.name,
+          // TODO: Set the correct initial rulesheet version
+          version: '1',
+        });
+      }
+      await queryRunner.commitTransaction();
+      return this.menuRepository.findOne({
+        where: { id: menu.id },
+        relations: ['items'],
       });
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      throw err;
+    } finally {
+      await queryRunner.release();
     }
-    return this.menuRepository.findOne({
-      where: { id: menu.id },
-      relations: ['items'],
-    });
   }
 
   async findAll(paginationArgs: PaginationArgs, sortArgs: FindMenuSortArgs) {
