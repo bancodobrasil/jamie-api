@@ -23,6 +23,11 @@ export class CreateMenuInput {
   @Field(() => Boolean, { nullable: true })
   @IsOptional()
   @IsBoolean()
+  hasConditions?: boolean;
+
+  @Field(() => Boolean, { nullable: true })
+  @IsOptional()
+  @IsBoolean()
   mustDeferChanges?: boolean;
 
   @Field(() => [CreateMenuMetaInput], { nullable: true })

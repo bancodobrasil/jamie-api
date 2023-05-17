@@ -96,6 +96,7 @@ type Menu {
   id: Int!
   uuid: ID!
   name: String!
+  hasConditions: Boolean!
   mustDeferChanges: Boolean!
   meta: [MenuMeta!]
   template: String
@@ -205,6 +206,7 @@ type Mutation {
 
 input CreateMenuInput {
   name: String!
+  hasConditions: Boolean
   mustDeferChanges: Boolean
   meta: [CreateMenuMetaInput!]
   items: [CreateMenuItemInput!]
@@ -232,6 +234,7 @@ input CreateMenuItemInput {
 
 input UpdateMenuInput {
   name: String
+  hasConditions: Boolean
   mustDeferChanges: Boolean
   id: Int!
   items: [UpdateMenuItemInput!]
