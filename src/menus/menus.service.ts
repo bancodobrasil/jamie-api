@@ -127,15 +127,21 @@ export class MenusService {
         const items = await saved.items;
         let features, parameters, rules;
         features = parameters = [];
-        rules = {};
         for (let i = 0; i < items.length; i++) {
           const item = items[i];
           const itemFeatures = JSON.parse(item.features) || [];
           features = [...features, ...itemFeatures];
           const itemParameters = JSON.parse(item.parameters) || [];
           parameters = [...parameters, ...itemParameters];
-          const itemRules = JSON.parse(item.rules) || {};
-          rules = { ...rules, ...{ [`menu_${item.id}`]: itemRules } };
+          if (item.rules) {
+            rules = {};
+            const itemRules = {
+              [`menu_${item.id}`]: {
+                value: JSON.parse(item.rules) || {},
+              },
+            };
+            rules = { ...rules, ...itemRules };
+          }
         }
         await this.featwsApiService.updateRulesheet({
           id: saved.rulesheetId,
