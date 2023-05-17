@@ -64,10 +64,12 @@ export class MenusService {
       meta: metaWithIds,
     });
     await this.menuRepository.save(menu, { data: { items } });
-    await this.featwsApiService.createRulesheet({
-      name: menu.name,
-      version: '1',
-    });
+    if (menu.hasConditions) {
+      await this.featwsApiService.createRulesheet({
+        name: menu.name,
+        version: '1',
+      });
+    }
     return this.menuRepository.findOne({
       where: { id: menu.id },
       relations: ['items'],
