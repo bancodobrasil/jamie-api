@@ -140,6 +140,8 @@ type MenuItem {
   template: String
   templateFormat: String
   defaultTemplate: MenuItemInitialTemplate!
+  features: String
+  parameters: String
   rules: String
 }
 
@@ -231,6 +233,8 @@ input CreateMenuItemInput {
   enabled: Boolean!
   startPublication: DateTime
   endPublication: DateTime
+  features: String!
+  parameters: String!
   rules: String!
 }
 
@@ -252,6 +256,8 @@ input UpdateMenuItemInput {
   parentId: Int
   startPublication: DateTime
   endPublication: DateTime
+  features: String
+  parameters: String
   rules: String
   action: InputAction!
   id: Int

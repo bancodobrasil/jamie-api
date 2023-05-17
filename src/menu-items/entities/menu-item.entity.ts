@@ -93,5 +93,13 @@ export class MenuItem extends VersionedTimestamped {
 
   @Field(() => String, { nullable: true })
   @Column('text', { nullable: true })
+  features?: string;
+
+  @Field(() => String, { nullable: true })
+  @Column('text', { nullable: true })
+  parameters?: string;
+
+  @Field(() => String, { nullable: true })
+  @Column('text', { nullable: true })
   rules?: string;
 }
