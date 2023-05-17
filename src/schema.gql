@@ -140,6 +140,7 @@ type MenuItem {
   template: String
   templateFormat: String
   defaultTemplate: MenuItemInitialTemplate!
+  rules: String
 }
 
 type Query {
@@ -230,6 +231,7 @@ input CreateMenuItemInput {
   enabled: Boolean!
   startPublication: DateTime
   endPublication: DateTime
+  rules: String!
 }
 
 input UpdateMenuInput {
@@ -250,6 +252,7 @@ input UpdateMenuItemInput {
   parentId: Int
   startPublication: DateTime
   endPublication: DateTime
+  rules: String
   action: InputAction!
   id: Int
   children: [UpdateMenuItemInput!]
