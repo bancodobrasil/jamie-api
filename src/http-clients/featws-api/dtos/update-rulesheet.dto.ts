@@ -2,20 +2,18 @@ import {
   IsArray,
   IsDefined,
   IsNotEmpty,
+  IsObject,
   IsOptional,
   ValidateNested,
 } from 'class-validator';
 import { MapStringUnknown } from 'src/common/types/common.type';
 
-export class RulesheetResponseDto {
+export class UpdateRulesheetDto {
   @IsDefined()
   id: number;
 
   @IsNotEmpty()
   name: string;
-
-  @IsNotEmpty()
-  slug: string;
 
   @IsNotEmpty()
   version: string;
@@ -24,16 +22,14 @@ export class RulesheetResponseDto {
   @IsNotEmpty()
   description?: string;
 
-  @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
-  features?: MapStringUnknown[];
+  features: MapStringUnknown[] = [];
 
-  @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
-  parameters?: MapStringUnknown[];
+  parameters: MapStringUnknown[] = [];
 
-  @IsOptional()
-  rules?: MapStringUnknown;
+  @IsObject()
+  rules: MapStringUnknown = {};
 }
