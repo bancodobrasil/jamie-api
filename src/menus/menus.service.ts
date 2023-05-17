@@ -134,7 +134,6 @@ export class MenusService {
           const itemParameters = JSON.parse(item.parameters) || [];
           parameters = [...parameters, ...itemParameters];
           if (item.rules) {
-            rules = {};
             const itemRules = {
               [`menu_${item.id}`]: {
                 value: JSON.parse(item.rules) || {},
