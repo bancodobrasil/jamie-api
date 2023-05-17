@@ -292,22 +292,30 @@ export class MenusService {
     description,
   }: CreateMenuRevisionInput) {
     try {
-      const { name, meta, template, templateFormat } =
-        await this.menuRepository.findOneOrFail({
-          where: { id: menuId },
-        });
+      // Removing the following properties from the menu object
+      const {
+        id: _id,
+        uuid,
+        currentRevision,
+        currentRevisionId,
+        publishedRevisionId,
+        publishedRevision,
+        defaultTemplate,
+        version,
+        createdAt,
+        updatedAt,
+        deletedAt,
+        // Spread the rest of the properties into snapshot
+        ...snapshot
+      } = await this.menuRepository.findOneOrFail({
+        where: { id: menuId },
+      });
 
       const items = await this.itemRepository.find({
         where: { menuId },
       });
 
-      const snapshot = {
-        name,
-        meta,
-        template,
-        templateFormat,
-        items,
-      };
+      snapshot.items = items;
 
       const revisions = await this.revisionRepository.find({
         where: { menuId },
