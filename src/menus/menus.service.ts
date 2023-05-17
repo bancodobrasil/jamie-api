@@ -121,7 +121,33 @@ export class MenusService {
         return menu;
       }
 
-      return this.updateMenu(menu, updateMenuInput);
+      const saved = await this.updateMenu(menu, updateMenuInput);
+
+      if (saved.hasConditions) {
+        const items = await saved.items;
+        let features, parameters, rules;
+        features = parameters = [];
+        rules = {};
+        for (let i = 0; i < items.length; i++) {
+          const item = items[i];
+          const itemFeatures = JSON.parse(item.features) || [];
+          features = [...features, ...itemFeatures];
+          const itemParameters = JSON.parse(item.parameters) || [];
+          parameters = [...parameters, ...itemParameters];
+          const itemRules = JSON.parse(item.rules) || {};
+          rules = { ...rules, ...itemRules };
+        }
+        await this.featwsApiService.updateRulesheet({
+          id: saved.rulesheetId,
+          name: saved.name,
+          version: String(saved.version),
+          features,
+          parameters,
+          rules,
+        });
+      }
+
+      return saved;
     } catch (err) {
       if (err instanceof EntityNotFoundErrorTypeOrm) {
         throw new EntityNotFoundError(Menu, id);
