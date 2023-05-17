@@ -127,6 +127,7 @@ export class MenusService {
         const items = await saved.items;
         let features, parameters, rules;
         features = parameters = [];
+        rules = {};
         for (let i = 0; i < items.length; i++) {
           const item = items[i];
           const itemFeatures = JSON.parse(item.features) || [];
