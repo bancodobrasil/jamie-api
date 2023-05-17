@@ -135,7 +135,7 @@ export class MenusService {
           const itemParameters = JSON.parse(item.parameters) || [];
           parameters = [...parameters, ...itemParameters];
           const itemRules = JSON.parse(item.rules) || {};
-          rules = { ...rules, ...itemRules };
+          rules = { ...rules, ...{ [`menu_${item.id}`]: itemRules } };
         }
         await this.featwsApiService.updateRulesheet({
           id: saved.rulesheetId,
