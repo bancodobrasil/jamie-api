@@ -1,4 +1,4 @@
-import { Field, InputType } from '@nestjs/graphql';
+import { Field, InputType, Int } from '@nestjs/graphql';
 import { Type } from 'class-transformer';
 import {
   IsArray,
@@ -43,4 +43,8 @@ export class CreateMenuInput {
   @ValidateNested({ each: true })
   @Type(() => CreateMenuItemInput)
   items?: CreateMenuItemInput[];
+
+  @Field(() => Int, { nullable: true })
+  @IsOptional()
+  rulesheetId?: number;
 }

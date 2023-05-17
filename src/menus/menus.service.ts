@@ -325,6 +325,7 @@ export class MenusService {
         createdAt,
         updatedAt,
         deletedAt,
+        rulesheetId,
         // Spread the rest of the properties into snapshot
         ...snapshotOld
       } = await this.menuRepository.findOneOrFail({

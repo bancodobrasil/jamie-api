@@ -109,6 +109,7 @@ type Menu {
   currentRevisionId: Int
   publishedRevision: MenuRevision
   publishedRevisionId: Int
+  rulesheetId: Int
 }
 
 type MenuConnection {
@@ -213,6 +214,7 @@ input CreateMenuInput {
   mustDeferChanges: Boolean
   meta: [CreateMenuMetaInput!]
   items: [CreateMenuItemInput!]
+  rulesheetId: Int
 }
 
 input CreateMenuMetaInput {
@@ -242,6 +244,7 @@ input UpdateMenuInput {
   name: String
   hasConditions: Boolean
   mustDeferChanges: Boolean
+  rulesheetId: Int
   id: Int!
   items: [UpdateMenuItemInput!]
   meta: [UpdateMenuMetaInput!]
