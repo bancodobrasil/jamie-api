@@ -76,7 +76,8 @@ export class MenusService {
           // TODO: Set the correct initial rulesheet version
           version: '1',
         });
-        await queryRunner.manager.save({ ...menu, rulesheetId: rulesheet.id });
+        menu.rulesheetId = rulesheet.id;
+        await queryRunner.manager.save(menu);
       }
       await queryRunner.commitTransaction();
       return this.menuRepository.findOne({
