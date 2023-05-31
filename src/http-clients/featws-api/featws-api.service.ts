@@ -55,10 +55,11 @@ export class FeatwsApiService {
 
   async updateRulesheet(updateRulesheetDto: UpdateRulesheetDto) {
     try {
+      const { id, ...params } = updateRulesheetDto;
       const response = await firstValueFrom(
         this.httpService.put<RulesheetResponseDto>(
-          `${this.options.url}/v1/rulesheets`,
-          updateRulesheetDto,
+          `${this.options.url}/v1/rulesheets/${id}`,
+          params,
           {
             headers: this.defaultHeaders,
           },
