@@ -97,6 +97,7 @@ export class MenuItemSubscriber implements EntitySubscriberInterface<MenuItem> {
   ) {
     const menu = await menuItem.menu;
     const items = await menu.items;
+    siblings = siblings || [];
     const allSiblings =
       items?.filter(
         (i) =>
