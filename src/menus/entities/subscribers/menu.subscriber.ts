@@ -38,7 +38,7 @@ export class MenuSubscriber implements EntitySubscriberInterface<Menu> {
         return;
       }
       this.validateMeta(event.entity.meta, event.databaseEntity.meta);
-      const updatedMeta = event.databaseEntity.meta
+      const updatedMeta = (event.databaseEntity.meta || [])
         .map((dbMeta) => {
           const meta = event.entity.meta.find((m) => m.id === dbMeta.id) || {};
           meta.action !== InputAction.DELETE && delete meta.action;
