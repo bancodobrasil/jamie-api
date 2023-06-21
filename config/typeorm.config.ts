@@ -7,7 +7,7 @@ type TypeOrmConfig = (...args: any[]) => TypeOrmModuleOptions;
 
 export const typeOrmConfig: TypeOrmConfig = (configService: ConfigService) => {
   return {
-    type: 'mysql',
+    type: configService.get('JAMIE_API_DATABASE_TYPE').default('mysql'),
     host: configService.get('JAMIE_API_DATABASE_HOST'),
     port: +configService.get('JAMIE_API_DATABASE_PORT'),
     username: configService.get('JAMIE_API_DATABASE_USER'),
