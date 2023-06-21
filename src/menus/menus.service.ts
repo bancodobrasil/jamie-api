@@ -72,7 +72,7 @@ export class MenusService {
       await queryRunner.manager.save(menu, { data: { items } });
       if (menu.hasConditions) {
         const rulesheet = await this.featwsApiService.createRulesheet({
-          name: menu.name,
+          name: `jamie-menu-${menu.uuid}`,
           // TODO: Set the correct initial rulesheet version
           version: '1',
         });
