@@ -127,14 +127,14 @@ export class MenusService {
       if (saved.hasConditions) {
         const items = await saved.items;
         let features, parameters, rules;
-        features = parameters = [];
+        // features = parameters = [];
         rules = {};
         for (let i = 0; i < items.length; i++) {
           const item = items[i];
-          const itemFeatures = JSON.parse(item.features) || [];
-          features = [...features, ...itemFeatures];
-          const itemParameters = JSON.parse(item.parameters) || [];
-          parameters = [...parameters, ...itemParameters];
+          // const itemFeatures = JSON.parse(item.features) || [];
+          // features = [...features, ...itemFeatures];
+          // const itemParameters = JSON.parse(item.parameters) || [];
+          // parameters = [...parameters, ...itemParameters];
           if (item.rules) {
             const itemRules = {
               [`menu_${item.id}`]: {

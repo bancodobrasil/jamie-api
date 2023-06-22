@@ -110,6 +110,8 @@ type Menu {
   publishedRevision: MenuRevision
   publishedRevisionId: Int
   rulesheetId: Int
+  featwsVersion: String
+  parameters: String
 }
 
 type MenuConnection {
@@ -141,8 +143,6 @@ type MenuItem {
   template: String
   templateFormat: String
   defaultTemplate: MenuItemInitialTemplate!
-  features: String
-  parameters: String
   rules: String
 }
 

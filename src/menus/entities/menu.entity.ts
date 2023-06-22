@@ -113,6 +113,14 @@ export class Menu extends VersionedTimestamped {
   @Field(() => Int, { nullable: true })
   @Column({ nullable: true })
   rulesheetId?: number;
+
+  @Field(() => String, { nullable: true })
+  @Column({ nullable: true })
+  featwsVersion?: string;
+
+  @Field(() => String, { nullable: true })
+  @Column({ nullable: true })
+  parameters?: string;
 }
 
 @ObjectType()
