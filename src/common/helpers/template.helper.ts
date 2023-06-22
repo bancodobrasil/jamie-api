@@ -90,13 +90,13 @@ export default class TemplateHelpers {
     }
   }
 
-  public static setup(renderConditions = false) {
+  private static setup(renderConditions = false) {
+    TemplateHelpers.renderConditions = renderConditions;
     TemplateHelpers.registerHelpers();
     TemplateHelpers.registerPartials();
-    TemplateHelpers.renderConditions = renderConditions;
   }
 
-  public static registerHelpers() {
+  private static registerHelpers() {
     Handlebars.registerHelper(TemplateHelpers.mathOperators);
     Handlebars.registerHelper(TemplateHelpers.logicOperators);
     Handlebars.registerHelper('defaultsTo', TemplateHelpers.defaultsTo);
@@ -111,14 +111,14 @@ export default class TemplateHelpers {
     Handlebars.registerHelper('withIndent', TemplateHelpers.withIndent);
   }
 
-  public static registerPartials() {
+  private static registerPartials() {
     Handlebars.registerPartial(
       'recursiveRender',
       TemplateHelpers.partials.recursiveRender,
     );
   }
 
-  public static mathOperators = {
+  private static mathOperators = {
     add: (v1, v2) => v1 + v2,
     sub: (v1, v2) => v1 - v2,
     mul: (v1, v2) => v1 * v2,
@@ -130,7 +130,7 @@ export default class TemplateHelpers {
     min: (v1, v2) => Math.min(v1, v2),
   };
 
-  public static logicOperators = {
+  private static logicOperators = {
     eq: (v1, v2) => v1 === v2,
     ne: (v1, v2) => v1 !== v2,
     lt: (v1, v2) => v1 < v2,
@@ -145,13 +145,13 @@ export default class TemplateHelpers {
     },
   };
 
-  public static defaultsTo = (value, defaultValue) => {
+  private static defaultsTo = (value, defaultValue) => {
     console.log(value, defaultValue);
     console.log(Handlebars.Utils.isEmpty(value));
     return Handlebars.Utils.isEmpty(value) ? defaultValue : value;
   };
 
-  public static wrapItemCondition(
+  private static wrapItemCondition(
     item: any,
     options: Handlebars.HelperOptions,
   ) {
@@ -161,7 +161,7 @@ export default class TemplateHelpers {
     return options.fn(this);
   }
 
-  public static hash = (options: Handlebars.HelperOptions) => {
+  private static hash = (options: Handlebars.HelperOptions) => {
     // options.hash comes with keys in reverse order
     return Object.keys(options.hash)
       .reverse()
@@ -171,9 +171,9 @@ export default class TemplateHelpers {
       }, {});
   };
 
-  public static getLength = (v) => v?.length;
+  private static getLength = (v) => v?.length;
 
-  public static json(context: any, options: Handlebars.HelperOptions) {
+  private static json(context: any, options: Handlebars.HelperOptions) {
     let str = options.fn ? options.fn(context) : JSON.stringify(context);
     if (!str) return JSON.stringify(null);
     // remove trailing commas
@@ -181,12 +181,12 @@ export default class TemplateHelpers {
     return JSON.stringify(JSON.parse(str), null, options.hash.spaces);
   }
 
-  public static jsonFormatter(options: Handlebars.HelperOptions) {
+  private static jsonFormatter(options: Handlebars.HelperOptions) {
     // json block helper
     return TemplateHelpers.json(this, options);
   }
 
-  public static withIndent(options: Handlebars.HelperOptions) {
+  private static withIndent(options: Handlebars.HelperOptions) {
     let indent = options.hash.indent;
     indent =
       indent || options.hash.spaces ? ' '.repeat(options.hash.spaces) : '\t';
@@ -194,7 +194,7 @@ export default class TemplateHelpers {
     return lines.map((line) => indent + line).join('\n');
   }
 
-  public static partials = {
+  private static partials = {
     recursiveRender: `{{#each items as |item|}}
 {{#if item.template}}
 {{{ item.template }}},
