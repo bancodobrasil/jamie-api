@@ -6,11 +6,13 @@ import { InitialTemplate } from 'src/common/schema/interfaces/initial-template.i
 export default class MenuItemInitialTemplate extends InitialTemplate {
   @Field(() => String)
   [TemplateFormat.JSON] = `${RenderItemPartial[TemplateFormat.JSON]}
-{{> renderItem item=item }}`;
+{{#jsonFormatter spaces=2}}
+{{> defaultTemplate item=item }}
+{{/jsonFormatter}}`;
 
   @Field(() => String)
   [TemplateFormat.XML] = `${RenderItemPartial[TemplateFormat.XML]}
-{{> renderItem item=item }}`;
+{{> defaultTemplate item=item }}`;
 
   @Field(() => String)
   [TemplateFormat.PLAIN] = this[TemplateFormat.JSON];
@@ -26,7 +28,7 @@ export class RenderItemPartial {
   "children": [
     {{> recursiveRender items=item.children }}
   ]
-},
+}
 {{/wrapItemCondition}}
 {{~/inline}}`;
 

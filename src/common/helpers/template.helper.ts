@@ -8,47 +8,57 @@ import { MenuMeta } from 'src/menus/objects/menu-meta.object';
 
 export default class TemplateHelpers {
   private static renderConditions = false;
+  private static jsonFixRegex = /,(?=\s*?[\]}])/g;
 
   public static renderMenuItemTemplate(
     item: RenderMenuItemTemplateInput,
     menu: RenderMenuTemplateInput,
     renderConditions = false,
   ): string {
+    const getMeta = (item: RenderMenuItemTemplateInput) => {
+      const meta: Record<string, unknown> = {};
+      menu.meta?.forEach((m: MenuMeta) => {
+        if (item.enabled) {
+          meta[m.name] = item.meta[item.id] || m.defaultValue;
+        }
+      });
+      return meta;
+    };
     const children = item.children
+      .sort((a, b) => a.order - b.order)
       ?.map((item: RenderMenuItemTemplateInput) => {
         const template = this.renderMenuItemTemplate(
           item,
           menu,
           renderConditions,
         );
+        const meta = getMeta(item);
         return {
           ...item,
           template,
+          meta,
         };
-      })
-      .sort((a, b) => a.order - b.order);
-    const meta: Record<string, unknown> = {};
-    menu.meta?.forEach((m: MenuMeta) => {
-      if (item.enabled) {
-        meta[m.name] = item.meta[item.id] || m.defaultValue;
-      }
-    });
-    if (!item.template) return '';
+      });
+    if (!item.template) return;
+    const meta = getMeta(item);
+    console.log(item.id);
     try {
       TemplateHelpers.setup(renderConditions);
-      const result = Handlebars.compile(item.template)({
+      let result = Handlebars.compile(item.template)({
         item: {
           ...item,
           meta,
           children,
         },
       });
-      if (!renderConditions && item.templateFormat === TemplateFormat.JSON) {
-        JSON.parse(result);
+      console.log(result);
+      if (item.templateFormat === TemplateFormat.JSON) {
+        result = result.replace(this.jsonFixRegex, '');
+        if (!renderConditions) JSON.parse(result);
       }
       return result;
     } catch (err) {
-      console.error(err);
+      console.error(err, item.id, item.template);
       throw new BadTemplateFormatError(err);
     }
   }
@@ -145,11 +155,8 @@ export default class TemplateHelpers {
     },
   };
 
-  private static defaultsTo = (value, defaultValue) => {
-    console.log(value, defaultValue);
-    console.log(Handlebars.Utils.isEmpty(value));
-    return Handlebars.Utils.isEmpty(value) ? defaultValue : value;
-  };
+  private static defaultsTo = (value, defaultValue) =>
+    Handlebars.Utils.isEmpty(value) ? defaultValue : value;
 
   private static wrapItemCondition(
     item: any,
@@ -174,11 +181,14 @@ export default class TemplateHelpers {
   private static getLength = (v) => v?.length;
 
   private static json(context: any, options: Handlebars.HelperOptions) {
+    console.log('json', context);
     let str = options.fn ? options.fn(context) : JSON.stringify(context);
     if (!str) return JSON.stringify(null);
     // remove trailing commas
-    str = str.replace(/,(?=\s*?[\]}])/g, '');
-    return JSON.stringify(JSON.parse(str), null, options.hash.spaces);
+    str = str.replace(this.jsonFixRegex, '');
+    return new Handlebars.SafeString(
+      JSON.stringify(JSON.parse(str), null, options.hash.spaces),
+    );
   }
 
   private static jsonFormatter(options: Handlebars.HelperOptions) {
@@ -197,10 +207,10 @@ export default class TemplateHelpers {
   private static partials = {
     recursiveRender: `{{#each items as |item|}}
 {{#if item.template}}
-{{{ item.template }}},
+{{{ item.template }}}
 {{else}}
 {{> (defaultsTo ../partial 'defaultTemplate') item=item}}
-{{/if}}
+{{/if}}{{~#unless @last}},{{/unless}}
 {{/each}}`,
   };
 }
