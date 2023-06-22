@@ -15,9 +15,6 @@ export class UpdateRulesheetDto {
   @IsNotEmpty()
   name: string;
 
-  @IsNotEmpty()
-  version: string;
-
   @IsOptional()
   @IsNotEmpty()
   description?: string;

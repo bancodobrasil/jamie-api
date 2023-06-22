@@ -5,7 +5,4 @@ export class CreateRulesheetDto {
   @MinLength(3)
   @MaxLength(255)
   name: string;
-
-  @IsNotEmpty()
-  version: string;
 }

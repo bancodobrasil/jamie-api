@@ -73,8 +73,6 @@ export class MenusService {
       if (menu.hasConditions) {
         const rulesheet = await this.featwsApiService.createRulesheet({
           name: `jamie-menu-${menu.uuid}`,
-          // TODO: Set the correct initial rulesheet version
-          version: '1',
         });
         menu.rulesheetId = rulesheet.id;
         await queryRunner.manager.save(menu);
@@ -126,18 +124,19 @@ export class MenusService {
 
       if (saved.hasConditions) {
         const items = await saved.items;
-        let features, parameters, rules;
-        // features = parameters = [];
+        let features, rules;
         rules = {};
         for (let i = 0; i < items.length; i++) {
           const item = items[i];
-          // const itemFeatures = JSON.parse(item.features) || [];
-          // features = [...features, ...itemFeatures];
-          // const itemParameters = JSON.parse(item.parameters) || [];
-          // parameters = [...parameters, ...itemParameters];
+          const itemFeatures = {
+            name: `menu_item_${item.id}`,
+            type: 'boolean',
+            default: true,
+          };
+          features = [...features, itemFeatures];
           if (item.rules) {
             const itemRules = {
-              [`menu_${item.id}`]: {
+              [`menu_item_${item.id}`]: {
                 value: JSON.parse(item.rules) || {},
               },
             };
@@ -147,9 +146,8 @@ export class MenusService {
         await this.featwsApiService.updateRulesheet({
           id: saved.rulesheetId,
           name: saved.name,
-          version: String(saved.version),
           features,
-          parameters,
+          parameters: JSON.parse(saved.parameters) || [],
           rules,
         });
       }

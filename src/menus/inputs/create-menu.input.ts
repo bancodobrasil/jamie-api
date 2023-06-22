@@ -47,4 +47,8 @@ export class CreateMenuInput {
   @Field(() => Int, { nullable: true })
   @IsOptional()
   rulesheetId?: number;
+
+  @Field(() => String, { nullable: true })
+  @IsOptional()
+  parameters?: string;
 }

@@ -58,13 +58,5 @@ export class CreateMenuItemInput {
 
   @Field(() => String)
   @IsOptional()
-  features?: string;
-
-  @Field(() => String)
-  @IsOptional()
-  parameters?: string;
-
-  @Field(() => String)
-  @IsOptional()
   rules?: string;
 }
