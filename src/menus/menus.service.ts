@@ -120,39 +120,7 @@ export class MenusService {
         return menu;
       }
 
-      const saved = await this.updateMenu(menu, updateMenuInput);
-
-      if (saved.hasConditions) {
-        const items = await saved.items;
-        let features, rules;
-        rules = {};
-        for (let i = 0; i < items.length; i++) {
-          const item = items[i];
-          const itemFeatures = {
-            name: `menu_item_${item.id}`,
-            type: 'boolean',
-            default: true,
-          };
-          features = [...features, itemFeatures];
-          if (item.rules) {
-            const itemRules = {
-              [`menu_item_${item.id}`]: {
-                value: JSON.parse(item.rules) || {},
-              },
-            };
-            rules = { ...rules, ...itemRules };
-          }
-        }
-        await this.featwsApiService.updateRulesheet({
-          id: saved.rulesheetId,
-          name: saved.name,
-          features,
-          parameters: JSON.parse(saved.parameters) || [],
-          rules,
-        });
-      }
-
-      return saved;
+      return this.updateMenu(menu, updateMenuInput);
     } catch (err) {
       if (err instanceof EntityNotFoundErrorTypeOrm) {
         throw new EntityNotFoundError(Menu, id);
@@ -348,6 +316,8 @@ export class MenusService {
       const {
         id: _id,
         uuid,
+        name,
+        hasConditions,
         currentRevision,
         currentRevisionId,
         publishedRevisionId,
@@ -358,6 +328,7 @@ export class MenusService {
         updatedAt,
         deletedAt,
         rulesheetId,
+        parameters,
         // Spread the rest of the properties into snapshot
         ...snapshotOld
       } = await this.menuRepository.findOneOrFail({
@@ -368,7 +339,43 @@ export class MenusService {
         where: { menuId },
       });
 
-      const snapshot: MenuRevisionSnapshot = snapshotOld;
+      let { featwsVersion } = snapshotOld;
+
+      if (hasConditions) {
+        let features, rules;
+        rules = {};
+        for (let i = 0; i < items.length; i++) {
+          const item = items[i];
+          const itemFeatures = {
+            name: `menu_item_${item.id}`,
+            type: 'boolean',
+            default: true,
+          };
+          features = [...features, itemFeatures];
+          if (item.rules) {
+            const itemRules = {
+              [`menu_item_${item.id}`]: {
+                value: JSON.parse(item.rules) || {},
+              },
+            };
+            rules = { ...rules, ...itemRules };
+          }
+        }
+        const response = await this.featwsApiService.updateRulesheet({
+          id: rulesheetId,
+          name,
+          features,
+          parameters: JSON.parse(parameters) || [],
+          rules,
+        });
+        featwsVersion = response.version;
+      }
+      const snapshot: MenuRevisionSnapshot = {
+        ...snapshotOld,
+        name,
+        parameters,
+        featwsVersion,
+      };
 
       snapshot.items = items.map((i) => {
         // Removing the following properties from the items object

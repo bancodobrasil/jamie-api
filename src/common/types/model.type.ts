@@ -39,6 +39,8 @@ export interface MenuRevisionSnapshot {
   items?: MenuItemSnapshot[];
   template?: string;
   templateFormat?: string;
+  parameters?: string;
+  featwsVersion?: string;
 }
 
 export type WithAction<T> = T & { action?: InputAction };
