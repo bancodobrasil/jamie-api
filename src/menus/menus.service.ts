@@ -75,6 +75,7 @@ export class MenusService {
           name: `jamie-menu-${menu.uuid}`,
         });
         menu.rulesheetId = rulesheet.id;
+        menu.featwsVersion = rulesheet.version;
         await queryRunner.manager.save(menu);
       }
       await queryRunner.commitTransaction();
