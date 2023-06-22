@@ -546,8 +546,19 @@ export class MenusService {
       };
       const content = this.renderMenuTemplate(formattedSnapshot, false);
 
-      await this.storeService.put(`${menu.uuid}/${revisionId}.jamie`, content);
-      await this.storeService.put(`${menu.uuid}/current.jamie`, content);
+      const formattedTemplate = JSON.stringify({
+        template: content,
+        featws_version: revision.snapshot.featwsVersion,
+      });
+
+      await this.storeService.put(
+        `${menu.uuid}/${revisionId}.jamie`,
+        formattedTemplate,
+      );
+      await this.storeService.put(
+        `${menu.uuid}/current.jamie`,
+        formattedTemplate,
+      );
 
       menu = await this.menuRepository.save({
         ...menu,

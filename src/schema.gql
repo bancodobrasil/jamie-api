@@ -216,6 +216,7 @@ input CreateMenuInput {
   meta: [CreateMenuMetaInput!]
   items: [CreateMenuItemInput!]
   rulesheetId: Int
+  parameters: String
 }
 
 input CreateMenuMetaInput {
@@ -236,8 +237,6 @@ input CreateMenuItemInput {
   enabled: Boolean!
   startPublication: DateTime
   endPublication: DateTime
-  features: String!
-  parameters: String!
   rules: String!
 }
 
@@ -246,6 +245,7 @@ input UpdateMenuInput {
   hasConditions: Boolean
   mustDeferChanges: Boolean
   rulesheetId: Int
+  parameters: String
   id: Int!
   items: [UpdateMenuItemInput!]
   meta: [UpdateMenuMetaInput!]
@@ -260,8 +260,6 @@ input UpdateMenuItemInput {
   parentId: Int
   startPublication: DateTime
   endPublication: DateTime
-  features: String
-  parameters: String
   rules: String
   action: InputAction!
   id: Int
