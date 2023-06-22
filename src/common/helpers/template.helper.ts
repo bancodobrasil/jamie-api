@@ -160,7 +160,7 @@ export default class TemplateHelpers {
     options: Handlebars.HelperOptions,
   ) {
     if (TemplateHelpers.renderConditions && item?.id) {
-      return `{{if menu_item_${item.id}}}${options
+      return `{{if .menu_item_${item.id}}}${options
         .fn(this)
         .trimEnd()}{{end}}\n`;
     }
