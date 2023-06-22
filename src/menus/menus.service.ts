@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import Handlebars from 'handlebars';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MenuItemsService } from 'src/menu-items/menu-items.service';
 import {
@@ -177,7 +176,8 @@ export class MenusService {
             items: inputItems,
           };
           try {
-            const renderedTemplate = this.renderMenuTemplate(inputMenu);
+            const renderedTemplate =
+              TemplateHelpers.renderMenuTemplate(inputMenu);
             JSON.parse(renderedTemplate);
           } catch (err) {
             throw new BadTemplateFormatError(err);
@@ -545,7 +545,10 @@ export class MenusService {
         templateFormat: TemplateFormat[revision.snapshot.templateFormat],
         items,
       };
-      const content = this.renderMenuTemplate(formattedSnapshot, false);
+      const content = TemplateHelpers.renderMenuTemplate(
+        formattedSnapshot,
+        true,
+      );
 
       const formattedTemplate = JSON.stringify({
         template: content,
@@ -576,41 +579,5 @@ export class MenusService {
       }
       throw err;
     }
-  }
-
-  renderMenuTemplate(
-    menu: RenderMenuTemplateInput,
-    shouldCheckJson = true,
-  ): string {
-    let items = menu.items?.map((item: RenderMenuItemTemplateInput) =>
-      this.menuItemsService.getItemForTemplate(item, menu),
-    );
-    items =
-      items
-        .filter((item) => !item.parentId)
-        .sort((a, b) => a.order - b.order) || [];
-    try {
-      TemplateHelpers.setup();
-      const result = Handlebars.compile(menu.template)({
-        menu: {
-          ...menu,
-          items,
-        },
-      });
-      if (shouldCheckJson && menu.templateFormat === TemplateFormat.JSON) {
-        JSON.parse(result);
-      }
-      return result;
-    } catch (err) {
-      console.error(err);
-      throw new BadTemplateFormatError(err);
-    }
-  }
-
-  renderMenuItemTemplate(
-    item: RenderMenuItemTemplateInput,
-    menu: RenderMenuTemplateInput,
-  ) {
-    return this.menuItemsService.renderMenuItemTemplate(item, menu);
   }
 }

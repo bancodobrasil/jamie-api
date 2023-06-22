@@ -1,8 +1,94 @@
 /* eslint-disable prefer-rest-params */
 import Handlebars from 'handlebars';
+import { RenderMenuItemTemplateInput } from 'src/menus/inputs/render-menu-item-template.input';
+import { RenderMenuTemplateInput } from 'src/menus/inputs/render-menu-template.input';
+import { TemplateFormat } from '../enums/template-format.enum';
+import { BadTemplateFormatError } from 'src/menus/errors/bad-template-format.error';
+import { MenuMeta } from 'src/menus/objects/menu-meta.object';
 
 export default class TemplateHelpers {
   private static renderConditions = false;
+
+  public static renderMenuItemTemplate(
+    item: RenderMenuItemTemplateInput,
+    menu: RenderMenuTemplateInput,
+    renderConditions = false,
+  ): string {
+    const children = item.children
+      ?.map((item: RenderMenuItemTemplateInput) => {
+        const template = this.renderMenuItemTemplate(
+          item,
+          menu,
+          renderConditions,
+        );
+        return {
+          ...item,
+          template,
+        };
+      })
+      .sort((a, b) => a.order - b.order);
+    const meta: Record<string, unknown> = {};
+    menu.meta?.forEach((m: MenuMeta) => {
+      if (item.enabled) {
+        meta[m.name] = item.meta[item.id] || m.defaultValue;
+      }
+    });
+    if (!item.template) return '';
+    try {
+      TemplateHelpers.setup(renderConditions);
+      const result = Handlebars.compile(item.template)({
+        item: {
+          ...item,
+          meta,
+          children,
+        },
+      });
+      if (!renderConditions && item.templateFormat === TemplateFormat.JSON) {
+        JSON.parse(result);
+      }
+      return result;
+    } catch (err) {
+      console.error(err);
+      throw new BadTemplateFormatError(err);
+    }
+  }
+
+  public static renderMenuTemplate(
+    menu: RenderMenuTemplateInput,
+    renderConditions = false,
+  ) {
+    let items = menu.items?.map((item: RenderMenuItemTemplateInput) => {
+      const template = this.renderMenuItemTemplate(
+        item,
+        menu,
+        renderConditions,
+      );
+      return {
+        ...item,
+        template,
+      };
+    });
+    items =
+      items
+        .filter((item) => !item.parentId)
+        .sort((a, b) => a.order - b.order) || [];
+    try {
+      TemplateHelpers.setup(renderConditions);
+      const result = Handlebars.compile(menu.template)({
+        menu: {
+          ...menu,
+          items,
+        },
+      });
+      if (!renderConditions && menu.templateFormat === TemplateFormat.JSON) {
+        JSON.parse(result);
+      }
+      return result;
+    } catch (err) {
+      console.error(err);
+      throw new BadTemplateFormatError(err);
+    }
+  }
 
   public static setup(renderConditions = false) {
     TemplateHelpers.registerHelpers();

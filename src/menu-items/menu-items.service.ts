@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import Handlebars from 'handlebars';
 import { Menu } from 'src/menus/entities/menu.entity';
 import { EntityManager, Repository } from 'typeorm';
 import { CreateMenuItemInput } from './inputs/create-menu-item.input';
@@ -14,8 +13,6 @@ import { BadTemplateFormatError } from 'src/menus/errors/bad-template-format.err
 import { RenderMenuItemTemplateInput } from 'src/menus/inputs/render-menu-item-template.input';
 import TemplateHelpers from 'src/common/helpers/template.helper';
 import { RenderMenuTemplateInput } from 'src/menus/inputs/render-menu-template.input';
-import { IMenuItemMeta } from 'src/common/types';
-import { MenuMeta } from 'src/menus/objects/menu-meta.object';
 
 @Injectable()
 export class MenuItemsService {
@@ -112,7 +109,7 @@ export class MenuItemsService {
           items: [inputItem],
         };
         try {
-          const renderedTemplate = this.renderMenuItemTemplate(
+          const renderedTemplate = TemplateHelpers.renderMenuItemTemplate(
             inputItem,
             inputMenu,
           );
@@ -213,102 +210,4 @@ export class MenuItemsService {
         throw new Error('unexpected action');
     }
   }
-
-  renderMenuItemTemplate(
-    item: RenderMenuItemTemplateInput,
-    menu: RenderMenuTemplateInput,
-  ): string {
-    const children = item.children
-      ?.map((item: RenderMenuItemTemplateInput) =>
-        this.getItemForTemplate(item, menu),
-      )
-      .sort((a, b) => a.order - b.order);
-    const meta = this.getItemMetaForTemplate(item.meta, menu);
-    if (!item.template) return '';
-    try {
-      TemplateHelpers.setup();
-      const result = Handlebars.compile(item.template)({
-        item: {
-          ...item,
-          meta,
-          children,
-        },
-      });
-      if (item.templateFormat === TemplateFormat.JSON) {
-        JSON.parse(result);
-      }
-      return result;
-    } catch (err) {
-      console.error(err);
-      throw new BadTemplateFormatError(err);
-    }
-  }
-
-  getItemForTemplate(
-    item: RenderMenuItemTemplateInput,
-    menu: RenderMenuTemplateInput,
-  ) {
-    const getChildren = (
-      parent: RenderMenuItemTemplateInput,
-    ): RenderMenuItemTemplateInput[] => {
-      const children = parent.children
-        ?.filter((item) => item.parentId === parent.id)
-        .map((i: RenderMenuItemTemplateInput) => {
-          const { rules, ...item } = i;
-          const meta = this.getItemMetaForTemplate(item.meta, menu);
-          const children = getChildren(item);
-          TemplateHelpers.setup();
-          if (item.template) {
-            item.template = Handlebars.compile(item.template)({
-              item: {
-                ...item,
-                meta,
-                children,
-              },
-            });
-            if (rules) {
-              item.template = `{{if menu_${item.id}}\n${item.template}\n{{end}}`;
-            }
-          }
-          return {
-            ...item,
-            meta,
-            children,
-          };
-        })
-        .sort((a, b) => a.order - b.order);
-      return children;
-    };
-    const meta = this.getItemMetaForTemplate(item.meta, menu);
-    const children = getChildren(item);
-    TemplateHelpers.setup();
-    if (item.template) {
-      item.template = Handlebars.compile(item.template)({
-        item: {
-          ...item,
-          meta,
-          children,
-        },
-      });
-    }
-    return {
-      ...item,
-      meta,
-      children,
-    };
-  }
-
-  private getItemMetaForTemplate = (
-    meta: IMenuItemMeta,
-    menu: RenderMenuTemplateInput,
-  ): Record<string, unknown> => {
-    const result: Record<string, unknown> = {};
-    if (!meta) return result;
-    menu.meta?.forEach((item: MenuMeta) => {
-      if (item.enabled) {
-        result[item.name] = meta[item.id] || item.defaultValue;
-      }
-    });
-    return result;
-  };
 }
