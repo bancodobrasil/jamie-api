@@ -7,7 +7,7 @@ export default class MenuItemInitialTemplate extends InitialTemplate {
   @Field(() => String)
   [TemplateFormat.JSON] = `${RenderItemPartial[TemplateFormat.JSON]}
 {{#jsonFormatter spaces=2}}
-{{> defaultTemplate item=item }}
+{{> defaultTemplate item=item last=true}}
 {{/jsonFormatter}}`;
 
   @Field(() => String)
@@ -28,7 +28,7 @@ export class RenderItemPartial {
   "children": [
     {{> recursiveRender items=item.children }}
   ]
-}
+}{{#unless last}},{{/unless}}
 {{/wrapItemCondition}}
 {{~/inline}}`;
 

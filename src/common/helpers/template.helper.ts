@@ -41,7 +41,6 @@ export default class TemplateHelpers {
       });
     if (!item.template) return;
     const meta = getMeta(item);
-    console.log(item.id);
     try {
       TemplateHelpers.setup(renderConditions);
       let result = Handlebars.compile(item.template)({
@@ -51,14 +50,12 @@ export default class TemplateHelpers {
           children,
         },
       });
-      console.log(result);
       if (item.templateFormat === TemplateFormat.JSON) {
         result = result.replace(this.jsonFixRegex, '');
         if (!renderConditions) JSON.parse(result);
       }
       return result;
     } catch (err) {
-      console.error(err, item.id, item.template);
       throw new BadTemplateFormatError(err);
     }
   }
@@ -163,7 +160,9 @@ export default class TemplateHelpers {
     options: Handlebars.HelperOptions,
   ) {
     if (TemplateHelpers.renderConditions && item?.id) {
-      return `{{if menu_item_${item.id}}}${options.fn(this)}{{end}}`;
+      return `{{if menu_item_${item.id}}}${options
+        .fn(this)
+        .trimEnd()}{{end}}\n`;
     }
     return options.fn(this);
   }
@@ -181,14 +180,13 @@ export default class TemplateHelpers {
   private static getLength = (v) => v?.length;
 
   private static json(context: any, options: Handlebars.HelperOptions) {
-    console.log('json', context);
     let str = options.fn ? options.fn(context) : JSON.stringify(context);
     if (!str) return JSON.stringify(null);
     // remove trailing commas
     str = str.replace(this.jsonFixRegex, '');
-    return new Handlebars.SafeString(
-      JSON.stringify(JSON.parse(str), null, options.hash.spaces),
-    );
+    return this.renderConditions
+      ? str
+      : JSON.stringify(JSON.parse(str), null, options.hash.spaces);
   }
 
   private static jsonFormatter(options: Handlebars.HelperOptions) {
@@ -209,8 +207,8 @@ export default class TemplateHelpers {
 {{#if item.template}}
 {{{ item.template }}}
 {{else}}
-{{> (defaultsTo ../partial 'defaultTemplate') item=item}}
-{{/if}}{{~#unless @last}},{{/unless}}
+{{> (defaultsTo ../partial 'defaultTemplate') item=item  last=@last}}
+{{/if}}
 {{/each}}`,
   };
 }
