@@ -343,8 +343,8 @@ export class MenusService {
       let { featwsVersion } = snapshotOld;
 
       if (hasConditions) {
-        let features, rules;
-        rules = {};
+        let features = [];
+        let rules = {};
         for (let i = 0; i < items.length; i++) {
           const item = items[i];
           const itemFeatures = {
