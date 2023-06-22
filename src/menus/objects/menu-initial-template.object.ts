@@ -9,46 +9,26 @@ export default class MenuInitialTemplate extends InitialTemplate {
   [TemplateFormat.JSON] = `${RenderItemPartial[TemplateFormat.JSON]}
 {{#jsonFormatter spaces=2}}
 [
-  {{#each menu.items as |item|}}
-  {{#if item.template}}
-  {{{ item.template }}},
-  {{else}}
-  {{> renderItem item=item}},
-  {{/if}}
-  {{/each}}
+  {{> recursiveRender items=menu.items }}
 ]
 {{/jsonFormatter}}`;
 
   @Field(() => String)
   [TemplateFormat.XML] = `${RenderItemPartial[TemplateFormat.XML]}
-<items>
+<?xml version="1.0" encoding="UTF-8"?>
+<menu>
 {{~#withIndent spaces=2}}
-{{~#each menu.items as |item|}}
-{{~#if item.template}}
-
-{{{ item.template }}}
-{{~else}}
-
-{{> renderItem item=item}}
-{{~/if}}
-{{~/each}}
-
+{{> recursiveRender items=menu.items }}
 {{~/withIndent}}
 
-</items>`;
+</menu>`;
 
   @Field(() => String)
   [TemplateFormat.PLAIN] = `${RenderItemPartial[TemplateFormat.JSON]}
 items=
 {{~#jsonFormatter spaces=2}}
 [
-  {{#each menu.items as |item|}}
-  {{#if item.template}}
-  {{{ item.template }}},
-  {{else}}
-  {{> renderItem item=item}},
-  {{/if}}
-  {{/each}}
+  {{> recursiveRender items=menu.items }}
 ]
 {{/jsonFormatter}};`;
 }

@@ -2,14 +2,22 @@
 import Handlebars from 'handlebars';
 
 export default class TemplateHelpers {
-  public static setup() {
+  private static renderConditions = false;
+
+  public static setup(renderConditions = false) {
     TemplateHelpers.registerHelpers();
     TemplateHelpers.registerPartials();
+    TemplateHelpers.renderConditions = renderConditions;
   }
 
   public static registerHelpers() {
     Handlebars.registerHelper(TemplateHelpers.mathOperators);
     Handlebars.registerHelper(TemplateHelpers.logicOperators);
+    Handlebars.registerHelper('defaultsTo', TemplateHelpers.defaultsTo);
+    Handlebars.registerHelper(
+      'wrapItemCondition',
+      TemplateHelpers.wrapItemCondition,
+    );
     Handlebars.registerHelper('hash', TemplateHelpers.hash);
     Handlebars.registerHelper('length', TemplateHelpers.getLength);
     Handlebars.registerHelper('json', TemplateHelpers.json);
@@ -18,8 +26,10 @@ export default class TemplateHelpers {
   }
 
   public static registerPartials() {
-    Handlebars.registerPartial('itemJSON', TemplateHelpers.partials.itemJSON);
-    Handlebars.registerPartial('itemXML', TemplateHelpers.partials.itemXML);
+    Handlebars.registerPartial(
+      'recursiveRender',
+      TemplateHelpers.partials.recursiveRender,
+    );
   }
 
   public static mathOperators = {
@@ -48,6 +58,22 @@ export default class TemplateHelpers {
       return Array.prototype.slice.call(arguments, 0, -1).some(Boolean);
     },
   };
+
+  public static defaultsTo = (value, defaultValue) => {
+    console.log(value, defaultValue);
+    console.log(Handlebars.Utils.isEmpty(value));
+    return Handlebars.Utils.isEmpty(value) ? defaultValue : value;
+  };
+
+  public static wrapItemCondition(
+    item: any,
+    options: Handlebars.HelperOptions,
+  ) {
+    if (TemplateHelpers.renderConditions && item?.id) {
+      return `{{if menu_item_${item.id}}}${options.fn(this)}{{end}}`;
+    }
+    return options.fn(this);
+  }
 
   public static hash = (options: Handlebars.HelperOptions) => {
     // options.hash comes with keys in reverse order
@@ -83,64 +109,12 @@ export default class TemplateHelpers {
   }
 
   public static partials = {
-    itemJSON: `{{#jsonFormatter spaces=2}}
-{
-  {{#each properties as |prop|}}
-  {{#if (and (eq @key "children") (length ../item.children)) }}
-  "{{prop}}": [
-    {{#each ../item.children as |children|}}
-    {{#if children.template}}
-    {{{ children.template }}}
-    {{else}}
-    {{> itemJSON item=children properties=../../properties}}
-    {{/if}},
-    {{/each}}
-  ],
-  {{else if (and (eq @key "meta") ../item.meta) }}
-  "{{prop.key}}": {
-    {{~#each ../item.meta as |meta|}}
-    "{{#if (and prop.mapKeys (lookup prop.mapKeys @key))}}{{lookup prop.mapKeys @key}}{{else}}{{@key}}{{/if}}": {{{json meta}}}{{#unless @last}},{{/unless}}
-    {{~/each}}
-  }{{#unless @last}},{{/unless}}
-  {{else if (and (ne @key "children") (ne @key "meta"))}}
-  "{{prop}}": "{{lookup ../item @key}}"{{#unless @last}},{{/unless}}
-  {{/if}}
-  {{/each}}
-}
-{{/jsonFormatter}}`,
-    itemXML: `<{{tag}} {{#each properties as |prop|}}
-{{~#if (and (ne @key "children") (ne @key "meta"))}}{{prop}}="{{lookup ../item @key}}" {{/if}}
-{{~/each}}{{~#unless (or (and properties.meta item.meta) (length item.children))}}/>{{else}}>
-
-{{~#withIndent spaces=2}}
-
-{{~#if properties.meta }}
-{{~#each item.meta as |meta|}}
-
-<{{lookup (lookup ../properties "meta") "tag"}} {{lookup (lookup ../properties "meta") "key"}}="{{#if (and ../properties.meta.mapKeys (lookup ../properties.meta.mapKeys @key))}}{{lookup ../properties.meta.mapKeys @key}}{{else}}{{@key}}{{/if}}" {{lookup (lookup ../properties "meta") "value"}}="{{meta}}" />
-
-{{~/each}}
-{{~/if}}
-
-{{~#each item.children as |child|}}
-
-<{{lookup ../properties "children"}}>
-{{~#withIndent spaces=2}}
-{{~#if child.template}}
-
-{{{child.template}}}
-{{~else}}
-
-{{> itemXML tag=../tag item=child properties=../properties}}
-{{~/if}}
-{{~/withIndent}}
-
-</{{lookup ../properties "children"}}>
-{{~/each}}
-{{~/withIndent}}
-
-</{{tag}}>
-{{~/unless}}
-`,
+    recursiveRender: `{{#each items as |item|}}
+{{#if item.template}}
+{{{ item.template }}},
+{{else}}
+{{> (defaultsTo ../partial 'defaultTemplate') item=item}}
+{{/if}}
+{{/each}}`,
   };
 }

@@ -17,26 +17,22 @@ export default class MenuItemInitialTemplate extends InitialTemplate {
 }
 
 export class RenderItemPartial {
-  static [TemplateFormat.JSON] = `{{#*inline "renderItem" }}
-{{#jsonFormatter spaces=2}}
+  static [TemplateFormat.JSON] = `{{#*inline "defaultTemplate" }}
+{{#wrapItemCondition item}}
 {
   "id": {{item.id}},
   "label": "{{item.label}}",
   "meta": {{{json item.meta}}},
   "children": [
-    {{#each item.children as |child|}}
-    {{#if child.template}}
-    {{{ child.template }}}
-    {{else}}
-    {{> renderItem item=child}}
-    {{/if}},
-    {{/each}}
+    {{> recursiveRender items=item.children }}
   ]
-}
-{{/jsonFormatter}}
+},
+{{/wrapItemCondition}}
 {{~/inline}}`;
 
-  static [TemplateFormat.XML] = `{{#*inline "renderItem" }}
+  static [TemplateFormat.XML] = `{{#*inline "defaultTemplate" }}
+{{#wrapItemCondition item}}
+
 <item id="{{item.id}}" label="{{item.label}}"
   {{~#unless (or item.meta (length item.children))}}/>{{else}}>
   {{~#each item.meta as |meta|}}
@@ -46,24 +42,15 @@ export class RenderItemPartial {
   {{~#if (length item.children)}}
 
   <children>
-  {{~#each item.children as |child|}}
-
   {{~#withIndent spaces=2}}
-  {{~#if child.template}}
-
-  {{{child.template}}}
-  {{~else}}
-
-  {{> renderItem item=child}}
-  {{~/if}}
+  {{> recursiveRender items=item.children }}
   {{~/withIndent}}
-
-  {{~/each}}
 
   </children>
   {{~/if}}
 
 </item>
 {{~/unless}}
-{{~/inline}}`;
+{{~/wrapItemCondition}}
+{{~/inline~}}`;
 }
