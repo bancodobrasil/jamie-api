@@ -33,6 +33,10 @@ export class Menu extends VersionedTimestamped {
   @Column()
   name: string;
 
+  @Field(() => Boolean, { defaultValue: false })
+  @Column({ default: false })
+  hasConditions: boolean;
+
   @Field(() => Boolean)
   @Column({ default: false })
   mustDeferChanges: boolean;
@@ -105,6 +109,18 @@ export class Menu extends VersionedTimestamped {
   @Field(() => Int, { nullable: true })
   @Column({ nullable: true })
   publishedRevisionId?: number;
+
+  @Field(() => Int, { nullable: true })
+  @Column({ nullable: true })
+  rulesheetId?: number;
+
+  @Field(() => String, { nullable: true })
+  @Column({ nullable: true })
+  featwsVersion?: string;
+
+  @Field(() => String, { nullable: true })
+  @Column({ nullable: true })
+  parameters?: string;
 }
 
 @ObjectType()

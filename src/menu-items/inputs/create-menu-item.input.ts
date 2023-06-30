@@ -55,4 +55,8 @@ export class CreateMenuItemInput {
   @IsDate()
   @IsOptional()
   endPublication?: Date;
+
+  @Field(() => String)
+  @IsOptional()
+  rules?: string;
 }

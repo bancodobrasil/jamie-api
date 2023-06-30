@@ -90,4 +90,8 @@ export class MenuItem extends VersionedTimestamped {
 
   @Field(() => MenuItemInitialTemplate)
   defaultTemplate: MenuItemInitialTemplate = new MenuItemInitialTemplate();
+
+  @Field(() => String, { nullable: true })
+  @Column('text', { nullable: true })
+  rules?: string;
 }

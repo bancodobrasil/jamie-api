@@ -1,4 +1,4 @@
-import { Field, InputType } from '@nestjs/graphql';
+import { Field, InputType, Int } from '@nestjs/graphql';
 import { Type } from 'class-transformer';
 import {
   IsArray,
@@ -23,6 +23,11 @@ export class CreateMenuInput {
   @Field(() => Boolean, { nullable: true })
   @IsOptional()
   @IsBoolean()
+  hasConditions?: boolean;
+
+  @Field(() => Boolean, { nullable: true })
+  @IsOptional()
+  @IsBoolean()
   mustDeferChanges?: boolean;
 
   @Field(() => [CreateMenuMetaInput], { nullable: true })
@@ -38,4 +43,12 @@ export class CreateMenuInput {
   @ValidateNested({ each: true })
   @Type(() => CreateMenuItemInput)
   items?: CreateMenuItemInput[];
+
+  @Field(() => Int, { nullable: true })
+  @IsOptional()
+  rulesheetId?: number;
+
+  @Field(() => String, { nullable: true })
+  @IsOptional()
+  parameters?: string;
 }

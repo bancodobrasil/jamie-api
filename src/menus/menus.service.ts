@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import Handlebars from 'handlebars';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MenuItemsService } from 'src/menu-items/menu-items.service';
 import {
@@ -24,13 +23,14 @@ import TemplateHelpers from 'src/common/helpers/template.helper';
 import { StoreService } from 'src/store/store.service';
 import { RenderMenuTemplateInput } from './inputs/render-menu-template.input';
 import { RenderMenuItemTemplateInput } from './inputs/render-menu-item-template.input';
-import MenuItemInitialTemplate from 'src/menu-items/objects/menu-item-initial-template.object';
 import { TemplateFormat } from 'src/common/enums/template-format.enum';
 import { MenuPendency } from './entities/menu-pendency.entity';
 import { KeycloakUser } from 'src/common/schema/objects/keycloak-user.object';
 import { KeycloakAccessToken } from 'src/common/types/keycloak.type';
 import { ForbiddenError } from 'apollo-server-express';
 import { BadTemplateFormatError } from './errors/bad-template-format.error';
+import { MenuItemSnapshot, MenuRevisionSnapshot } from 'src/common/types';
+import { FeatwsApiService } from 'src/http-clients/featws-api/featws-api.service';
 
 @Injectable()
 export class MenusService {
@@ -46,28 +46,48 @@ export class MenusService {
     private pendencyRepository: Repository<MenuPendency>,
     private readonly menuItemsService: MenuItemsService,
     private readonly storeService: StoreService,
+    private readonly featwsApiService: FeatwsApiService,
   ) {}
 
-  private readonly menuIteminitialTemplate = new MenuItemInitialTemplate();
-
   async create(createMenuInput: CreateMenuInput) {
-    const { meta, items, ...rest } = createMenuInput;
-    const metaWithIds = meta
-      ?.sort((a, b) => a.order - b.order)
-      .map((m, index) => {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { action, ...rest } = m;
-        return { ...rest, id: index + 1 };
+    const queryRunner = this.dataSource.createQueryRunner();
+
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const { meta, items, ...rest } = createMenuInput;
+      const metaWithIds = meta
+        ?.sort((a, b) => a.order - b.order)
+        .map((m, index) => {
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { action, ...rest } = m;
+          return { ...rest, id: index + 1 };
+        });
+      const menu = await this.menuRepository.create({
+        ...rest,
+        meta: metaWithIds,
       });
-    const menu = await this.menuRepository.create({
-      ...rest,
-      meta: metaWithIds,
-    });
-    await this.menuRepository.save(menu, { data: { items } });
-    return this.menuRepository.findOne({
-      where: { id: menu.id },
-      relations: ['items'],
-    });
+      await queryRunner.manager.save(menu, { data: { items } });
+      if (menu.hasConditions) {
+        const rulesheet = await this.featwsApiService.createRulesheet({
+          name: `jamie-menu-${menu.uuid}`,
+        });
+        menu.rulesheetId = rulesheet.id;
+        menu.featwsVersion = rulesheet.version;
+        await queryRunner.manager.save(menu);
+      }
+      await queryRunner.commitTransaction();
+      return this.menuRepository.findOne({
+        where: { id: menu.id },
+        relations: ['items'],
+      });
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      throw err;
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   async findAll(paginationArgs: PaginationArgs, sortArgs: FindMenuSortArgs) {
@@ -156,7 +176,8 @@ export class MenusService {
             items: inputItems,
           };
           try {
-            const renderedTemplate = this.renderMenuTemplate(inputMenu);
+            const renderedTemplate =
+              TemplateHelpers.renderMenuTemplate(inputMenu);
             JSON.parse(renderedTemplate);
           } catch (err) {
             throw new BadTemplateFormatError(err);
@@ -292,22 +313,86 @@ export class MenusService {
     description,
   }: CreateMenuRevisionInput) {
     try {
-      const { name, meta, template, templateFormat } =
-        await this.menuRepository.findOneOrFail({
-          where: { id: menuId },
-        });
+      // Removing the following properties from the menu object
+      const {
+        id: _id,
+        uuid,
+        name,
+        hasConditions,
+        currentRevision,
+        currentRevisionId,
+        publishedRevisionId,
+        publishedRevision,
+        defaultTemplate,
+        version,
+        createdAt,
+        updatedAt,
+        deletedAt,
+        rulesheetId,
+        parameters,
+        // Spread the rest of the properties into snapshot
+        ...snapshotOld
+      } = await this.menuRepository.findOneOrFail({
+        where: { id: menuId },
+      });
 
       const items = await this.itemRepository.find({
         where: { menuId },
       });
 
-      const snapshot = {
+      let { featwsVersion } = snapshotOld;
+
+      if (hasConditions) {
+        let features = [];
+        let rules = {};
+        for (let i = 0; i < items.length; i++) {
+          const item = items[i];
+          const itemFeatures = {
+            name: `menu_item_${item.id}`,
+            type: 'boolean',
+            default: true,
+          };
+          features = [...features, itemFeatures];
+          if (item.rules) {
+            const itemRules = {
+              [`menu_item_${item.id}`]: {
+                value: JSON.parse(`"${item.rules}"`) || {},
+              },
+            };
+            rules = { ...rules, ...itemRules };
+          }
+        }
+        const response = await this.featwsApiService.updateRulesheet({
+          id: rulesheetId,
+          name,
+          features,
+          parameters: JSON.parse(parameters) || [],
+          rules,
+        });
+        featwsVersion = response.version;
+      }
+      const snapshot: MenuRevisionSnapshot = {
+        ...snapshotOld,
         name,
-        meta,
-        template,
-        templateFormat,
-        items,
+        parameters,
+        featwsVersion,
       };
+
+      snapshot.items = items.map((i) => {
+        // Removing the following properties from the items object
+        // and mapping ...rest to the snapshot
+        const {
+          menuId,
+          defaultTemplate,
+          version,
+          createdAt,
+          updatedAt,
+          deletedAt,
+          ...rest
+        } = i;
+
+        return rest;
+      });
 
       const revisions = await this.revisionRepository.find({
         where: { menuId },
@@ -437,7 +522,10 @@ export class MenusService {
 
       const snapshotItems = await revision.snapshot.items;
 
-      const getChildren = (snapshotItems: MenuItem[], item: MenuItem) => {
+      const getChildren = (
+        snapshotItems: MenuItemSnapshot[],
+        item: MenuItemSnapshot,
+      ) => {
         const children = snapshotItems.filter((i) => i.parentId === item.id);
         return children.map((c) => ({
           ...c,
@@ -447,7 +535,7 @@ export class MenusService {
 
       const items = snapshotItems
         .filter((i) => !i.parentId)
-        .map((i: MenuItem) => ({
+        .map((i: MenuItemSnapshot) => ({
           ...i,
           children: getChildren(snapshotItems, i),
         }));
@@ -457,10 +545,24 @@ export class MenusService {
         templateFormat: TemplateFormat[revision.snapshot.templateFormat],
         items,
       };
-      const content = this.renderMenuTemplate(formattedSnapshot);
+      const content = TemplateHelpers.renderMenuTemplate(
+        formattedSnapshot,
+        true,
+      );
 
-      await this.storeService.put(`${menu.uuid}/${revisionId}.jamie`, content);
-      await this.storeService.put(`${menu.uuid}/current.jamie`, content);
+      const formattedTemplate = JSON.stringify({
+        template: content,
+        featws_version: revision.snapshot.featwsVersion,
+      });
+
+      await this.storeService.put(
+        `${menu.uuid}/${revisionId}.jamie`,
+        formattedTemplate,
+      );
+      await this.storeService.put(
+        `${menu.uuid}/current.jamie`,
+        formattedTemplate,
+      );
 
       menu = await this.menuRepository.save({
         ...menu,
@@ -477,38 +579,5 @@ export class MenusService {
       }
       throw err;
     }
-  }
-
-  renderMenuTemplate(menu: RenderMenuTemplateInput): string {
-    let items = menu.items?.map((item: RenderMenuItemTemplateInput) =>
-      this.menuItemsService.getItemForTemplate(item, menu),
-    );
-    items =
-      items
-        .filter((item) => !item.parentId)
-        .sort((a, b) => a.order - b.order) || [];
-    try {
-      TemplateHelpers.setup();
-      const result = Handlebars.compile(menu.template)({
-        menu: {
-          ...menu,
-          items,
-        },
-      });
-      if (menu.templateFormat === TemplateFormat.JSON) {
-        JSON.parse(result);
-      }
-      return result;
-    } catch (err) {
-      console.error(err);
-      throw new BadTemplateFormatError(err);
-    }
-  }
-
-  renderMenuItemTemplate(
-    item: RenderMenuItemTemplateInput,
-    menu: RenderMenuTemplateInput,
-  ) {
-    return this.menuItemsService.renderMenuItemTemplate(item, menu);
   }
 }

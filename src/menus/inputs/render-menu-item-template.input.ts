@@ -69,4 +69,9 @@ export class RenderMenuItemTemplateInput {
   @IsDate()
   @IsOptional()
   endPublication?: Date;
+
+  @Field(() => String, { nullable: true })
+  @IsOptional()
+  @IsString()
+  rules?: string;
 }

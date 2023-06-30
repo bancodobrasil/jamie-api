@@ -1,15 +1,116 @@
 /* eslint-disable prefer-rest-params */
 import Handlebars from 'handlebars';
+import { RenderMenuItemTemplateInput } from 'src/menus/inputs/render-menu-item-template.input';
+import { RenderMenuTemplateInput } from 'src/menus/inputs/render-menu-template.input';
+import { TemplateFormat } from '../enums/template-format.enum';
+import { BadTemplateFormatError } from 'src/menus/errors/bad-template-format.error';
+import { MenuMeta } from 'src/menus/objects/menu-meta.object';
 
 export default class TemplateHelpers {
-  public static setup() {
+  private static renderConditions = false;
+  private static jsonFixRegex = /,(?=\s*?[\]}])/g;
+
+  public static renderMenuItemTemplate(
+    item: RenderMenuItemTemplateInput,
+    menu: RenderMenuTemplateInput,
+    renderConditions = false,
+  ): string {
+    const getMeta = (item: RenderMenuItemTemplateInput) => {
+      const meta: Record<string, unknown> = {};
+      menu.meta?.forEach((m: MenuMeta) => {
+        if (item.enabled) {
+          meta[m.name] = item.meta[item.id] || m.defaultValue;
+        }
+      });
+      return meta;
+    };
+    const children = item.children
+      .sort((a, b) => a.order - b.order)
+      ?.map((item: RenderMenuItemTemplateInput) => {
+        const template = this.renderMenuItemTemplate(
+          item,
+          menu,
+          renderConditions,
+        );
+        const meta = getMeta(item);
+        return {
+          ...item,
+          template,
+          meta,
+        };
+      });
+    if (!item.template) return;
+    const meta = getMeta(item);
+    try {
+      TemplateHelpers.setup(renderConditions);
+      let result = Handlebars.compile(item.template)({
+        item: {
+          ...item,
+          meta,
+          children,
+        },
+      });
+      if (item.templateFormat === TemplateFormat.JSON) {
+        result = result.replace(this.jsonFixRegex, '');
+        if (!renderConditions) JSON.parse(result);
+      }
+      return result;
+    } catch (err) {
+      throw new BadTemplateFormatError(err);
+    }
+  }
+
+  public static renderMenuTemplate(
+    menu: RenderMenuTemplateInput,
+    renderConditions = false,
+  ) {
+    let items = menu.items?.map((item: RenderMenuItemTemplateInput) => {
+      const template = this.renderMenuItemTemplate(
+        item,
+        menu,
+        renderConditions,
+      );
+      return {
+        ...item,
+        template,
+      };
+    });
+    items =
+      items
+        .filter((item) => !item.parentId)
+        .sort((a, b) => a.order - b.order) || [];
+    try {
+      TemplateHelpers.setup(renderConditions);
+      const result = Handlebars.compile(menu.template)({
+        menu: {
+          ...menu,
+          items,
+        },
+      });
+      if (!renderConditions && menu.templateFormat === TemplateFormat.JSON) {
+        JSON.parse(result);
+      }
+      return result;
+    } catch (err) {
+      console.error(err);
+      throw new BadTemplateFormatError(err);
+    }
+  }
+
+  private static setup(renderConditions = false) {
+    TemplateHelpers.renderConditions = renderConditions;
     TemplateHelpers.registerHelpers();
     TemplateHelpers.registerPartials();
   }
 
-  public static registerHelpers() {
+  private static registerHelpers() {
     Handlebars.registerHelper(TemplateHelpers.mathOperators);
     Handlebars.registerHelper(TemplateHelpers.logicOperators);
+    Handlebars.registerHelper('defaultsTo', TemplateHelpers.defaultsTo);
+    Handlebars.registerHelper(
+      'wrapItemCondition',
+      TemplateHelpers.wrapItemCondition,
+    );
     Handlebars.registerHelper('hash', TemplateHelpers.hash);
     Handlebars.registerHelper('length', TemplateHelpers.getLength);
     Handlebars.registerHelper('json', TemplateHelpers.json);
@@ -17,12 +118,14 @@ export default class TemplateHelpers {
     Handlebars.registerHelper('withIndent', TemplateHelpers.withIndent);
   }
 
-  public static registerPartials() {
-    Handlebars.registerPartial('itemJSON', TemplateHelpers.partials.itemJSON);
-    Handlebars.registerPartial('itemXML', TemplateHelpers.partials.itemXML);
+  private static registerPartials() {
+    Handlebars.registerPartial(
+      'recursiveRender',
+      TemplateHelpers.partials.recursiveRender,
+    );
   }
 
-  public static mathOperators = {
+  private static mathOperators = {
     add: (v1, v2) => v1 + v2,
     sub: (v1, v2) => v1 - v2,
     mul: (v1, v2) => v1 * v2,
@@ -34,7 +137,7 @@ export default class TemplateHelpers {
     min: (v1, v2) => Math.min(v1, v2),
   };
 
-  public static logicOperators = {
+  private static logicOperators = {
     eq: (v1, v2) => v1 === v2,
     ne: (v1, v2) => v1 !== v2,
     lt: (v1, v2) => v1 < v2,
@@ -49,7 +152,22 @@ export default class TemplateHelpers {
     },
   };
 
-  public static hash = (options: Handlebars.HelperOptions) => {
+  private static defaultsTo = (value, defaultValue) =>
+    Handlebars.Utils.isEmpty(value) ? defaultValue : value;
+
+  private static wrapItemCondition(
+    item: any,
+    options: Handlebars.HelperOptions,
+  ) {
+    if (TemplateHelpers.renderConditions && item?.id) {
+      return `{{if .menu_item_${item.id}}}${options
+        .fn(this)
+        .trimEnd()}{{end}}\n`;
+    }
+    return options.fn(this);
+  }
+
+  private static hash = (options: Handlebars.HelperOptions) => {
     // options.hash comes with keys in reverse order
     return Object.keys(options.hash)
       .reverse()
@@ -59,22 +177,24 @@ export default class TemplateHelpers {
       }, {});
   };
 
-  public static getLength = (v) => v?.length;
+  private static getLength = (v) => v?.length;
 
-  public static json(context: any, options: Handlebars.HelperOptions) {
+  private static json(context: any, options: Handlebars.HelperOptions) {
     let str = options.fn ? options.fn(context) : JSON.stringify(context);
     if (!str) return JSON.stringify(null);
     // remove trailing commas
-    str = str.replace(/,(?=\s*?[\]}])/g, '');
-    return JSON.stringify(JSON.parse(str), null, options.hash.spaces);
+    str = str.replace(this.jsonFixRegex, '');
+    return this.renderConditions
+      ? str
+      : JSON.stringify(JSON.parse(str), null, options.hash.spaces);
   }
 
-  public static jsonFormatter(options: Handlebars.HelperOptions) {
+  private static jsonFormatter(options: Handlebars.HelperOptions) {
     // json block helper
     return TemplateHelpers.json(this, options);
   }
 
-  public static withIndent(options: Handlebars.HelperOptions) {
+  private static withIndent(options: Handlebars.HelperOptions) {
     let indent = options.hash.indent;
     indent =
       indent || options.hash.spaces ? ' '.repeat(options.hash.spaces) : '\t';
@@ -82,65 +202,13 @@ export default class TemplateHelpers {
     return lines.map((line) => indent + line).join('\n');
   }
 
-  public static partials = {
-    itemJSON: `{{#jsonFormatter spaces=2}}
-{
-  {{#each properties as |prop|}}
-  {{#if (and (eq @key "children") (length ../item.children)) }}
-  "{{prop}}": [
-    {{#each ../item.children as |children|}}
-    {{#if children.template}}
-    {{{ children.template }}}
-    {{else}}
-    {{> itemJSON item=children properties=../../properties}}
-    {{/if}},
-    {{/each}}
-  ],
-  {{else if (and (eq @key "meta") ../item.meta) }}
-  "{{prop.key}}": {
-    {{~#each ../item.meta as |meta|}}
-    "{{#if (and prop.mapKeys (lookup prop.mapKeys @key))}}{{lookup prop.mapKeys @key}}{{else}}{{@key}}{{/if}}": {{{json meta}}}{{#unless @last}},{{/unless}}
-    {{~/each}}
-  }{{#unless @last}},{{/unless}}
-  {{else if (and (ne @key "children") (ne @key "meta"))}}
-  "{{prop}}": "{{lookup ../item @key}}"{{#unless @last}},{{/unless}}
-  {{/if}}
-  {{/each}}
-}
-{{/jsonFormatter}}`,
-    itemXML: `<{{tag}} {{#each properties as |prop|}}
-{{~#if (and (ne @key "children") (ne @key "meta"))}}{{prop}}="{{lookup ../item @key}}" {{/if}}
-{{~/each}}{{~#unless (or (and properties.meta item.meta) (length item.children))}}/>{{else}}>
-
-{{~#withIndent spaces=2}}
-
-{{~#if properties.meta }}
-{{~#each item.meta as |meta|}}
-
-<{{lookup (lookup ../properties "meta") "tag"}} {{lookup (lookup ../properties "meta") "key"}}="{{#if (and ../properties.meta.mapKeys (lookup ../properties.meta.mapKeys @key))}}{{lookup ../properties.meta.mapKeys @key}}{{else}}{{@key}}{{/if}}" {{lookup (lookup ../properties "meta") "value"}}="{{meta}}" />
-
-{{~/each}}
-{{~/if}}
-
-{{~#each item.children as |child|}}
-
-<{{lookup ../properties "children"}}>
-{{~#withIndent spaces=2}}
-{{~#if child.template}}
-
-{{{child.template}}}
-{{~else}}
-
-{{> itemXML tag=../tag item=child properties=../properties}}
-{{~/if}}
-{{~/withIndent}}
-
-</{{lookup ../properties "children"}}>
-{{~/each}}
-{{~/withIndent}}
-
-</{{tag}}>
-{{~/unless}}
-`,
+  private static partials = {
+    recursiveRender: `{{#each items as |item|}}
+{{#if item.template}}
+{{{ item.template }}}
+{{else}}
+{{> (defaultsTo ../partial 'defaultTemplate') item=item  last=@last}}
+{{/if}}
+{{/each}}`,
   };
 }

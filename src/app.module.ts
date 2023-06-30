@@ -26,6 +26,7 @@ import { BigBrotherMetricsInterceptor } from './bbmetrics.interceptor';
 import { LoggingInterceptor } from './logging.interceptor';
 import { MenusModule } from './menus/menus.module';
 import { MetricsInterceptor } from './metrics.interceptor';
+import { HttpClientsModule } from './http-clients/http-clients.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { MetricsInterceptor } from './metrics.interceptor';
       useFactory: keycloakConfig,
     }),
     MenusModule,
+    HttpClientsModule,
   ],
   providers: [
     {

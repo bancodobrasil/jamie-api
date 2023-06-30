@@ -11,6 +11,7 @@ import { RenderMenuItemTemplateInput } from './inputs/render-menu-item-template.
 import { Roles } from 'nest-keycloak-connect';
 import { MenuPendencyConnection } from './entities/menu-pendency.entity';
 import { GraphQLResolverContext } from 'src/common/types/graphql.type';
+import TemplateHelpers from 'src/common/helpers/template.helper';
 
 @Resolver(() => Menu)
 export class MenusResolver {
@@ -115,7 +116,7 @@ export class MenusResolver {
     @Args('renderMenuTemplateInput')
     renderMenuTemplateInput: RenderMenuTemplateInput,
   ) {
-    return this.menusService.renderMenuTemplate(renderMenuTemplateInput);
+    return TemplateHelpers.renderMenuTemplate(renderMenuTemplateInput);
   }
 
   @Query(() => String)
@@ -126,7 +127,7 @@ export class MenusResolver {
     @Args('renderMenuTemplateInput')
     renderMenuTemplateInput: RenderMenuTemplateInput,
   ) {
-    return this.menusService.renderMenuItemTemplate(
+    return TemplateHelpers.renderMenuItemTemplate(
       renderMenuItemTemplateInput,
       renderMenuTemplateInput,
     );
