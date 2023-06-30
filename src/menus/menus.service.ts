@@ -356,7 +356,7 @@ export class MenusService {
           if (item.rules) {
             const itemRules = {
               [`menu_item_${item.id}`]: {
-                value: JSON.parse(item.rules) || {},
+                value: JSON.parse(`"${item.rules}"`) || {},
               },
             };
             rules = { ...rules, ...itemRules };
