@@ -7,12 +7,12 @@ type TypeOrmConfig = (...args: any[]) => TypeOrmModuleOptions;
 
 export const typeOrmConfig: TypeOrmConfig = (configService: ConfigService) => {
   return {
-    type: configService.get('JAMIE_API_DATABASE_TYPE').default('mysql'),
+    type: configService.get<any>('JAMIE_API_DATABASE_TYPE', 'mysql'),
     host: configService.get('JAMIE_API_DATABASE_HOST'),
     port: +configService.get('JAMIE_API_DATABASE_PORT'),
     username: configService.get('JAMIE_API_DATABASE_USER'),
-    password: configService.get('JAMIE_API_DATABASE_PASSWORD').default('changeme'),
-    database: configService.get('JAMIE_API_DATABASE_NAME').default('jamie-api'),
+    password: configService.get<string>('JAMIE_API_DATABASE_PASSWORD', 'changeme'),
+    database: configService.get<string>('JAMIE_API_DATABASE_NAME', 'jamie-api'),
     timezone: 'Z',
     entities: [join(__dirname, '..', 'src', '**', '*.entity{.js,.ts}')],
     subscribers: [join(__dirname, '..', 'src', '**', '*.subscriber{.js,.ts}')],
