@@ -32,9 +32,7 @@ docker compose up -d
 
 Next, make a copy of the `.env.development` file, renaming it to just `.env`. You will need to configure the `KEYCLOAK_SECRET` variable. To do this, you'll need to download the [Jamie Auth Service](https://github.com/bancodobrasil/jamie-auth-service) project and follow the instructions in its README.
 
-Once you've completed all the KeyCloak configuration, change the **Realm** to `jamie` and click on the **Clients** menu on the side. Then, in the **Client ID** column, click on `jamie-api`. This will open a screen similar to the following:
-
-![Secret KeyCloak](img/secret.png)
+Once you've completed all the KeyCloak configuration, change the **Realm** to `jamie` and click on the **Clients** menu on the side. Then, in the **Client ID** column, click on `jamie-api`.
 
 Click on **Credentials**, where you will find a key under **Client secret**. Copy this key and paste it into the `KEYCLOAK_SECRET` variable in the `.env` file:
 

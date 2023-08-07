@@ -31,11 +31,10 @@ Em seguida, rode o comando do Docker:
 
 Em seguida faça uma cópia do arquivo `.env.development`, deixando ele apenas ficar com o nome de `.env`. Será necessário configure a variável `KEYCLOAK_SECRET` para isso é necessário que você baixe o [Jamie Auth Service](https://github.com/bancodobrasil/jamie-auth-service) e faça os passos do README. 
 
-Em seguida, após fazer toda a configuração do KeyCloak, basta mudar o **Realm** para o `jamie` e clique no menu lateral de **Clients**. Em seguida, na coluna de **Client ID** clique em `jamie-api`, abrirá uma tela semelhante a seguir:
+Em seguida, após fazer toda a configuração do KeyCloak, basta mudar o **Realm** para o `jamie` e clique no menu lateral de **Clients**. Em seguida, na coluna de **Client ID** clique em `jamie-api`.
 
-![Secret KeyCloak](img/secret.png)
 
-  Clique em **Credentils**, lá terá uma chave em **Client secret**. Em seguida, cópie-o e coloque na variável `KEYCLOAK_SECRET`.
+Clique em **Credentils**, lá terá uma chave em **Client secret**. Em seguida, cópie-o e coloque na variável `KEYCLOAK_SECRET`.
 
 ```bash
   KEYCLOAK_SECRET=Secret
