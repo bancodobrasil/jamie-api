@@ -1,9 +1,8 @@
-# Jamie API [![About_en](https://github.com/yammadev/flag-icons/blob/master/png/US.png?raw=true)](https://github.com/bancodobrasil/jamie-api/blob/develop/README.md)
-
+# Jamie API 
 
 ## Descrição
 
-Este projeto é desenvolvido com o framework [Nest](https://github.com/nestjs/nest) framework.
+Este projeto é desenvolvido com o framework [Nest](https://github.com/nestjs/nest).
 
 ## Dependências
 
