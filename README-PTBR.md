@@ -1,4 +1,5 @@
-# Jamie API
+# Jamie API [![About_en](https://github.com/yammadev/flag-icons/blob/master/png/US.png?raw=true)](https://github.com/bancodobrasil/jamie-api/blob/develop/README.md)
+
 
 ## Descrição
 
@@ -28,7 +29,7 @@ Em seguida, rode o comando do Docker:
 ```
 ### Configuração de Ambiente
 
-Em seguida faça uma cópia do arquivo `.env.development`, deixando ele apenas ficar com o nome de `.env`. Será necessário configure a variável `KEYCLOAK_SECRET` para isso é necessário que você baixe o [jamie-ui](https://github.com/bancodobrasil/jamie-ui) e faça os passos do README. 
+Em seguida faça uma cópia do arquivo `.env.development`, deixando ele apenas ficar com o nome de `.env`. Será necessário configure a variável `KEYCLOAK_SECRET` para isso é necessário que você baixe o [Jamie Auth Service](https://github.com/bancodobrasil/jamie-auth-service) e faça os passos do README. 
 
 Em seguida, após fazer toda a configuração do KeyCloak, basta mudar o **Realm** para o `jamie` e clique no menu lateral de **Clients**. Em seguida, na coluna de **Client ID** clique em `jamie-api`, abrirá uma tela semelhante a seguir:
 
