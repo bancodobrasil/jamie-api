@@ -1,5 +1,8 @@
-# Jamie API [![About_en](https://github.com/yammadev/flag-icons/blob/master/png/BR.png?raw=true)](https://github.com/bancodobrasil/jamie-api/blob/develop/README-PTBR.md)
+# Jamie API 
 
+Alternative languages:
+
+[Leia a página em Português Brasileiro ![About_en](https://github.com/yammadev/flag-icons/blob/master/png/BR.png?raw=true)](https://github.com/bancodobrasil/jamie-api/blob/develop/README-PTBR.md) 
 
 ## Description
 
