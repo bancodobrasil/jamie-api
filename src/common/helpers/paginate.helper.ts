@@ -22,6 +22,8 @@ export async function paginate<T>(
 
   const totalCountQuery = query.clone();
 
+  let reversed = false;
+
   // FORWARD pagination
   if (paginationArgs.first) {
     if (paginationArgs.after) {
@@ -47,9 +49,14 @@ export async function paginate<T>(
     const limit = paginationArgs.last ?? defaultLimit;
 
     query.where({ [cursorColumn]: LessThan(offsetId) }).take(limit);
+    reversed = true;
   }
 
-  const result = await query.getMany();
+  let result = await query.getMany();
+
+  if (reversed) {
+    result = result.reverse()
+  }
 
   const startCursorId: number =
     result.length > 0 ? result[0][cursorColumn] : null;
