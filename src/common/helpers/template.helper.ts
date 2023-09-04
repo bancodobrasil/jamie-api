@@ -60,11 +60,30 @@ export default class TemplateHelpers {
     }
   }
 
+  private static buildMetas(item, metas) {
+    const computedMeta = {};
+    metas.forEach(meta => {
+
+      if (meta.defaultValue != null) {
+        computedMeta[meta.name] = meta.defaultValue;
+      }
+
+      if (meta.id in item.meta) {
+        computedMeta[meta.name] = item.meta[meta.id];
+      }
+
+    });
+    return {
+      ...item,
+      meta: computedMeta
+    };
+  }
+
   public static renderMenuTemplate(
     menu: RenderMenuTemplateInput,
     renderConditions = false,
   ) {
-    let items = menu.items?.map((item: RenderMenuItemTemplateInput) => {
+    let items = menu.items?.map(item => this.buildMetas(item, menu.meta)).map((item: RenderMenuItemTemplateInput) => {
       const template = this.renderMenuItemTemplate(
         item,
         menu,
@@ -114,6 +133,7 @@ export default class TemplateHelpers {
     Handlebars.registerHelper('hash', TemplateHelpers.hash);
     Handlebars.registerHelper('length', TemplateHelpers.getLength);
     Handlebars.registerHelper('json', TemplateHelpers.json);
+    Handlebars.registerHelper('toJson', TemplateHelpers.toJson);
     Handlebars.registerHelper('jsonFormatter', TemplateHelpers.jsonFormatter);
     Handlebars.registerHelper('withIndent', TemplateHelpers.withIndent);
   }
@@ -187,6 +207,10 @@ export default class TemplateHelpers {
     return this.renderConditions
       ? str
       : JSON.stringify(JSON.parse(str), null, options.hash.spaces);
+  }
+
+  private static toJson(context: any) {
+    return JSON.parse(context);
   }
 
   private static jsonFormatter(options: Handlebars.HelperOptions) {
