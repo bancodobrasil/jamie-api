@@ -26,7 +26,7 @@ export class MenuRevision {
   description: string;
 
   @Field(() => GraphQLJSONObject)
-  @Column('text', { transformer: { from: JSON.parse, to: JSON.stringify } })
+  @Column('longtext', { transformer: { from: JSON.parse, to: JSON.stringify } })
   snapshot: MenuRevisionSnapshot;
 
   @Field(() => Menu)
