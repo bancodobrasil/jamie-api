@@ -47,7 +47,7 @@ export class MenusService {
     private readonly menuItemsService: MenuItemsService,
     private readonly storeService: StoreService,
     private readonly featwsApiService: FeatwsApiService,
-  ) {}
+  ) { }
 
   async create(createMenuInput: CreateMenuInput) {
     const queryRunner = this.dataSource.createQueryRunner();
@@ -473,7 +473,7 @@ export class MenusService {
         const siblings = items.filter(
           (m2, i2) => i2 !== index && m2.parentId === i.parentId,
         );
-        return { ...i, menu, index, siblings };
+        return { ...i, menuId: menu.id, menu, index, siblings };
       });
 
       const savedItems = await queryRunner.manager.save(
