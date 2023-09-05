@@ -83,7 +83,7 @@ export default class TemplateHelpers {
     menu: RenderMenuTemplateInput,
     renderConditions = false,
   ) {
-    let items = menu.items?.map(item => this.buildMetas(item, menu.meta)).map((item: RenderMenuItemTemplateInput) => {
+    let items = menu.items?.map(item => this.buildMetas(item, (menu.meta || []))).map((item: RenderMenuItemTemplateInput) => {
       const template = this.renderMenuItemTemplate(
         item,
         menu,
