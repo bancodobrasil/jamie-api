@@ -210,8 +210,13 @@ export class MenuSubscriber implements EntitySubscriberInterface<Menu> {
             (m2) => m2.name === m.name && m2.id !== m.id,
           );
           return (
+            // Filter out meta (m) if NOT updating name
             !!m.name &&
+            // Filter out meta (m) if name is unique
             existing &&
+            // Filter out meta (m) if
+            // existing meta name is NOT being updated, OR
+            // it is being deleted
             !metaWithIndex.find(
               (m2) =>
                 m2.id === existing.id &&
@@ -219,6 +224,8 @@ export class MenuSubscriber implements EntitySubscriberInterface<Menu> {
             )
           );
         })
+        // For each meta that was NOT filtered out (i.e. is NOT unique)
+        // add an error to the errors object
         .forEach((m) => {
           errors[`meta[${m.index}]`] = {
             ...errors[`meta[${m.index}]`],
