@@ -121,7 +121,20 @@ export class MenuSubscriber implements EntitySubscriberInterface<Menu> {
     meta: WithAction<MenuMeta>[],
     dbMeta?: MenuMeta[],
   ): void {
-    const metaWithIndex = meta.map((m, index) => ({ ...m, index }));
+    const hydrateMeta = (meta: WithAction<MenuMeta>[]) => {
+      return meta.map((m) => {
+        if (m.action === InputAction.CREATE) {
+          return m;
+        }
+        const dbMetaItem = dbMeta?.find((m2) => m2.id === m.id) || {};
+        if (dbMetaItem) {
+          return { ...dbMetaItem, ...m };
+        }
+        return m;
+      });
+    };
+    const entity = hydrateMeta(meta);
+    const entityWithIndex = entity.map((m, index) => ({ ...m, index }));
     const errors = {};
     const {
       IS_UNIQUE,
@@ -129,9 +142,9 @@ export class MenuSubscriber implements EntitySubscriberInterface<Menu> {
       META_DEFAULT_VALUE_REQUIRED,
     } = FieldValidationError.constraints;
     // Check if ids are unique
-    metaWithIndex
+    entityWithIndex
       .filter((m) => {
-        return metaWithIndex.find(
+        return entityWithIndex.find(
           (m2) => m2.id === m.id && m2.index !== m.index,
         );
       })
@@ -147,9 +160,9 @@ export class MenuSubscriber implements EntitySubscriberInterface<Menu> {
         };
       });
     // Check if names are unique
-    metaWithIndex
+    entityWithIndex
       .filter((m) => {
-        return metaWithIndex.find(
+        return entityWithIndex.find(
           (m2) => !!m.name && m2.name === m.name && m2.index !== m.index,
         );
       })
@@ -165,9 +178,9 @@ export class MenuSubscriber implements EntitySubscriberInterface<Menu> {
         };
       });
     // Check if orders are unique
-    metaWithIndex
+    entityWithIndex
       .filter((m) => {
-        return metaWithIndex.find(
+        return entityWithIndex.find(
           (m2) => !!m.order && m2.order === m.order && m2.index !== m.index,
         );
       })
@@ -184,88 +197,8 @@ export class MenuSubscriber implements EntitySubscriberInterface<Menu> {
       });
     if (dbMeta) {
       // Is an update
-      // Check if ids are unique
-      metaWithIndex
-        .filter((m) => {
-          return (
-            m.action === InputAction.CREATE &&
-            dbMeta.find((m2) => m2.id === m.id)
-          );
-        })
-        .forEach((m) => {
-          errors[`meta[${m.index}]`] = {
-            ...errors[`meta[${m.index}]`],
-            id: {
-              errors: [
-                `Menu meta ids must be unique. Found repeated id: ${m.id}`,
-              ],
-              constraints: [IS_UNIQUE],
-            },
-          };
-        });
-      // Check if names are unique
-      metaWithIndex
-        .filter((m) => {
-          const existing = dbMeta.find(
-            (m2) => m2.name === m.name && m2.id !== m.id,
-          );
-          return (
-            // Filter out meta (m) if NOT updating name
-            !!m.name &&
-            // Filter out meta (m) if name is unique
-            existing &&
-            // Filter out meta (m) if
-            // existing meta name is NOT being updated, OR
-            // it is being deleted
-            !metaWithIndex.find(
-              (m2) =>
-                m2.id === existing.id &&
-                (m2.name !== m.name || m2.action === InputAction.DELETE),
-            )
-          );
-        })
-        // For each meta that was NOT filtered out (i.e. is NOT unique)
-        // add an error to the errors object
-        .forEach((m) => {
-          errors[`meta[${m.index}]`] = {
-            ...errors[`meta[${m.index}]`],
-            name: {
-              errors: [
-                `Menu meta names must be unique. Found repeated name: ${m.name}`,
-              ],
-              constraints: [IS_UNIQUE],
-            },
-          };
-        });
-      // Check if orders are unique
-      metaWithIndex
-        .filter((m) => {
-          const existing = dbMeta.find(
-            (m2) => m2.order === m.order && m2.id !== m.id,
-          );
-          return (
-            !!m.order &&
-            existing &&
-            !metaWithIndex.find(
-              (m2) =>
-                m2.id === existing.id &&
-                (m2.order !== m.order || m2.action === InputAction.DELETE),
-            )
-          );
-        })
-        .forEach((m) => {
-          errors[`meta[${m.index}]`] = {
-            ...errors[`meta[${m.index}]`],
-            order: {
-              errors: [
-                `Menu meta orders must be unique. Found repeated order: ${m.order}`,
-              ],
-              constraints: [IS_UNIQUE],
-            },
-          };
-        });
       // Check if types have changed
-      metaWithIndex
+      entityWithIndex
         .filter((m) => {
           const dbMetaItem = dbMeta.find((m2) => m2.id === m.id);
           return dbMetaItem && m.type && dbMetaItem.type !== m.type;
@@ -282,7 +215,7 @@ export class MenuSubscriber implements EntitySubscriberInterface<Menu> {
           };
         });
       // Check if default value is set when required
-      metaWithIndex
+      entityWithIndex
         .filter((m) => {
           const dbMetaItem = dbMeta.find((m2) => m2.id === m.id);
           const required =
